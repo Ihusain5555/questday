@@ -20,9 +20,26 @@ npm run dist       # build the NSIS installer -> C:\Users\ihusa\questday-release
 ```
 
 There are no unit tests; **verification is done by driving the real app with Playwright**
-(`scripts/pw-run.mjs`, uses `playwright-core`'s `_electron`). When you add a feature,
-rewrite that script to exercise it, run `npm run build` then `npm run pw`, and read the
-PASS/FAIL lines + screenshots. Electron is GUI — launching opens real windows.
+(`playwright-core`'s `_electron`). Each feature gets its OWN driver so parallel work never
+clobbers a shared script: `scripts/pw-run.mjs` is the current/active feature's driver, and
+per-feature drivers live alongside it (`pw-arcade.mjs` → `npm run pw:arcade`,
+`pw-main.mjs`, `pw-widget.mjs`, …). When you add a feature, add/extend ITS driver (don't
+overwrite another feature's), run `npm run build` then the matching `npm run pw*`, and read
+the PASS/FAIL lines + screenshots. Electron is GUI — launching opens real windows.
+
+## Working in parallel (git)
+
+This repo is under git (`main` = baseline). Multiple terminals/sessions may be building
+different features at once (e.g. the Focus timer and the Arcade games), so **isolate**:
+
+- **One feature, one branch.** Branch off `main` (`git switch -c feature/<name>`); for
+  truly concurrent sessions use a **worktree** (`git worktree add ../questday-<name>
+  feature/<name>`) so each terminal has its own folder and they never touch the same files.
+- **Don't commit another feature's half-done WIP into a release.** `npm run dist` ships the
+  whole working tree — only run it from a branch where the tree is complete and green.
+- **Per-feature Playwright drivers** (above) keep the test scripts from colliding.
+- Single-instance lock still applies: only one QuestDay/`dev`/`pw` runs at a time across all
+  terminals — coordinate runs (quit/kill before launching, see the lock gotcha below).
 
 ## Architecture
 
@@ -30,8 +47,9 @@ Three renderer windows, one main process:
 - **main window** (`src/renderer/app/`) — management UI (tabs: Dashboard, Quests, Time
   frames, World, Arcade, Stats, Active mode, Data — labels carry emoji icons, e.g.
   "⚔️ Quests"). The 🕹️ Arcade (v1.4, `app/arcade/`) is ticket-gated: completions earn
-  tickets (cap/day in `balance.arcade`), 11 local minigames pay a small capped coin
-  bonus; adding a game = one balance entry + one component in the ArcadeView registry.
+  tickets (cap/day in `balance.arcade`), 14 local minigames pay a small capped coin
+  bonus (incl. a brain-training trio — Color Clash/Stroop, Flash Recall/UFOV, N-Back);
+  adding a game = one balance entry + one component in the ArcadeView registry.
 - **widget** (`src/renderer/widget/`) — always-on-top, frameless, movable, resizable;
   shows the current quest + immediate sub-task; expands to the full list.
 - **friction window** (`src/renderer/friction/`) — dedicated always-on-top popup for the
