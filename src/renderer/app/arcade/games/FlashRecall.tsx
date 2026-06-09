@@ -16,7 +16,13 @@ import { play } from '../sound'
  */
 
 const SLOTS = 8 // positions around the ring (clock face)
-const START_MS = 420 // first exposure
+// Start exposure by difficulty (chosen during "ready"); it still adapts from there.
+const STARTS = [
+  { key: 'relaxed', name: 'Relaxed', ms: 520 },
+  { key: 'normal', name: 'Normal', ms: 420 },
+  { key: 'sharp', name: 'Sharp', ms: 320 }
+] as const
+const START_MS = 420 // default first exposure (Normal)
 const MIN_MS = 90 // floor — can't get easier to see than this
 const MAX_MS = 650 // ceiling after misses
 const STEP_DOWN = 40 // shorten on a hit (harder)
@@ -39,7 +45,15 @@ export function FlashRecall({ onFinish }: { onFinish: (score: number) => void })
   const [target, setTarget] = useState(0)
   const [chosen, setChosen] = useState<number | null>(null)
   const [sharpest, setSharpest] = useState<number | null>(null) // briefest flash localised correctly
+  const [diff, setDiff] = useState<(typeof STARTS)[number]['key']>('normal')
   const exposure = useRef(START_MS)
+
+  // Difficulty sets the starting exposure (locked once the first flash begins).
+  const pickDiff = (s: (typeof STARTS)[number]) => {
+    if (phase !== 'ready') return
+    setDiff(s.key)
+    exposure.current = s.ms
+  }
   const done = useRef(false)
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
 
@@ -141,6 +155,17 @@ export function FlashRecall({ onFinish }: { onFinish: (score: number) => void })
         })}
         {phase === 'ready' && (
           <div className="ufov-ready">
+            <div className="game-diff" role="group" aria-label="difficulty">
+              {STARTS.map((s) => (
+                <button
+                  key={s.key}
+                  className={`game-diff-opt${diff === s.key ? ' on' : ''}`}
+                  onClick={() => pickDiff(s)}
+                >
+                  {s.name}
+                </button>
+              ))}
+            </div>
             <span className="ufov-ready-label">Eyes on the centre…</span>
             <span className="ufov-ready-count">{count > 0 ? count : 'Go!'}</span>
           </div>

@@ -28,18 +28,25 @@ interface Prompt {
   options: number[] // shuffled colour indices to choose from (includes ink)
 }
 
-function nextPrompt(): Prompt {
+// Difficulty: how many swatches to choose among, and how often the word is
+// incongruent with the ink (the harder it is to ignore the word).
+const DIFFS = [
+  { key: 'calm', name: 'Calm', count: 4, incong: 0.7 },
+  { key: 'spicy', name: 'Spicy', count: 6, incong: 0.85 }
+] as const
+
+function nextPrompt(count: number, incong: number): Prompt {
   const ink = Math.floor(Math.random() * COLORS.length)
-  // 75% incongruent: the word names a different colour than the ink (the clash).
+  // Incongruent: the word names a different colour than the ink (the clash).
   let wordIdx = ink
-  if (Math.random() < 0.75) {
+  if (Math.random() < incong) {
     do {
       wordIdx = Math.floor(Math.random() * COLORS.length)
     } while (wordIdx === ink)
   }
-  // 4 swatches: the ink plus 3 distinct distractors, shuffled.
+  // `count` swatches: the ink plus distinct distractors, shuffled.
   const opts = [ink]
-  while (opts.length < 4) {
+  while (opts.length < count) {
     const c = Math.floor(Math.random() * COLORS.length)
     if (!opts.includes(c)) opts.push(c)
   }
@@ -58,9 +65,18 @@ export function ColorClash({ onFinish }: { onFinish: (score: number) => void }):
   const [score, setScore] = useState(0)
   const [combo, setCombo] = useState(0)
   const [bestCombo, setBestCombo] = useState(0)
-  const [prompt, setPrompt] = useState<Prompt>(() => nextPrompt())
+  const [diff, setDiff] = useState<(typeof DIFFS)[number]['key']>('calm')
+  const cur = DIFFS.find((d) => d.key === diff) ?? DIFFS[0]
+  const [prompt, setPrompt] = useState<Prompt>(() => nextPrompt(DIFFS[0].count, DIFFS[0].incong))
   const [flash, setFlash] = useState<'good' | 'bad' | null>(null)
   const [pop, setPop] = useState(0) // bumps a floating "+1" on each correct tap
+
+  // Difficulty is chosen during the "ready" countdown, then locked.
+  const pickDiff = (d: (typeof DIFFS)[number]) => {
+    if (phase !== 'ready') return
+    setDiff(d.key)
+    setPrompt(nextPrompt(d.count, d.incong))
+  }
   const done = useRef(false)
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -110,7 +126,7 @@ export function ColorClash({ onFinish }: { onFinish: (score: number) => void }):
     setFlash(correct ? 'good' : 'bad')
     if (flashTimer.current) clearTimeout(flashTimer.current)
     flashTimer.current = setTimeout(() => setFlash(null), 180)
-    setPrompt(nextPrompt())
+    setPrompt(nextPrompt(cur.count, cur.incong))
   }
 
   const endEarly = () => {
@@ -131,6 +147,17 @@ export function ColorClash({ onFinish }: { onFinish: (score: number) => void }):
       <div className={`cc-field ${flash ?? ''}`}>
         {phase === 'ready' ? (
           <div className="cc-ready">
+            <div className="game-diff" role="group" aria-label="difficulty">
+              {DIFFS.map((d) => (
+                <button
+                  key={d.key}
+                  className={`game-diff-opt${diff === d.key ? ' on' : ''}`}
+                  onClick={() => pickDiff(d)}
+                >
+                  {d.name}
+                </button>
+              ))}
+            </div>
             <span className="cc-ready-label">Tap the colour, not the word…</span>
             <span className="cc-ready-count">{count > 0 ? count : 'Go!'}</span>
           </div>

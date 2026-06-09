@@ -14,22 +14,21 @@ import { play } from '../sound'
  * lights then CLEARS before the next (a readable beat) so the 2-back is trackable.
  */
 
-const N = 2
 const CELLS = 9 // 3x3 grid
 const TOTAL = 24 // sequence length
 const STEP_MS = 2400 // time per step (one cell)
 const LIT_MS = 1650 // how long the cell stays lit within a step (rest is blank)
 const MATCH_RATE = 0.32 // ~1/3 of eligible steps are forced matches
 
-function buildSequence(): number[] {
+function buildSequence(n: number): number[] {
   const seq: number[] = []
   for (let i = 0; i < TOTAL; i++) {
-    if (i >= N && Math.random() < MATCH_RATE) {
-      seq.push(seq[i - N]) // forced match
+    if (i >= n && Math.random() < MATCH_RATE) {
+      seq.push(seq[i - n]) // forced match
     } else {
       let c = Math.floor(Math.random() * CELLS)
       // Avoid an accidental match when we didn't intend one.
-      if (i >= N) while (c === seq[i - N]) c = Math.floor(Math.random() * CELLS)
+      if (i >= n) while (c === seq[i - n]) c = Math.floor(Math.random() * CELLS)
       seq.push(c)
     }
   }
@@ -37,7 +36,8 @@ function buildSequence(): number[] {
 }
 
 export function NBack({ onFinish }: { onFinish: (score: number) => void }): JSX.Element {
-  const seq = useRef<number[]>(buildSequence())
+  const [nLevel, setNLevel] = useState(2) // 2-back / 3-back (chosen during "ready")
+  const seq = useRef<number[]>(buildSequence(2))
   const [phase, setPhase] = useState<'ready' | 'playing'>('ready')
   const [count, setCount] = useState(3)
   const [step, setStep] = useState(0)
@@ -51,7 +51,14 @@ export function NBack({ onFinish }: { onFinish: (score: number) => void }): JSX.
   const faRef = useRef(0)
   const done = useRef(false)
 
-  const isMatch = (i: number) => i >= N && seq.current[i] === seq.current[i - N]
+  const isMatch = (i: number) => i >= nLevel && seq.current[i] === seq.current[i - nLevel]
+
+  // Difficulty is locked once play starts; changing it rebuilds the sequence.
+  const pickLevel = (n: number) => {
+    if (phase !== 'ready' || n === nLevel) return
+    setNLevel(n)
+    seq.current = buildSequence(n)
+  }
 
   const finish = () => {
     if (done.current) return
@@ -137,6 +144,17 @@ export function NBack({ onFinish }: { onFinish: (score: number) => void }): JSX.
         ))}
         {phase === 'ready' && (
           <div className="nback-ready">
+            <div className="game-diff" role="group" aria-label="difficulty">
+              {[2, 3].map((n) => (
+                <button
+                  key={n}
+                  className={`game-diff-opt${nLevel === n ? ' on' : ''}`}
+                  onClick={() => pickLevel(n)}
+                >
+                  {n}-back
+                </button>
+              ))}
+            </div>
             <span className="nback-ready-label">Get ready…</span>
             <span className="nback-ready-count">{count > 0 ? count : 'Go!'}</span>
           </div>
@@ -151,9 +169,9 @@ export function NBack({ onFinish }: { onFinish: (score: number) => void }): JSX.
           ? '✓ match!'
           : feedback === 'oops'
             ? 'not that one — keep going'
-            : `Match (${N}-back)`}
+            : `Match (${nLevel}-back)`}
       </button>
-      <div className="nback-caption meta-dim">Tap when the lit square is the same as {N} steps ago.</div>
+      <div className="nback-caption meta-dim">Tap when the lit square is the same as {nLevel} steps ago.</div>
     </div>
   )
 }

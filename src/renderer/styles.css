@@ -1752,6 +1752,35 @@ select:focus {
   color: var(--accent-2);
   animation: game-pop 0.3s var(--ease-spring);
 }
+/* Difficulty picker shown in each game's "ready" intro — a small pill segmented
+   control. Locked (visually unchanged) once play starts. */
+.game-diff {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: var(--r-pill);
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+.game-diff-opt {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  border-radius: var(--r-pill);
+  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.game-diff-opt.on {
+  background: linear-gradient(180deg, var(--brand-bright), var(--brand));
+  color: #06231a;
+}
+.game-diff-opt:hover {
+  filter: brightness(1.06);
+}
+
 /* Color Clash combo chip + the word pop on each new prompt. */
 .cc-combo {
   color: var(--fire);
