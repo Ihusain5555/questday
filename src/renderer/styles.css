@@ -2563,6 +2563,16 @@ code {
   font-size: 12px;
 }
 
+/* Timebox button — sized from the current quest's estimate (time-blocking) */
+.focus-timebox {
+  border-color: var(--gold-deep);
+  color: var(--gold-bright);
+  font-weight: 600;
+}
+.focus-timebox:hover {
+  background: var(--panel-3);
+}
+
 /* Feature toggles (Data tab → Productivity features) */
 .feature-toggles {
   display: flex;

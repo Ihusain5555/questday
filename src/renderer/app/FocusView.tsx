@@ -52,6 +52,15 @@ export function FocusView(): JSX.Element {
   const [total, setTotal] = useState(0) // phase length (0 for flowtime work = no ring)
   const [cycle, setCycle] = useState(0) // completed work sessions today (long-break + tally)
   const [reward, setReward] = useState<{ coins: number; capped: boolean } | null>(null)
+  const [isTimebox, setIsTimebox] = useState(false) // current session is a quest timebox
+
+  // Timebox length = the current quest's estimate × a planning-fallacy buffer
+  // (research: ×1.5 — we under-estimate), floored so tiny estimates still give a
+  // real box. Only offered when there's a current quest. Tunable in balance.
+  const tbCfg = balance.focus.timebox
+  const timeboxMinutes = current
+    ? Math.max(tbCfg.minMinutes, Math.round(current.timeEstimateMinutes * tbCfg.bufferMultiplier))
+    : null
 
   const deadlineRef = useRef<number | null>(null) // countdown end timestamp
   const flowStartRef = useRef<number | null>(null) // flowtime work start timestamp
@@ -64,6 +73,7 @@ export function FocusView(): JSX.Element {
   // ---- phase transitions ---------------------------------------------------
   const startWork = (): void => {
     setReward(null)
+    setIsTimebox(false)
     if (isFlow) {
       flowStartRef.current = Date.now()
       setTotal(0)
@@ -78,12 +88,27 @@ export function FocusView(): JSX.Element {
     setRunning(true)
   }
 
+  // Timebox the current quest: a hard-stop countdown sized from its estimate.
+  // Always a fixed countdown, independent of the chosen preset (incl. Flowtime).
+  const startTimebox = (minutes: number): void => {
+    setReward(null)
+    setIsTimebox(true)
+    const len = minutes * 60_000
+    deadlineRef.current = Date.now() + len
+    flowStartRef.current = null
+    setTotal(len)
+    setMs(len)
+    setPhase('work')
+    setRunning(true)
+  }
+
   const goBreak = (workedMs: number): void => {
     let breakMin: number
-    if (isFlow) {
+    if (isFlow && !isTimebox) {
       breakMin = Math.max(1, Math.round((workedMs / 60_000) * (preset.breakRatio ?? 0.2)))
     } else {
       const isLong =
+        !isTimebox &&
         !!preset.longBreak &&
         !!preset.cyclesPerLong &&
         (cycle + 1) % (preset.cyclesPerLong as number) === 0
@@ -115,7 +140,7 @@ export function FocusView(): JSX.Element {
   }
 
   const pause = (): void => {
-    if (isFlow && phase === 'work') {
+    if (isFlow && !isTimebox && phase === 'work') {
       pausedRef.current = ms
     } else if (deadlineRef.current != null) {
       pausedRef.current = deadlineRef.current - Date.now()
@@ -124,7 +149,7 @@ export function FocusView(): JSX.Element {
   }
 
   const resume = (): void => {
-    if (isFlow && phase === 'work') {
+    if (isFlow && !isTimebox && phase === 'work') {
       flowStartRef.current = Date.now() - (pausedRef.current ?? ms)
     } else {
       deadlineRef.current = Date.now() + (pausedRef.current ?? ms)
@@ -138,6 +163,7 @@ export function FocusView(): JSX.Element {
     setPhase('idle')
     setMs(0)
     setTotal(0)
+    setIsTimebox(false)
     deadlineRef.current = null
     flowStartRef.current = null
     pausedRef.current = null
@@ -155,7 +181,7 @@ export function FocusView(): JSX.Element {
   useEffect(() => {
     if (!running) return
     const id = setInterval(() => {
-      if (isFlow && phase === 'work') {
+      if (isFlow && !isTimebox && phase === 'work') {
         setMs(Date.now() - (flowStartRef.current ?? Date.now()))
         return
       }
@@ -172,7 +198,7 @@ export function FocusView(): JSX.Element {
     }, 250)
     return () => clearInterval(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [running, phase, isFlow, total, cycle, presetKey])
+  }, [running, phase, isFlow, isTimebox, total, cycle, presetKey])
 
   // Let the reward flash fade on its own.
   useEffect(() => {
@@ -191,9 +217,11 @@ export function FocusView(): JSX.Element {
 
   const phaseLabel =
     phase === 'work'
-      ? isFlow
-        ? 'Focusing — stop when ready'
-        : 'Focus'
+      ? isTimebox
+        ? 'Timebox'
+        : isFlow
+          ? 'Focusing — stop when ready'
+          : 'Focus'
       : phase === 'break'
         ? 'Break — step away'
         : 'Ready'
@@ -250,8 +278,8 @@ export function FocusView(): JSX.Element {
               style={{
                 stroke: ringColor,
                 strokeDasharray: C,
-                strokeDashoffset: isFlow && phase === 'work' ? 0 : C * (1 - elapsedFrac),
-                opacity: isFlow && phase === 'work' ? 0.35 : 1
+                strokeDashoffset: isFlow && !isTimebox && phase === 'work' ? 0 : C * (1 - elapsedFrac),
+                opacity: isFlow && !isTimebox && phase === 'work' ? 0.35 : 1
               }}
             />
           </svg>
@@ -268,9 +296,20 @@ export function FocusView(): JSX.Element {
 
         <div className="focus-controls">
           {phase === 'idle' ? (
-            <button className="primary focus-start" onClick={startWork}>
-              <Play size={18} weight="fill" /> Start focus
-            </button>
+            <>
+              <button className="primary focus-start" onClick={startWork}>
+                <Play size={18} weight="fill" /> Start focus
+              </button>
+              {timeboxMinutes !== null && (
+                <button
+                  className="focus-timebox"
+                  onClick={() => startTimebox(timeboxMinutes)}
+                  title={`Hard-stop box sized from this quest's estimate (×${tbCfg.bufferMultiplier} buffer). When it ends: start another box, or move on — no penalty.`}
+                >
+                  📦 Timebox · {timeboxMinutes}m
+                </button>
+              )}
+            </>
           ) : (
             <>
               {running ? (
