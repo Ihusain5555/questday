@@ -62,7 +62,7 @@ export function EisenhowerView(): JSX.Element {
               >
                 <div className="eh-quad-head">
                   <span className="eh-quad-name" style={{ color: q.color }}>
-                    {q.emoji} {q.name}
+                    {q.name}
                   </span>
                   <span className="eh-quad-count">{quests.length}</span>
                 </div>
