@@ -12,7 +12,7 @@
     "preview": "electron-vite preview",
     "start": "electron-vite preview",
     "pw": "node scripts/pw-run.mjs",
-    "pw:arcade": "node scripts/pw-arcade.mjs",
+    "pw:arcade": "node scripts/with-app.mjs arcade node scripts/pw-arcade.mjs",
     "dist": "electron-vite build && electron-builder --win",
     "typecheck:node": "tsc -p tsconfig.node.json --noEmit",
     "typecheck:web": "tsc -p tsconfig.web.json --noEmit",
