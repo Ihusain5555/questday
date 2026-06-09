@@ -47,10 +47,21 @@
   font-display: swap;
 }
 
+/* High-quality color emoji (Twemoji, COLR format) — bundled locally so every
+   emoji in the app renders crisp, consistent, and identical on every PC instead
+   of Windows' default emoji. It contains ONLY emoji glyphs, so it's listed
+   AFTER the text fonts in the family stacks: letters/numbers stay Satoshi/Clash,
+   and only emoji codepoints fall through to Twemoji. Offline-safe (no CDN). */
+@font-face {
+  font-family: 'Twemoji';
+  src: url('./assets/fonts/Twemoji.woff2') format('woff2');
+  font-display: swap;
+}
+
 :root {
   /* Type — characterful display + clean body (escapes the system-font look) */
-  --font-display: 'Clash Display', 'Segoe UI', system-ui, sans-serif;
-  --font-body: 'Satoshi', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Clash Display', 'Twemoji', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Satoshi', 'Twemoji', 'Segoe UI', system-ui, sans-serif;
 
   /* Surfaces — deep emerald-ink (Clay Fantasy, dark) */
   --bg: #0e1512;
