@@ -7,13 +7,13 @@
   "main": "./out/main/index.js",
   "author": "QuestDay",
   "scripts": {
-    "dev": "node scripts/with-app.mjs arcade electron-vite dev",
+    "dev": "node scripts/with-app.mjs electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "start": "electron-vite preview",
     "pw": "node scripts/pw-run.mjs",
-    "pw:arcade": "node scripts/with-app.mjs arcade node scripts/pw-arcade.mjs",
-    "dist": "node scripts/with-app.mjs arcade \"electron-vite build && electron-builder --win\"",
+    "pw:arcade": "node scripts/with-app.mjs node scripts/pw-arcade.mjs",
+    "dist": "node scripts/with-app.mjs \"electron-vite build && electron-builder --win\"",
     "typecheck:node": "tsc -p tsconfig.node.json --noEmit",
     "typecheck:web": "tsc -p tsconfig.web.json --noEmit",
     "typecheck": "npm run typecheck:node && npm run typecheck:web"
