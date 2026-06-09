@@ -313,7 +313,7 @@ export const balance = {
   // abandoning one costs nothing, and breaks are first-class, not "slacking".
   focus: {
     presets: {
-      pomodoro: { name: 'Pomodoro', emoji: '🍅', blurb: '25 on, 5 off — beat procrastination.', work: 25, break: 5, longBreak: 15, cyclesPerLong: 4 },
+      pomodoro: { name: 'Pomodoro', emoji: '⏲️', blurb: '25 on, 5 off — beat procrastination.', work: 25, break: 5, longBreak: 15, cyclesPerLong: 4 },
       fiftytwo: { name: '52 / 17', emoji: '⏳', blurb: 'Longer flow, real recovery (DeskTime study).', work: 52, break: 17 },
       ultradian: { name: 'Deep work 90', emoji: '🧠', blurb: 'Ride your 90-min ultradian focus cycle.', work: 90, break: 20 },
       flowtime: { name: 'Flowtime', emoji: '🌊', blurb: 'No fixed timer — stop when focus fades.', work: null, breakRatio: 0.2 }
