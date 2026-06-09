@@ -1,25 +1,72 @@
 # QuestDay — Handoff
 
-**Status: v1.6.4 — v1.5 base + v1.6 productivity tools (⏱️ Focus timer, 🧭 Eisenhower
-matrix, 📦 Timeboxing) + feature toggles + app-wide high-quality (Twemoji) emoji.** v1.5
-shipped the full roadmap, themed worlds, harvest economy, the ticket-gated arcade, and
-recurring quests (all 2026-06-06); the arcade later grew to 14 minigames (brain trio); v1.6
-(2026-06-08 → 2026-06-09) added the productivity tools above. Every feature verified by
-driving the real app with Playwright. Installer `QuestDay Setup 1.6.4.exe` is built and
-installed on the user's machine.
+**Status: v1.7.2 — v1.6 base + the Premium Fantasy ("Clay Fantasy") visual redesign now
+SHIPPED, the Matrix re-iconed to Phosphor, and the app version shown in the title bar.**
+v1.5 shipped the full roadmap, themed worlds, harvest economy, the ticket-gated arcade, and
+recurring quests (all 2026-06-06); the arcade grew to 14 minigames; v1.6 (2026-06-08 →
+2026-06-09) added the productivity tools (⏱️ Focus, 🧭 Matrix, 📦 Timeboxing) + feature
+toggles + app-wide Twemoji emoji; v1.7 (2026-06-09) merged + shipped the redesign and
+polished the Matrix. Every feature verified by driving the real app with Playwright.
+Installer `QuestDay Setup 1.7.2.exe` is built and installed on the user's machine.
 
 Last worked: 2026-06-09.
 
-**State of the user's machine when this session ended (session closed cleanly):**
-- The installed app is up to date (**1.6.4**, silently installed + relaunched; it is
+**State of the user's machine when this session ended (user is closing the terminal):**
+- The installed app is up to date (**1.7.2**, silently installed + relaunched; it is
   RUNNING — quit it before launching the app, or use the `scripts/with-app.mjs` wrapper /
-  an isolated `--user-data-dir` test which needs no quit). Earlier data counts below are the
-  2026-06-06 snapshot; the v1.6 sessions used isolated test data dirs and never touched the
-  real `db.json`.
+  an isolated `--user-data-dir` test which needs no quit). The title bar now shows
+  "QuestDay v1.7.2".
+- `main` is clean at commit `6fead22`. Worktrees: only `C:\Users\ihusa\questday-wt\redesign`
+  (`feature/premium-fantasy`) remains, and it is now FULLY MERGED into `main` (kept in case
+  the redesign continues; safe to remove with the junction-safe steps below). The four v1.6
+  leftover worktrees (eisenhower/timeboxing/arcade/focus) were removed this session.
 - **Real user data exists** in `%APPDATA%\questday\db.json` and the user is actively
-  playing. At close: 6 quests (none recurring yet — feature shipped at end of session),
-  24 placed world items, 1,230 coins, level 9, 1 banked arcade ticket, active theme
-  "city". The Playwright script stashes/restores db.json automatically; don't wipe it.
+  playing. Earlier data counts below are the 2026-06-06 snapshot; the v1.6/v1.7 sessions
+  used isolated test data dirs and never touched the real `db.json`. The Playwright scripts
+  stash/restore (or fully isolate) db.json automatically; don't wipe it.
+
+## v1.7 (2026-06-09) — Premium Fantasy redesign SHIPPED + Matrix icons + version in title bar
+
+Session resumed after a terminal was closed mid-work. Goal: reconcile outstanding branches
+and ship the visual layer. All three sub-versions built + silently installed + relaunched.
+
+- **Branch reconciliation**: five feature branches existed in worktrees. FOUR
+  (`arcade-brain-games`, `eisenhower`, `focus-timer`, `timeboxing`) were ALREADY fully
+  merged into `main` (0 unique commits — nothing lost when the terminal closed); their
+  worktrees + branches were removed (junction-safe: `cmd /c rmdir "<wt>\node_modules"` FIRST
+  to drop the link, then `git worktree remove` + `git branch -D`). The fifth,
+  `feature/premium-fantasy` (the redesign), had 1 unmerged commit that conflicted.
+- **Premium Fantasy redesign merged + shipped (v1.7.0)**: the "Clay Fantasy" look (dark,
+  emerald + gold, claymorphism — look-spec in `design-system/MASTER.md`).
+  Its commit moved ALL design tokens (colours/fonts/shape/depth/motion) out of
+  `styles.css :root` into a dedicated **`theme.css`** — the single source of truth for the
+  look, `@import`ed at the top of `styles.css` — with RGB-channel token variants
+  (`--brand-rgb` etc., for `rgb(var(--x-rgb) / alpha)` tints), a deep-emerald **custom title
+  bar** (`.titlebar`/`.titlebar-brand` in `App.tsx`; colour `#10362a` MUST stay in sync
+  across three places: `--titlebar` in theme.css, `titleBarOverlay.color` in
+  `src/main/index.ts`, and that token), the default app menu removed, slim on-brand
+  scrollbars, and isolated pw test data dirs. **Conflict note**: styles.css conflicted
+  because the branch predated the v1.6 Twemoji emoji feature — resolution kept BOTH (the
+  `@font-face` stays in styles.css; `'Twemoji'` was added to the theme.css `--font-*` stacks
+  so emoji still fall through). App.tsx auto-merged (kept the new title bar AND the Matrix tab).
+- **Matrix icon rework (v1.7.1)**: the 🧭 Eisenhower view was the ONE screen the redesign's
+  emoji→Phosphor sweep had missed. Swapped its emoji (🧭🔥📅⚡🌙✨) for crisp **Phosphor
+  icons** — Compass title; Fire / Calendar / Lightning / Moon quadrants — each set in a small
+  badge tinted with the quadrant colour (`.eh-badge`, `color-mix(in srgb, var(--quad) 18%,
+  transparent)`; `--quad` passed inline per quadrant). Icon NAMES live in
+  `balance.eisenhower.quadrants` (`icon:` field, replacing the old `emoji:`); `EisenhowerView`
+  maps name→component via `QUAD_ICON`. 11/11 `pw:eisenhower` checks still PASS; screenshot
+  confirms the look.
+- **App version in the title bar (v1.7.2)**: `package.json` version is baked into the renderer
+  at build time via a Vite `define` (`__APP_VERSION__`, added to the renderer config in
+  `electron.vite.config.ts` — single source of truth, no IPC; the global is declared in
+  `src/renderer/env.d.ts` inside `declare global`). Rendered as a small muted "vX.Y.Z" beside
+  the brand (`.titlebar-version`). Tracks every future release automatically — no manual edits.
+- **Process note (tone/working-style)**: the redesign was flagged to the user as possibly
+  unfinished before merging; the user chose to ship it. Big visual/architectural calls were
+  presented as plain-English options with pros/cons and the user chose; small calls (icon
+  picks, version-bump numbers) were made directly. Each ship asked first or followed an
+  explicit "ship it".
 
 ## v1.6 (2026-06-08 → 2026-06-09) — ⏱️ Focus, 🧭 Matrix, 📦 Timeboxing, toggles, emoji
 
@@ -61,11 +108,11 @@ method families first, then built three research-backed tools, each in its OWN g
 - **Shipped**: v1.6.0 (3 tools + toggles) → 1.6.1 (matrix emoji cleanup) → 1.6.2 (focus
   emoji cleanup) → 1.6.3 (Twemoji font) → 1.6.4 (icons restored, high-quality + theme-fit).
   Each built + silently installed.
-- **Leftover worktrees** (harmless, mergeable work already on `main`): `questday-eisenhower`
-  (`feature/eisenhower`) + `questday-wt/timeboxing` (`feature/timeboxing`). To remove safely
-  (their `node_modules` is a JUNCTION to the shared one — never recursively delete it):
-  `cmd /c rmdir "<worktree>\node_modules"` first (drops the link, not the target), THEN
-  `git worktree remove <worktree>` and `git branch -d <branch>`.
+- **Leftover worktrees** — RESOLVED in v1.7: these (eisenhower, timeboxing, + arcade, focus)
+  were fully merged and have been REMOVED. The junction-safe removal recipe still applies to
+  the one remaining redesign worktree (their `node_modules` is a JUNCTION to the shared one —
+  never recursively delete it): `cmd /c rmdir "<worktree>\node_modules"` first (drops the
+  link, not the target), THEN `git worktree remove <worktree>` and `git branch -d <branch>`.
 
 ## v1.4 (2026-06-06) — 🕹️ The Arcade
 

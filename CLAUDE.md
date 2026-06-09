@@ -4,7 +4,10 @@ Guidance for working in this repo. QuestDay is a Windows-first **Electron + Reac
 TypeScript** desktop app (electron-vite): a quest-based daily productivity guide with an
 always-on-top widget that always surfaces the single highest-priority "current quest".
 v1.5: the full roadmap is built, plus themed reward worlds, the harvest economy, the
-ticket-gated Arcade, and recurring quests (see `HANDOFF.md` for the per-version log).
+ticket-gated Arcade, and recurring quests; v1.6 added the productivity tools (Focus, Matrix,
+Timeboxing); v1.7 shipped the **"Clay Fantasy" visual redesign** (dark emerald + gold,
+claymorphism; design tokens in `src/renderer/theme.css`, look-spec in `design-system/MASTER.md`)
+and shows the app version in the title bar (see `HANDOFF.md` for the per-version log).
 Tone of the product: **motivating, never punishing** — never add health/lives loss, point
 deduction, streak-shaming, or any punitive mechanic. (One sanctioned exception: ↩ Restore
 reverses an accidental completion's payout exactly — correction, not punishment.)
@@ -52,8 +55,10 @@ different features at once (e.g. the Focus timer and the Arcade games), so **iso
 
 Three renderer windows, one main process:
 - **main window** (`src/renderer/app/`) — management UI (tabs: Dashboard, Quests, Time
-  frames, Focus, Matrix, World, Arcade, Stats, Active mode, Data — labels carry emoji icons,
-  e.g. "⚔️ Quests"). The 🕹️ Arcade (v1.4, `app/arcade/`) is ticket-gated: completions earn
+  frames, Focus, Matrix, World, Arcade, Stats, Active mode, Data — each tab has a **Phosphor
+  icon** (`@phosphor-icons/react`); the v1.7 redesign replaced emoji-as-icons app-wide, so
+  UI chrome uses Phosphor and emoji are reserved for content/decoration). The custom title
+  bar shows the brand + the app version. The Arcade (v1.4, `app/arcade/`) is ticket-gated: completions earn
   tickets (cap/day in `balance.arcade`), 14 local minigames pay a small capped coin
   bonus (incl. a brain-training trio — Color Clash/Stroop, Flash Recall/UFOV, N-Back);
   adding a game = one balance entry + one component in the ArcadeView registry.
@@ -64,7 +69,9 @@ Three renderer windows, one main process:
   daily-capped coin bonus (`store.finishFocusSession`, mirrors the arcade cap). 🧭 Matrix
   (`app/EisenhowerView.tsx`, `engine/eisenhower.ts`, `balance.eisenhower`) = read-only
   Eisenhower urgent×important 2×2 over EXISTING fields (dueAt=urgent, skippability/priority=
-  important; low/low quadrant is "Later", never "Delete"). Both are **toggleable features**:
+  important; low/low quadrant is "Later", never "Delete"). Each quadrant shows a Phosphor icon
+in a colour-tinted badge (`.eh-badge`; icon NAME in `balance.eisenhower.quadrants[].icon`,
+mapped to the component in `EisenhowerView`). Both are **toggleable features**:
   `Settings.enabledFeatures` (Record<string,boolean>, missing=on; mirrors `activeModeTiers`)
   + registry `app/features.ts`, switched in Data → "Productivity features"; App.tsx hides
   toggled-off tabs. A new optional feature = one `features.ts` entry + one App.tsx tab +
@@ -110,12 +117,14 @@ only writer of the data file.
   quest fields (dueAt=urgent within `balance.eisenhower.urgentWithinHours`; skippability/
   priority=important). Read-only triage (Do/Schedule/Minimize/Later); never mutates quests.
 
-**Emoji rendering (v1.6):** all emoji across every window render via a bundled **Twemoji
-COLR color webfont** (`src/renderer/assets/fonts/Twemoji.woff2`, ~466KB, offline) — added
-AFTER the text fonts in `--font-body`/`--font-display` (`styles.css`), so letters/numbers
-stay Satoshi/Clash and only emoji codepoints fall through to Twemoji (crisp + identical on
-every PC, replacing Windows' default). To re-add an emoji to UI/content, just type it — it
-renders high-quality automatically.
+**Icons vs emoji (post-v1.7):** UI chrome (tabs, buttons, quadrant badges, headers) uses
+**Phosphor icons** (`@phosphor-icons/react`, fill/duotone weights) — the redesign removed
+emoji-as-icons app-wide (it was the user's #1 complaint). Reserve emoji for content/decoration
+(garden plants, arcade game identity, celebrations). When you DO use an emoji, it renders via a
+bundled **Twemoji COLR color webfont** (`src/renderer/assets/fonts/Twemoji.woff2`, ~466KB,
+offline) — listed AFTER the text fonts in the `--font-body`/`--font-display` stacks (in
+`theme.css`), so letters/numbers stay Satoshi/Clash and only emoji codepoints fall through to
+Twemoji (crisp + identical on every PC). The `@font-face` itself is declared in `styles.css`.
 
 ## Conventions / where things live
 
@@ -123,6 +132,14 @@ renders high-quality automatically.
   garden/world economy under `garden.*`, and arcade tickets/payout rates under `arcade`)
   live in ONE file: `src/shared/config/balance.ts`. Re-tune there; don't hardcode
   weights in logic.
+- **ALL visual design tokens** (colours, fonts, shape/radii, depth/shadows, motion) live in
+  ONE file: `src/renderer/theme.css` (`@import`ed at the top of `styles.css`). Change the
+  LOOK there; components reference `var(--brand)` etc., never raw hex. The deep-emerald title
+  bar colour `#10362a` is duplicated in 3 spots that must stay in sync: `--titlebar`
+  (theme.css), `titleBarOverlay.color` (`src/main/index.ts`), and the `.titlebar` background.
+- **App version** is injected into the renderer at build time from `package.json` via a Vite
+  `define` (`__APP_VERSION__`, in `electron.vite.config.ts`; global declared in
+  `src/renderer/env.d.ts`). The title bar reads it — no manual version strings in the UI.
 - Shared types: `src/shared/types.ts`. Defaults + migration seed: `src/shared/defaults.ts`
   (`createDefaultDatabase`); the migration in `src/main/db/store.ts` must stay tolerant of
   older/missing fields (`...fresh ... ...db`).
