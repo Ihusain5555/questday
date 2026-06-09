@@ -57,7 +57,7 @@ export function createDefaultDatabase(): Database {
       widgetExpanded: false,
       launchOnLogin: false,
       focusPreset: 'pomodoro',
-      enabledFeatures: { focus: true }
+      enabledFeatures: { focus: true, matrix: true }
     },
     lastSeenDate: null
   }

@@ -2587,3 +2587,112 @@ code {
   margin-top: 2px;
   font-size: 12px;
 }
+
+/* =====================================================================
+   🧭 Eisenhower matrix — the urgent×important 2×2 (read-only triage)
+   ===================================================================== */
+.eh-hint {
+  color: var(--muted);
+  font-size: 13px;
+}
+.eh-axes {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto 1fr;
+  gap: 8px 10px;
+  align-items: center;
+}
+.eh-axis-x {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0 4px;
+}
+.eh-axis-y {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+.eh-grid {
+  grid-column: 1;
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.eh-quad {
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: var(--r-card);
+  padding: 14px 16px;
+  min-height: 150px;
+  box-shadow: var(--shadow-1);
+}
+.eh-quad-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.eh-quad-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 15px;
+}
+.eh-quad-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  font-size: 13px;
+}
+.eh-quad-blurb {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 2px 0 10px;
+}
+.eh-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.eh-empty {
+  color: var(--muted);
+  font-size: 12px;
+  opacity: 0.6;
+}
+.eh-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 7px 10px;
+}
+.eh-chip.current {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold);
+}
+.eh-chip .eh-star {
+  color: var(--gold);
+}
+.eh-chip-title {
+  font-weight: 600;
+  font-size: 13px;
+}
+.eh-chip-meta {
+  color: var(--muted);
+  font-size: 11px;
+}

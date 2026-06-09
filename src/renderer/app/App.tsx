@@ -5,6 +5,7 @@ import { Dashboard } from './Dashboard'
 import { QuestsView } from './QuestsView'
 import { TimeFramesView } from './TimeFramesView'
 import { FocusView } from './FocusView'
+import { EisenhowerView } from './EisenhowerView'
 import { ActiveModeSettings } from './ActiveModeSettings'
 import { GardenView } from './GardenView'
 import { ArcadeView } from './arcade/ArcadeView'
@@ -21,6 +22,7 @@ import {
   Sword,
   Hourglass,
   Timer,
+  Compass,
   Plant,
   GameController,
   ChartBar,
@@ -28,13 +30,14 @@ import {
   FloppyDisk
 } from '@phosphor-icons/react'
 
-type Tab = 'dashboard' | 'quests' | 'frames' | 'focus' | 'world' | 'arcade' | 'stats' | 'active' | 'data'
+type Tab = 'dashboard' | 'quests' | 'frames' | 'focus' | 'matrix' | 'world' | 'arcade' | 'stats' | 'active' | 'data'
 
 const TABS: { id: Tab; label: string; icon: JSX.Element }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: <Crown size={16} weight="fill" /> },
   { id: 'quests', label: 'Quests', icon: <Sword size={16} weight="fill" /> },
   { id: 'frames', label: 'Time frames', icon: <Hourglass size={16} weight="fill" /> },
   { id: 'focus', label: 'Focus', icon: <Timer size={16} weight="fill" /> },
+  { id: 'matrix', label: 'Matrix', icon: <Compass size={16} weight="fill" /> },
   { id: 'world', label: 'World', icon: <Plant size={16} weight="fill" /> },
   { id: 'arcade', label: 'Arcade', icon: <GameController size={16} weight="fill" /> },
   { id: 'stats', label: 'Stats', icon: <ChartBar size={16} weight="fill" /> },
@@ -124,6 +127,7 @@ export function App(): JSX.Element {
             {tab === 'quests' && <QuestsView />}
             {tab === 'frames' && <TimeFramesView />}
             {tab === 'focus' && <FocusView />}
+            {tab === 'matrix' && <EisenhowerView />}
             {tab === 'world' && <GardenView />}
             {tab === 'arcade' && <ArcadeView />}
             {tab === 'stats' && <StatsView />}

@@ -322,6 +322,28 @@ export const balance = {
     reward: { coinsPerSession: 3, dailySessionCap: 8 }
   },
 
+  // --- Eisenhower matrix: prioritization layer ------------------------------
+  // The urgent×important 2×2, computed from fields quests ALREADY have. Tunable
+  // so "urgent" / "important" can be re-defined without touching the engine.
+  eisenhower: {
+    /** Due within this many hours (or overdue) = urgent. Mirrors selection.urgencyHorizonHours. */
+    urgentWithinHours: 24,
+    /** Skippability levels that count as "important". */
+    importantSkippability: ['Must do', 'Should do'],
+    /** Priority levels that ALSO tip a quest into "important". */
+    importantPriority: ['High', 'Critical'],
+    /**
+     * The four quadrants — label / blurb / colour, in 2×2 render order
+     * (Do, Schedule, Minimize, Later). Tone: "Later", never "Delete".
+     */
+    quadrants: [
+      { key: 'do', name: 'Do now', emoji: '🔥', blurb: 'Urgent & important — tackle these first.', color: 'var(--candy)' },
+      { key: 'schedule', name: 'Schedule', emoji: '📅', blurb: 'Important, not urgent — plan time for these. Your real wins live here.', color: 'var(--brand-bright)' },
+      { key: 'minimize', name: 'Minimize', emoji: '⚡', blurb: 'Urgent, not important — do quickly or batch them.', color: 'var(--gold)' },
+      { key: 'later', name: 'Later', emoji: '🌙', blurb: 'Neither urgent nor important — revisit when you have room.', color: 'var(--muted)' }
+    ]
+  },
+
   // --- §4 "current quest" selection scoring --------------------------------
   // Transparent, tunable scoring. Higher total score => more likely to be the
   // single surfaced "current quest". See engine/selectCurrentQuest.ts for how

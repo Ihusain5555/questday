@@ -23,6 +23,12 @@ export const TOGGLEABLE_FEATURES: ToggleableFeature[] = [
     emoji: '⏱️',
     label: 'Focus timer',
     blurb: 'Pomodoro, 52/17, deep-work, or Flowtime focus sessions tied to your current quest.'
+  },
+  {
+    id: 'matrix',
+    emoji: '🧭',
+    label: 'Eisenhower matrix',
+    blurb: 'Triage your quests in the urgent × important 2×2 — see where your effort should go.'
   }
 ]
 
