@@ -32,14 +32,21 @@ the PASS/FAIL lines + screenshots. Electron is GUI — launching opens real wind
 This repo is under git (`main` = baseline). Multiple terminals/sessions may be building
 different features at once (e.g. the Focus timer and the Arcade games), so **isolate**:
 
-- **One feature, one branch.** Branch off `main` (`git switch -c feature/<name>`); for
-  truly concurrent sessions use a **worktree** (`git worktree add ../questday-<name>
-  feature/<name>`) so each terminal has its own folder and they never touch the same files.
-- **Don't commit another feature's half-done WIP into a release.** `npm run dist` ships the
-  whole working tree — only run it from a branch where the tree is complete and green.
+- **One feature, one worktree+branch.** Spin one up in one step with
+  `node scripts/new-worktree.mjs <name>` — it creates `C:\Users\ihusa\questday-wt\<name>`
+  on `feature/<name>` and junctions `node_modules` (so each terminal has its own folder and
+  they never touch the same files). **Never `npm install` in a worktree** — the junction
+  already resolves the OneDrive electron-extract gotcha; `npm run typecheck` works at once.
+- **Editing + `npm run typecheck` are parallel-safe.** The ONE thing that collides is
+  *opening the app* — single-instance lock + one save file (`%APPDATA%\questday\db.json`).
+- **`node scripts/with-app.mjs <terminal> <cmd>` wraps every app-open safely:** claims the
+  shared cross-terminal lock (`C:\Users\ihusa\questday-coordination\app-lock.mjs`), kills
+  strays, runs, and always releases. `npm run dev`/`dist`/`pw:arcade` already route through
+  it — so you can't forget the lock; if it's BUSY they refuse instead of clobbering.
 - **Per-feature Playwright drivers** (above) keep the test scripts from colliding.
-- Single-instance lock still applies: only one QuestDay/`dev`/`pw` runs at a time across all
-  terminals — coordinate runs (quit/kill before launching, see the lock gotcha below).
+- **Don't commit another feature's half-done WIP into a release.** `npm run dist` ships the
+  whole working tree — only run it from a branch where the tree is complete and green; merge
+  finished feature branches into `main`, then ship from clean `main`.
 
 ## Architecture
 
