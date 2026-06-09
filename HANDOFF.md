@@ -1,0 +1,271 @@
+# QuestDay — Handoff
+
+**Status: v1.5 — full roadmap + themed worlds + harvest economy + Arcade + recurring
+quests.** All 6 original build phases, the post-v1 features, the v1.2 world themes, the
+v1.3 Grow-a-Garden-style harvest economy, the v1.4 ticket-gated arcade (11 minigames),
+and v1.5 recurring quests (all 2026-06-06) — every one verified by driving the real app
+with Playwright. Installer `QuestDay Setup 1.5.0.exe` is built and installed on the
+user's machine.
+
+Last worked: 2026-06-06.
+
+**State of the user's machine when this session ended (session closed cleanly):**
+- The installed app is up to date (**1.5.0**, silently installed + relaunched; it is
+  RUNNING in the tray — quit it before any `npm run pw`/`npm run dev`).
+- **Real user data exists** in `%APPDATA%\questday\db.json` and the user is actively
+  playing. At close: 6 quests (none recurring yet — feature shipped at end of session),
+  24 placed world items, 1,230 coins, level 9, 1 banked arcade ticket, active theme
+  "city". The Playwright script stashes/restores db.json automatically; don't wipe it.
+
+## v1.4 (2026-06-06) — 🕹️ The Arcade
+
+User asked for minigames (aim training + "simple classics" + a top-10 mobile list).
+Built ticket-gated so it stays an EARNED reward, not a distraction engine:
+- **Tickets**: each quest completion earns 1 🎟️ (cap 3/day, `balance.arcade`); tickets
+  never expire; celebration shows "+1 arcade ticket". Spend 1 to play a round.
+- **Coin bonus, capped**: coins = min(max 15, floor(score × per-game rate)) — a chest on
+  top of completions, never a farm (tickets only come from real quests).
+- **11 games** (`src/renderer/app/arcade/`, registry in `ArcadeView.tsx` — adding one =
+  a balance entry + a component): 🎯 Aim Trainer, ⚡ Reaction Time, 🧠 Memory Match,
+  🐍 Snake, 🧱 Block Drop (tetris-like), 🫧 Bubble Pop (bubble shooter), plus mobile-
+  classic-inspired originals: 🏃 Lane Dash (Subway-Surfers-like), 🔺 Spike Rush
+  (Geometry-Dash-like), 🍉 Fruit Slice (Fruit-Ninja-like), 🐔 Road Hopper (Crossy-Road/
+  Frogger-like), 👾 Maze Muncher (Pac-Man-like). All local/offline, original names/art.
+  SKIPPED from the user's list: Brawl Stars + Snake Clash (multiplayer/leaderboards
+  conflict with no-cloud rule), Badland (physics scope).
+- **Non-punitive throughout**: "End round" always cashes out; a crash/bomb/ghost just
+  ends the round with the score kept; bests only ever celebrate; empty-ticket state
+  encourages the next quest. rewards.ts `newPlayer` now spreads `...player` so new
+  player fields survive completions.
+- 18 Playwright checks PASS (incl. real Aim Trainer round: 5 clicked targets → +2 🪙).
+
+## v1.5 (2026-06-06) — ↻ Recurring quests
+
+User asked for daily/recurring quests. Self-resetting design (no template spawning):
+- **`Quest.recurDays?: number[]`** (0=Sun..6=Sat). Form has "Repeats ↻": Never / Daily /
+  Weekdays / Weekends / Custom day toggles (`QuestForm.tsx`).
+- **Completing pays in full every time** (XP/coins/growth/ticket) and logs the day into
+  **`completionDates`** — Stats counts that history (`stats.ts completionDays/
+  totalCompletions`), so the reset never erases wins.
+- **Daily reset**: rollover (`computeDayChange.recurringReady` + `runDayChange`) flips a
+  previously-completed recurring quest back to active with sub-tasks unchecked.
+- **Rest days**: on weekdays not in `recurDays` the quest "rests" — dimmed row with
+  badge, excluded from `rankCandidates` (engine/recurrence.ts `isResting`), so it's
+  never the widget's current quest. Recurring quests are excluded from carry-over
+  counts and past-due review (they renew; they never nag).
+- **Done-today visibility**: a recurring quest completed today stays listed ("✓ ·
+  back next day") even with Show-completed off — a daily never just vanishes.
+- ↩ Restore on a recurring completion reverses payout AND removes today's history entry.
+- 22 Playwright checks PASS (reset, resting gate beats a Critical resting quest,
+  stats history).
+
+**Plan of record (user's decision, 2026-06-06): live with v1.5 for a few days, then tune.**
+All the new economies are FIRST-DRAFT — when the user returns, start by asking how it all
+felt and tune `balance.ts` accordingly. Specific things to probe:
+- Coin flow: harvests (5/6/9/12/20/24/70/170 per pick) + quest coins — too rich/too poor?
+  At close the user already held 1,230 coins at level 9 — inflation watch: are mythics
+  (300🪙, lv 12) still aspirational, or should harvest values/costs be rebalanced?
+- Mutation cadence: base 18% + 1%/streak-day (cap +10%) + 5% companion perk — does a
+  jackpot land often enough to delight but stay special? Is 🌈 ×25 too common/rare (w 2)?
+- Morning dew + daily rare stock: do they create a pleasant morning check-in?
+- One completion grows ONE item — with many seedlings planted, does progress feel
+  spread too thin? (Possible lever: gear/sprinkler idea below, or grow-2 at high level.)
+- Arcade: are payout rates fair (max 15 🪙/round)? Is 3 tickets/day the right cap? Which
+  games get played; any worth dropping/adding from the future-ideas list?
+- Recurring quests: does daily XP-farming via easy dailies inflate levels too fast?
+  (Lever: dailies are user-authored — if it's a problem, consider diminishing XP for the
+  same recurring quest within a week. Discuss first; could read as punitive.)
+
+## v1.3 (2026-06-06) — the harvest economy ("Grow a Garden"-inspired)
+
+User asked to make the world like Roblox's *Grow a Garden* (researched: harvest/sell loop,
+stacking weather mutations, seed rarities, rotating shop, pets, idle growth). Adapted to
+QuestDay's effort-driven, never-punitive frame; all 14 Playwright checks PASS:
+- **Harvest economy**: ripe crops are picked for coins via the **inspect panel** (click a
+  placed item → Harvest / Move / ✕). ALL crops are multi-harvest: picking pays out,
+  consumes mutations, drops the plant back ONE stage to regrow. Nothing is ever removed.
+- **Mutations (positive-only)**: each growth event can roll one (💧×2 🍃×3 ❄️×3 🌞×4 ✨×8
+  ⚡×12 🌈×25), gated by **daily weather** (date-seeded per season: ☀️🍃🌧️⛈️❄️). Chance
+  rises with streak. Badges + golden glow on tiles; jackpot line in the celebration.
+- **Seed rarities** Common→Mythic (colors in shop) + 2 new high-tier species per theme
+  (Hibiscus/Lotus, Citadel/Dragon roost, Watermelon/Golden pineapple, Sky tower/Skyline
+  block, Nebula garden/Ring station; 120/300 coins, unlock lv 8/12).
+- **Daily shop rotation**: common/uncommon always stocked; 3 of the rare+ rotate in per
+  day (date-seeded `dailyStock`); out-of-stock cards grey with "check tomorrow". Nothing
+  is permanently missable.
+- **Morning dew**: each new day, 1 plant grows free in the active world (piggybacks on
+  the rollover day-change; skipped on first run; banner in World tab). It can mutate too.
+- **Companion perks**: streak companions now help — 3d: +5% mutation chance; 7d: +10%
+  harvest; 14d: dew grows 2; 30d: 10% double harvest. Perks card lists them.
+- **Celebration upgrade**: completion popup now says what grew (closes the old "what
+  grew" idea) and announces mutations.
+- All numbers in `balance.ts` (`garden.mutations/weather/rarities/harvest/shop/dew`).
+  Engine additions in `engine/garden.ts` are pure — randomness is passed in.
+- **1.3.1 wording fix**: user deleted all completed quests and thought things were still
+  "growing" — they weren't (verified: every item stage 0). The "(N growing now)" tagline
+  read as active growth; now says "waiting on your next completions — nothing grows on
+  its own except the daily morning dew". Note: deleting completed quests is allowed and
+  never touches garden/XP/coins (only ↩ Restore reverses; deleting also removes the
+  quest from Stats and forfeits its Restore option).
+
+## v1.2 (2026-06-06, later session) — themed worlds + garden depth
+
+All Playwright-verified (`scripts/pw-run.mjs`, 14 PASS):
+- **5 selectable world themes** (World tab pills): 🌱 Garden, 🏰 Medieval kingdom,
+  🌾 Farmstead, 🏙️ Modern city, 🚀 Space outpost — pick the game style you like. All
+  content (catalogs, visitor milestones, plot upgrades, seasons) in `balance.ts` under
+  `garden.themes`. Each theme has its own ground tint (`ground-*` CSS).
+- **Each theme is its own plot** — `GardenItem.theme` tags every placed item; switching is
+  free and loses nothing (other worlds just pause). Coins are shared. Completions grow the
+  ACTIVE world only.
+- **Companions (visitors) derive from `bestStreak`** — same thresholds (3/7/14/30) in every
+  theme, so a milestone earned once shows its themed companion in all worlds. The stored
+  `visitors` array is now a legacy/celebration log only.
+- **Move/rearrange**: click a placed item to lift it, click a free tile to set it down
+  (`moveItem` engine fn + `moveGardenItem` store action). Free, purely positional.
+- **Plot grows with level** (`plotUpgrades`: 7×4@5, 7×5@8, 8×5@12, 9×6@16, 10×6@20) and
+  `plotSize()` never shrinks below what fits placed items (↩ Restore level rollback safe).
+- **Seasons** — cosmetic only: date-based badge + tile tint (`seasonFor`, `season-*` CSS).
+- **Migration**: pre-theme dbs get `garden.theme='garden'` and items tagged
+  `theme:'garden'` (in `migrate()`, also covers Import). Restore's refund-first claw-back
+  scans newest-first across ALL themes.
+- **1.2.1 clarity pass** (user thought growables-vs-decorations was "backwards" — a
+  cottage shows 🪵 while a crown is instant 👑): under-construction tiles wear a stage
+  pip ("1/3"), shop cards show each growable's full path (🪵→🛖→🏠) vs "✨ ready now"
+  for decorations, and the shop helper text explains the distinction. Mechanic unchanged.
+- **Standing user request**: after every `npm run dist`, silently install the new build
+  (`Setup.exe /S`) and relaunch the installed app — don't just remind (see CLAUDE.md).
+
+---
+
+## What it is
+
+A Windows desktop app that frames your tasks as game-style **quests** and always surfaces
+the single highest-priority "current quest" via a small always-on-top widget. Motivating,
+never punishing. Single local user, no account, no cloud.
+
+## How to run / install
+
+- **Use it (installed):** run the installer at
+  `C:\Users\ihusa\questday-release\QuestDay Setup 1.1.0.exe`. It's **unsigned**, so Windows
+  SmartScreen warns → **More info → Run anyway**. Creates Desktop + Start-menu shortcuts.
+  Launch "QuestDay" from the Start menu. (An older 1.0.0 setup file sits alongside it.)
+- **Develop:** `npm install` then `npm run dev`. (If Electron's binary fails to extract,
+  see the gotcha in `CLAUDE.md`.)
+- **Rebuild installer:** `npm run dist` → output in `C:\Users\ihusa\questday-release\`.
+- Data lives in `%APPDATA%\questday\` (db.json + rotated auto-backups). Contains real data.
+- **Before `npm run pw` or `npm run dev`:** quit any running QuestDay (tray → Quit, or
+  `Get-Process QuestDay | Stop-Process`) — the single-instance lock makes new launches
+  quit instantly otherwise. Relaunch the installed app for the user afterwards.
+
+## Build phases (all complete)
+
+0. Scaffold — Electron/React/TS, 3 windows, tray, JSON persistence + auto-backup, engines.
+1. Quest CRUD + time-frame editing + management UI.
+2. §4 current-quest engine wired into a live widget (cross-window sync, expand/collapse).
+3. Completion animation + §7 XP/currency/levels/streak + reward-world placeholder.
+4. Daily rollover (encouraging carry-over) + past-due relevance prompt (keep/reschedule/drop).
+5. Active mode tiers 1–3 (awareness / nudge / soft friction) + no-admin foreground detection.
+6. Opaque Export/Import backup + final acceptance pass.
+
+Plus, after the phases: friction-prompt visibility fix + reliable re-trigger; **drag quests
+between time frames**; the installer. Then (2026-06-06, all Playwright-verified):
+- **Start with Windows** toggle (Data tab) — login item registers `--hidden`, which opens
+  just the widget + tray (main window stays out of the way). Synced on import too.
+- **Enter in a sub-task row** inserts a new row below and focuses it (fast brain-dump).
+- **Defer ("↷") the current sub-task in the widget** — session-only, no penalty; deferred
+  steps resurface once the steps ahead are done (cycles, never a dead end).
+- **Hours + minutes estimate** in the quest form (stored as `timeEstimateMinutes`), plus an
+  optional per-sub-task minutes estimate (shown next to the step in the widget).
+- **Within-frame drag reordering** — dropping a quest onto another quest inserts it before
+  that quest (frames still take loose drops = append at end).
+- **Hard block (tier 4) — now BUILT** (approved: no-admin overlay + minimize). Flagged
+  apps are minimized behind an always-on-top block screen with a guilt-free timed
+  **break pass** (default 5 min, configurable; the pass restores the user's app — a real
+  break, not a trick). Re-triggers on every landing; never requires admin.
+- **"Show completed quests 🏆" toggle** in the Quests tab (next to "Show dropped") —
+  a trophy log: completed quests appear under their frames with a dated ✓ badge,
+  newest win first, after active quests. Each completed row has **↩ Restore**
+  (mis-click insurance): back to active with sub-tasks unchecked, and the
+  completion's payout is reversed EXACTLY (the award is stored on the quest at
+  completion): XP comes back out with level rollback; coins come back out with
+  refund-first — if already spent in the World, newest garden purchases are
+  refunded (item removed, cost returned) until the balance covers the claw-back,
+  so deserved coins are never touched and balance never goes negative. Old
+  completions without a stored award take back nothing.
+- Time estimates render as hours+minutes everywhere (`formatMinutes`: 3630 →
+  "60h 30m"), incl. quest rows, widget list, and per-step hints.
+- **"Start fresh" data reset** (Data tab danger-zone card): type-RESET-to-confirm
+  modal → an IMMEDIATE backup of the old data is written to `backups/` first
+  (`writeImmediateBackup`, not debounced) → db replaced with defaults. Even a
+  reset is recoverable via Import/backups.
+- **📊 Stats tab** (`engine/stats.ts` + `StatsView.tsx`): totals (completed, total
+  XP earned, last-7-days, streak/best), a 14-day completions bar chart, and
+  all-time completions by time frame. Celebration-only — no shame metrics.
+- **Gaming-look theme pass** (`components/PlayerBar.tsx`): gold level star (level
+  number inside) with the XP bar growing out of it, shown as current/needed
+  (e.g. 40/200 XP) — full-size on the Dashboard, slim strip in the widget. 🪙 on all
+  currency, ⚡🪙 bounty tags on quest rows + current-quest card, icon tabs (⚔️🌱💾…).
+- **The reward world — now BUILT: the Garden** (World tab + live Dashboard peek).
+  Coins buy seeds/decorations (species unlock by level, catalog in `balance.ts`);
+  each completion grows one plant a stage (least-grown, oldest first); NEW best-streak
+  milestones bring permanent visitors (🦋 3d, 🐦 7d, 🐿️ 14d, 🦔 30d). Structurally
+  non-punitive: the garden only ever gains. Engine: `src/shared/engine/garden.ts`.
+- Version bumped to **1.1.0**, then **1.2.0** with the themed-worlds pass (installer is
+  now `QuestDay Setup 1.2.0.exe`).
+
+## Acceptance criteria — all PASS
+
+1. Create quests w/ sub-tasks, priority, skippability, difficulty, estimate, due, time-frame ✅
+2. Define/edit time frames; app knows the active frame ✅
+3. Widget shows the correct single current quest + immediate sub-task (§4); expands to full list ✅
+4. Completion plays animation + awards §7 XP/currency; levels & streaks update ✅
+5. Unfinished quests roll over with encouragement; past-due ones prompt relevance ✅
+6. Passive by default; Active mode tiers toggle/configure ✅
+7. Auto-backup; manual Export → Import restores (portable across PCs) ✅
+8. Widget always-on-top, movable, resizable; working tray icon ✅
+9. XP/level/streak weights in one editable config (`src/shared/config/balance.ts`) ✅
+
+## Active mode (opt-in, off by default)
+
+- **Awareness** — periodic quiet reminder of the current quest (OS notification + widget toast).
+- **Gentle nudge** — heads-up when a time frame is ending, or when you land on a flagged app/site.
+- **Soft friction** — short "are you sure?" pause (its own always-on-top window) on opening a
+  flagged app/site. Configurable, snoozeable, never blocks.
+- **Hard block** — flagged apps get minimized behind a block screen; escapable via a
+  timed break pass. Firm, never punitive.
+- **Foreground detection** = a no-admin persistent PowerShell watcher (no native module);
+  minimize/restore for hard block uses one-shot PowerShell `ShowWindow` calls (also no admin).
+
+## Backup format
+
+- Auto-backups: rotated JSON snapshots in `%APPDATA%\questday\backups\`.
+- Export/Import (Data tab): one opaque `.questday` file = gzip + AES-256-GCM (not
+  human-readable; for backup/transfer, not editing). Verified round-trip restore.
+
+## Known limitations / open items
+
+- Installer is **unsigned** (SmartScreen warning). Signing needs a purchased cert.
+- Domain/site matching for Active mode is **best-effort via window title** (true per-tab URLs
+  would need a browser extension). App-name matching is reliable. For hard block this means
+  flagging a site minimizes the whole browser window when its title matches.
+
+## Suggested next steps (none required)
+
+Everything on the original roadmap is built. **First: the balance-tuning pass above.**
+Then, ideas if appetite returns (rough priority from the 2026-06-06 session):
+- ~~Garden depth: move/rearrange, bigger plot, seasons~~ — built in v1.2, plus themes.
+- ~~Celebration copy that mentions what grew~~ — built in v1.3 (with mutation jackpots).
+- Gear & helpers (more Grow-a-Garden depth): placeable ⛲ sprinkler = completions grow an
+  extra plant in radius; a placeable pet that occasionally auto-rolls a mutation.
+- Widget world peek: a tiny "🧺 2 ripe" counter on the always-on-top widget.
+- Harvest history in Stats: total coins harvested, best single harvest, rarest mutation
+  found (celebration-only — no shame metrics).
+- Event weather: rare special days (🌠 meteor shower = mutation chance ×2), date-seeded.
+- Code-signing the installer (declined for now — needs a purchased cert).
+
+## Map of the code
+
+See `CLAUDE.md` for architecture, conventions, the tunable-config location, and the
+important environment gotchas (Electron install under OneDrive, preload `.mjs`, the
+PowerShell `-File` detector, and the electron-builder `winCodeSign` symlink workaround).

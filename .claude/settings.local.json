@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(npm run *)",
+      "PowerShell(Get-Process *)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell($b = Get-Content \"$env:APPDATA\\\\questday\\\\backups\\\\backup-2026-06-06T11-23-53-943Z-26.json\" -Raw | ConvertFrom-Json; $b.quests | Select-Object title, status)",
+      "PowerShell($src = \"$env:APPDATA\\\\questday\\\\backups\\\\backup-2026-06-06T11-24-00-225Z-27.json\"; $b = Get-Content $src -Raw | ConvertFrom-Json; \"quests:\"; $b.quests | ForEach-Object { \"  $\\($_.title\\) [$\\($_.status\\)] subTasks=$\\($_.subTasks.Count\\)\" }; \"player: level=$\\($b.player.level\\) xp=$\\($b.player.xp\\) streak=$\\($b.player.streakCount\\)\")",
+      "PowerShell(Copy-Item *)",
+      "PowerShell(Test-Path *)",
+      "PowerShell(npm version *)",
+      "PowerShell(node scripts\\\\make-transcript.mjs)",
+      "PowerShell(Select-String *)",
+      "PowerShell($t = Get-Content C:\\\\Users\\\\ihusa\\\\OneDrive\\\\Desktop\\\\project1\\\\transcript.md -Encoding UTF8; \"you: $\\(\\($t | Select-String -SimpleMatch '🧑 You'\\).Count\\)\"; \"claude: $\\(\\($t | Select-String -SimpleMatch '🤖 Claude'\\).Count\\)\")"
+    ]
+  }
+}

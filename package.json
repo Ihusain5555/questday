@@ -1,0 +1,67 @@
+{
+  "name": "questday",
+  "version": "1.5.0",
+  "description": "QuestDay — a quest-based daily productivity guide",
+  "private": true,
+  "type": "module",
+  "main": "./out/main/index.js",
+  "author": "QuestDay",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "start": "electron-vite preview",
+    "pw": "node scripts/pw-run.mjs",
+    "dist": "electron-vite build && electron-builder --win",
+    "typecheck:node": "tsc -p tsconfig.node.json --noEmit",
+    "typecheck:web": "tsc -p tsconfig.web.json --noEmit",
+    "typecheck": "npm run typecheck:node && npm run typecheck:web"
+  },
+  "build": {
+    "appId": "com.questday.app",
+    "productName": "QuestDay",
+    "directories": {
+      "output": "C:/Users/ihusa/questday-release",
+      "buildResources": "resources"
+    },
+    "files": [
+      "out/**/*"
+    ],
+    "extraResources": [
+      "resources/**"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "resources/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "QuestDay"
+    }
+  },
+  "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
+    "framer-motion": "^11.11.17",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^33.2.1",
+    "electron-builder": "^26.8.1",
+    "electron-vite": "^2.3.0",
+    "playwright-core": "^1.60.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.11"
+  }
+}
