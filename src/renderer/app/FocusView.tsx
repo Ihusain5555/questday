@@ -231,7 +231,7 @@ export function FocusView(): JSX.Element {
       <div className="view-head">
         <h2>⏱️ Focus</h2>
         <span className="focus-tally">
-          {preset.emoji} {cycle} session{cycle === 1 ? '' : 's'} today
+          {cycle} session{cycle === 1 ? '' : 's'} today
         </span>
       </div>
 
@@ -247,7 +247,6 @@ export function FocusView(): JSX.Element {
               disabled={phase !== 'idle' && k !== presetKey}
               title={p.blurb}
             >
-              <span className="fp-emoji">{p.emoji}</span>
               <span className="fp-name">{p.name}</span>
               <span className="fp-blurb">{p.blurb}</span>
             </button>
