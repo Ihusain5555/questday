@@ -59,18 +59,20 @@ const seed = {
   lastSeenDate: null
 }
 
-const userData = path.join(process.env.APPDATA, 'questday')
+// Private, throwaway data folder for this test run = a SEPARATE app instance with
+// its own save file and its own single-instance lock. It never collides with the
+// installed app or other terminals, and never touches the real %APPDATA%\questday.
+const userData = path.join(root, '.pw-userdata')
+rmSync(userData, { recursive: true, force: true })
 mkdirSync(userData, { recursive: true })
 const dbPath = path.join(userData, 'db.json')
-const stashPath = path.join(userData, 'db.json.pw-stash')
-if (existsSync(dbPath)) copyFileSync(dbPath, stashPath)
 writeFileSync(dbPath, JSON.stringify(seed, null, 2))
 
 const result = (name, pass, extra = '') =>
   console.log(`${name}: ${pass ? 'PASS' : 'FAIL'}${extra ? ` (${extra})` : ''}`)
 
 try {
-  const app = await electron.launch({ args: [root], cwd: root })
+  const app = await electron.launch({ args: [root, `--user-data-dir=${userData}`], cwd: root })
   await (await app.firstWindow()).waitForLoadState('domcontentloaded')
   await new Promise((r) => setTimeout(r, 1800))
 
@@ -119,10 +121,6 @@ try {
 
   await app.close()
 } finally {
-  if (existsSync(stashPath)) {
-    copyFileSync(stashPath, dbPath)
-    rmSync(stashPath)
-    console.log('restored real db.json from stash')
-  }
+  rmSync(userData, { recursive: true, force: true })
 }
 console.log('closed')

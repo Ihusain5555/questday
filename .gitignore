@@ -8,4 +8,5 @@ resources/*.tmp
 pw-shots/
 transcript.md
 *.pw-stash
+.pw-userdata/
 .env*

@@ -1,0 +1,67 @@
+/* =====================================================================
+   QuestDay THEME — the single source of truth for the app's look.
+
+   Change the look HERE and every screen follows: components reference these
+   names (e.g. var(--brand)), never raw colours. Plain-English rationale lives in
+   design-system/MASTER.md. Style: "Clay Fantasy" — dark, emerald + gold,
+   claymorphism (soft tactile depth).
+   ===================================================================== */
+:root {
+  /* ---- Type ---- */
+  --font-display: 'Clash Display', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Satoshi', 'Segoe UI', system-ui, sans-serif;
+
+  /* ---- Surfaces (deep emerald-ink) ---- */
+  --bg: #0e1512;
+  --panel: #16201b;
+  --panel-2: #1e2a23;
+  --panel-3: #25342b;
+  --text: #eaf2ec;
+  --muted: #93a89a;
+  --border: #2c3a32;
+  /* Window title bar — keep in sync with titleBarOverlay.color in src/main/index.ts */
+  --titlebar: #10362a;
+
+  /* ---- Brand + semantic colour (vibrant, not muted) ---- */
+  --accent: #2fb380; /* emerald — primary action / brand */
+  --accent-2: #3fe0a8; /* bright mint — success / done */
+  --brand: #2fb380;
+  --brand-deep: #1f8a60;
+  --brand-bright: #3fe0a8;
+  --gold: #f5b938; /* XP, coins, treasure */
+  --gold-bright: #ffcf5c;
+  --gold-deep: #c98a1e;
+  --fire: #ff7a45; /* streak */
+  --candy: #ff6b6b; /* high-energy / celebration — sparing */
+  --plum: #b566d6; /* rare / special — sparing */
+
+  /* ---- Same colours as RGB channels, so semi-transparent tints stay on-theme:
+          e.g.  background: rgb(var(--brand-rgb) / 0.16) ---- */
+  --brand-rgb: 47 179 128;
+  --brand-deep-rgb: 31 138 96;
+  --brand-bright-rgb: 63 224 168;
+  --gold-rgb: 245 185 56;
+  --fire-rgb: 255 122 69;
+  --candy-rgb: 255 107 107;
+
+  /* ---- Shape (claymorphism = generous radii) ---- */
+  --r-sm: 10px;
+  --r-btn: 14px;
+  --r-card: 20px;
+  --r-pill: 999px;
+  --radius-sm: var(--r-sm); /* legacy aliases */
+  --radius: var(--r-btn);
+  --radius-lg: var(--r-card);
+
+  /* ---- Depth (soft puffed clay) ---- */
+  --shadow-1: 0 2px 6px rgba(0, 0, 0, 0.28);
+  --shadow-2: 0 14px 34px rgba(0, 0, 0, 0.46);
+  --shadow-clay: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 2px 6px rgba(0, 0, 0, 0.25),
+    0 14px 32px rgba(0, 0, 0, 0.4);
+
+  /* ---- Motion (springy, tactile) ---- */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  font-family: var(--font-body);
+  color-scheme: dark;
+}

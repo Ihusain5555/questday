@@ -1,8 +1,10 @@
 # QuestDay Design System — MASTER
 
-Single source of truth for the UI rebuild. Every screen obeys this. Tokens live in
-`src/renderer/styles.css` `:root`; this doc explains the intent. Re-tune tokens, not
-hardcoded values.
+Single source of truth for the UI rebuild. Every screen obeys this. The live tokens
+live in **`src/renderer/theme.css`** (`:root`), imported at the top of `styles.css`;
+this doc explains the intent. Re-tune tokens in `theme.css`, never hardcoded values.
+Tinted colours use the RGB-channel tokens (e.g. `rgb(var(--brand-rgb) / 0.16)`) so even
+transparency stays on-theme. Change a token in `theme.css` → the whole app follows.
 
 Product class: **Gamified habit-tracker × RPG × desktop dashboard.**
 Named style: **Clay Fantasy** — claymorphism (soft, tactile, squishy 3D depth) applied
