@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { balance } from '@shared/config/balance'
+import { play } from '../sound'
 
 /**
  * 👁️ Flash Recall — a Useful-Field-of-View (speed-of-processing) drill. Keep
@@ -84,6 +85,7 @@ export function FlashRecall({ onFinish }: { onFinish: (score: number) => void })
   const choose = (slot: number) => {
     if (phase !== 'respond' || done.current) return
     const correct = slot === target
+    play(correct ? 'good' : 'bad')
     const usedMs = exposure.current // the exposure this flash was shown at
     const nextScore = correct ? score + 1 : score
     setChosen(slot)

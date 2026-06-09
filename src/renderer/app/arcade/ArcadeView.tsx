@@ -3,6 +3,7 @@ import { useStore } from '../../state/store'
 import { balance } from '@shared/config/balance'
 import { GameController, Ticket, Trophy, Play } from '@phosphor-icons/react'
 import { CoinIcon } from '../../components/RewardIcons'
+import { play as playSfx, isMuted, toggleMuted } from './sound'
 import { AimTrainer } from './games/AimTrainer'
 import { ReactionTime } from './games/ReactionTime'
 import { MemoryMatch } from './games/MemoryMatch'
@@ -55,10 +56,22 @@ export function ArcadeView(): JSX.Element {
   const { db, spendArcadeTicket, finishArcadeRound } = useStore()
   const [playing, setPlaying] = useState<GameKey | null>(null)
   const [result, setResult] = useState<RoundResult | null>(null)
+  const [muted, setMuted] = useState(isMuted())
 
   if (!db) return <div>Loading…</div>
   const tickets = db.player.arcadeTickets
   const games = Object.entries(balance.arcade.games) as [GameKey, (typeof balance.arcade.games)[GameKey]][]
+
+  // One sound toggle for the whole arcade (persisted per window via localStorage).
+  const muteBtn = (
+    <button
+      className="arcade-mute"
+      title={muted ? 'Sound off — click for sound' : 'Sound on — click to mute'}
+      onClick={() => setMuted(toggleMuted())}
+    >
+      {muted ? '🔇' : '🔊'}
+    </button>
+  )
 
   const play = async (key: GameKey) => {
     setResult(null)
@@ -70,6 +83,7 @@ export function ArcadeView(): JSX.Element {
     setPlaying(null)
     if (!key) return
     const { coins, newBest } = await finishArcadeRound(key, score)
+    if (newBest) playSfx('best')
     setResult({ key, score, coins, newBest })
   }
 
@@ -83,6 +97,7 @@ export function ArcadeView(): JSX.Element {
             {cfg.emoji} {cfg.name}
           </h2>
           <span className="garden-coins">
+            {muteBtn}
             <Ticket size={15} weight="fill" /> {tickets}
           </span>
         </div>
@@ -97,8 +112,11 @@ export function ArcadeView(): JSX.Element {
         <h2>
           <GameController size={20} weight="fill" /> Arcade
         </h2>
-        <span className="garden-coins" title="Earn a ticket with each quest you complete (up to 3/day). Tickets never expire.">
-          <Ticket size={15} weight="fill" /> {tickets} {tickets === 1 ? 'ticket' : 'tickets'}
+        <span className="garden-coins">
+          {muteBtn}
+          <span title="Earn a ticket with each quest you complete (up to 3/day). Tickets never expire.">
+            <Ticket size={15} weight="fill" /> {tickets} {tickets === 1 ? 'ticket' : 'tickets'}
+          </span>
         </span>
       </div>
       <p className="tagline">

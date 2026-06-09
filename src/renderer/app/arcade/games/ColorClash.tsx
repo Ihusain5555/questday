@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { balance } from '@shared/config/balance'
+import { play } from '../sound'
 
 /**
  * 🎨 Color Clash — the Stroop task as a game. A colour WORD is painted in a
@@ -59,6 +60,7 @@ export function ColorClash({ onFinish }: { onFinish: (score: number) => void }):
   const [bestCombo, setBestCombo] = useState(0)
   const [prompt, setPrompt] = useState<Prompt>(() => nextPrompt())
   const [flash, setFlash] = useState<'good' | 'bad' | null>(null)
+  const [pop, setPop] = useState(0) // bumps a floating "+1" on each correct tap
   const done = useRef(false)
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -93,13 +95,16 @@ export function ColorClash({ onFinish }: { onFinish: (score: number) => void }):
     if (done.current || phase !== 'playing') return
     const correct = idx === prompt.ink
     if (correct) {
+      play('good')
       setScore((s) => s + 1)
+      setPop((p) => p + 1)
       setCombo((c) => {
         const n = c + 1
         setBestCombo((b) => Math.max(b, n))
         return n
       })
     } else {
+      play('bad')
       setCombo(0)
     }
     setFlash(correct ? 'good' : 'bad')
@@ -132,9 +137,14 @@ export function ColorClash({ onFinish }: { onFinish: (score: number) => void }):
         ) : (
           <>
             <div className="cc-instruction meta-dim">Tap the colour it’s written in — ignore the word.</div>
-            <div key={score} className="cc-word" style={{ color: COLORS[prompt.ink].css }}>
+            <div className="cc-word" style={{ color: COLORS[prompt.ink].css }}>
               {prompt.word}
             </div>
+            {pop > 0 && (
+              <span key={pop} className="cc-pop">
+                +1
+              </span>
+            )}
             <div className="cc-options">
               {prompt.options.map((c) => (
                 <button

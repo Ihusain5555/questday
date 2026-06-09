@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { balance } from '@shared/config/balance'
+import { play } from '../sound'
 
 /**
  * 🔢 N-Back — the classic working-memory workout. Cells light up one at a time;
@@ -109,8 +110,10 @@ export function NBack({ onFinish }: { onFinish: (score: number) => void }): JSX.
     if (done.current || phase !== 'playing' || pressed.current) return
     pressed.current = true
     if (isMatch(stepRef.current)) {
+      play('good')
       setFeedback('hit')
     } else {
+      play('bad')
       faRef.current++
       setMisses(faRef.current)
       setFeedback('oops')
