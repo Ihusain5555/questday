@@ -91,14 +91,12 @@ export function App(): JSX.Element {
 
   return (
     <MotionConfig reducedMotion="user">
-    <div className="app">
-      <header className="app-header">
-        <div>
-          <h1>QuestDay</h1>
-          <p className="tagline">Your day, one quest at a time.</p>
-        </div>
-      </header>
-
+      <div className="titlebar">
+        <span className="titlebar-brand">
+          <Crown size={15} weight="fill" /> QuestDay
+        </span>
+      </div>
+      <div className="app">
       {rolloverMsg && <RolloverBanner message={rolloverMsg} onClose={() => setRolloverMsg(null)} />}
 
       <nav className="tabs">

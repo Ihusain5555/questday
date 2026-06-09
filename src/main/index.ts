@@ -3,7 +3,7 @@
 // full management window, the system tray, and wiring to the store.
 // ---------------------------------------------------------------------------
 
-import { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, screen } from 'electron'
+import { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, screen, nativeTheme } from 'electron'
 import { join } from 'path'
 import { existsSync } from 'fs'
 import { registerStoreIpc } from './ipc/store'
@@ -113,7 +113,11 @@ function createMainWindow(): void {
     minHeight: 540,
     title: 'QuestDay',
     show: true,
-    backgroundColor: '#11131a',
+    backgroundColor: '#0e1512',
+    // Custom deep-emerald title bar with native window buttons overlaid. The
+    // colour must match --titlebar in theme.css / the .titlebar rule in styles.css.
+    titleBarStyle: 'hidden',
+    titleBarOverlay: { color: '#10362a', symbolColor: '#dfeee6', height: 40 },
     webPreferences: { preload, sandbox: false }
   })
   loadRenderer(mainWindow, 'index.html')
@@ -243,6 +247,11 @@ if (!singleLock) {
   app.whenReady().then(() => {
     // Required on Windows for OS notifications to attribute to the app.
     app.setAppUserModelId('com.questday.app')
+    // Drop the default File/Edit/View/Window menu bar (we don't use it), and ask
+    // the OS for dark window chrome so the title bar matches the app instead of
+    // showing as a light/gray bar.
+    Menu.setApplicationMenu(null)
+    nativeTheme.themeSource = 'dark'
     // Ensure the widget sits within the visible work area on first run.
     screen.getPrimaryDisplay()
     registerStoreIpc()

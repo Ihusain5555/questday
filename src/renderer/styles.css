@@ -1,9 +1,9 @@
 /* =====================================================================
-   Design system — "Premium Fantasy" (v1, 2026-06-08)
-   Self-hosted fonts (offline-safe), emerald/gold/plum palette (NOT the
-   default AI-slop purple), explicit depth + shape tokens. Everything tunable
-   lives here; components reference vars, never raw hex. See styles below.
+   QuestDay styles. The THEME — every colour/font/shape/motion token — lives in
+   theme.css (imported below). Change the look THERE, not here. Fonts load next.
    ===================================================================== */
+@import './theme.css';
+
 @font-face {
   font-family: 'Clash Display';
   src: url('./assets/fonts/ClashDisplay-Medium.woff2') format('woff2');
@@ -49,66 +49,17 @@
 
 /* High-quality color emoji (Twemoji, COLR format) — bundled locally so every
    emoji in the app renders crisp, consistent, and identical on every PC instead
-   of Windows' default emoji. It contains ONLY emoji glyphs, so it's listed
-   AFTER the text fonts in the family stacks: letters/numbers stay Satoshi/Clash,
-   and only emoji codepoints fall through to Twemoji. Offline-safe (no CDN). */
+   of Windows' default emoji. It contains ONLY emoji glyphs, so 'Twemoji' is
+   listed AFTER the text fonts in the --font-* stacks (theme.css): letters/numbers
+   stay Satoshi/Clash, only emoji codepoints fall through. Offline-safe (no CDN). */
 @font-face {
   font-family: 'Twemoji';
   src: url('./assets/fonts/Twemoji.woff2') format('woff2');
   font-display: swap;
 }
 
-:root {
-  /* Type — characterful display + clean body (escapes the system-font look) */
-  --font-display: 'Clash Display', 'Twemoji', 'Segoe UI', system-ui, sans-serif;
-  --font-body: 'Satoshi', 'Twemoji', 'Segoe UI', system-ui, sans-serif;
-
-  /* Surfaces — deep emerald-ink (Clay Fantasy, dark) */
-  --bg: #0e1512;
-  --panel: #16201b;
-  --panel-2: #1e2a23;
-  --panel-3: #25342b;
-  --text: #eaf2ec;
-  --muted: #93a89a;
-  --border: #2c3a32;
-
-  /* Brand + semantic colour. --accent was #7c5cff (the AI-slop purple) — now
-     emerald. Reward economy is gold; streak fire; celebration candy; rare plum.
-     Vibrant, not muted (gamification wants energy). */
-  --accent: #2fb380; /* emerald — primary action / brand */
-  --accent-2: #3fe0a8; /* bright mint — success / done */
-  --brand: #2fb380;
-  --brand-deep: #1f8a60;
-  --brand-bright: #3fe0a8;
-  --gold: #f5b938; /* XP, coins, treasure */
-  --gold-bright: #ffcf5c;
-  --gold-deep: #c98a1e;
-  --fire: #ff7a45; /* streak */
-  --candy: #ff6b6b; /* high-energy accent / celebration — sparing */
-  --plum: #b566d6; /* rare / special — sparing */
-
-  /* Shape — claymorphism uses generous radii */
-  --r-sm: 10px;
-  --r-btn: 14px;
-  --r-card: 20px;
-  --r-pill: 999px;
-  /* legacy aliases */
-  --radius-sm: var(--r-sm);
-  --radius: var(--r-btn);
-  --radius-lg: var(--r-card);
-
-  /* Depth — clay = soft puffed surface (inner top highlight + layered drops) */
-  --shadow-1: 0 2px 6px rgba(0, 0, 0, 0.28);
-  --shadow-2: 0 14px 34px rgba(0, 0, 0, 0.46);
-  --shadow-clay: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 2px 6px rgba(0, 0, 0, 0.25),
-    0 14px 32px rgba(0, 0, 0, 0.4);
-
-  /* Motion — springy, tactile */
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-
-  font-family: var(--font-body);
-  color-scheme: dark;
-}
+/* All design tokens (colours, fonts, shape, depth, motion) now live in theme.css,
+   imported at the very top of this file — the single source of truth for the look. */
 
 /* Accessibility baseline (anti-pattern fixes: focus + reduced motion) */
 :focus-visible {
@@ -134,6 +85,39 @@ body {
   margin: 0;
   color: var(--text);
   font-family: var(--font-body);
+}
+
+/* Slim, on-brand scrollbars (replaces the default chunky gray ones, in every
+   scrollable area incl. the widget). */
+* {
+  scrollbar-width: thin; /* Firefox-style fallback */
+  scrollbar-color: rgb(var(--brand-rgb) / 0.35) transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--brand-rgb) / 0.3);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--brand-rgb) / 0.55);
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+/* The widget is small — give it an even slimmer bar. */
+.widget-body-content::-webkit-scrollbar,
+.widget ::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
 }
 
 /* Display type for headings — the single biggest "this is a designed product"
@@ -167,13 +151,38 @@ svg {
 body:not(.widget-body) {
   /* soft emerald glow from the top edge = depth, not a flat fill */
   background:
-    radial-gradient(120% 70% at 50% -5%, rgba(47, 179, 128, 0.1), transparent 55%),
+    radial-gradient(120% 70% at 50% -5%, rgb(var(--brand-rgb) / 0.1), transparent 55%),
     var(--bg);
   min-height: 100vh;
 }
 
+/* Custom window title bar (deep emerald, draggable). Keep its colour in sync with
+   titleBarOverlay.color in src/main/index.ts and --titlebar in theme.css. */
+.titlebar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  -webkit-app-region: drag;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  background: var(--titlebar);
+  border-bottom: 1px solid var(--border);
+  user-select: none;
+}
+.titlebar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--brand-bright);
+}
+
 .app {
-  padding: 28px 32px;
+  padding: 20px 32px 28px;
   max-width: 900px;
   margin: 0 auto;
 }
@@ -417,7 +426,7 @@ button:has(svg) {
 
 /* Bounty tag: the reward a quest pays out (gaming look). */
 .badge.bounty {
-  background: rgba(245, 185, 56, 0.16);
+  background: rgb(var(--gold-rgb) / 0.16);
   color: var(--gold-bright);
 }
 
@@ -515,7 +524,7 @@ button:has(svg) {
   height: 100%;
   background: linear-gradient(90deg, var(--gold-deep), var(--gold-bright));
   border-radius: 0 999px 999px 0;
-  box-shadow: 0 0 12px rgba(245, 185, 56, 0.5);
+  box-shadow: 0 0 12px rgb(var(--gold-rgb) / 0.5);
   transition: width 0.6s var(--ease-spring);
   overflow: hidden;
 }
@@ -596,8 +605,8 @@ button:has(svg) {
 
 /* ---- Current quest (dashboard) — the hero card ---- */
 .current-quest-card {
-  background: linear-gradient(160deg, rgba(47, 179, 128, 0.14), var(--panel) 62%);
-  border-color: rgba(47, 179, 128, 0.22);
+  background: linear-gradient(160deg, rgb(var(--brand-rgb) / 0.14), var(--panel) 62%);
+  border-color: rgb(var(--brand-rgb) / 0.22);
 }
 
 .current-quest-card .label {
@@ -946,8 +955,8 @@ select:focus {
 }
 
 .chart-bar.lit {
-  background: linear-gradient(180deg, var(--brand-bright), rgba(63, 224, 168, 0.3));
-  border-color: rgba(63, 224, 168, 0.5);
+  background: linear-gradient(180deg, var(--brand-bright), rgb(var(--brand-bright-rgb) / 0.3));
+  border-color: rgb(var(--brand-bright-rgb) / 0.5);
 }
 
 .chart-day {
@@ -1542,7 +1551,7 @@ select:focus {
   border-radius: 12px;
   padding: 28px 16px 32px;
   text-align: center;
-  background: radial-gradient(circle at 50% 30%, rgba(47, 179, 128, 0.06), transparent);
+  background: radial-gradient(circle at 50% 30%, rgb(var(--brand-rgb) / 0.06), transparent);
   transition: background 0.12s ease;
 }
 /* Floating "+1" that drifts up and fades on each correct tap. */
@@ -1692,7 +1701,7 @@ select:focus {
 .nback-cell.on {
   background: var(--accent);
   border-color: var(--accent-2);
-  box-shadow: 0 0 18px rgba(63, 224, 168, 0.45);
+  box-shadow: 0 0 18px rgb(var(--brand-bright-rgb) / 0.45);
 }
 .nback-btn {
   display: block;
@@ -1816,12 +1825,14 @@ select:focus {
   --w-bg-2: #0d1411;
   --w-card: rgba(40, 58, 48, 0.5);
   --w-card-border: rgba(90, 180, 140, 0.16);
-  --w-brand: #2fb380;
-  --w-brand-deep: #1f8a60;
-  --w-gold: #f2b53b;
-  --w-gold-deep: #c98a1e;
-  --w-text: #eef3ee;
-  --w-muted: #93a89a;
+  --w-brand: var(--brand);
+  --w-brand-deep: var(--brand-deep);
+  --w-brand-bright: var(--brand-bright);
+  --w-gold: var(--gold);
+  --w-gold-bright: var(--gold-bright);
+  --w-gold-deep: var(--gold-deep);
+  --w-text: var(--text);
+  --w-muted: var(--muted);
   /* aliases (legacy names → new palette) */
   --w-purple: var(--w-brand);
   --w-purple-deep: var(--w-brand-deep);
@@ -1834,7 +1845,7 @@ select:focus {
   color: var(--w-text);
   /* a soft emerald "glow from above" + deep vertical gradient = depth, not flatness */
   background:
-    radial-gradient(120% 80% at 50% -10%, rgba(47, 179, 128, 0.16), transparent 60%),
+    radial-gradient(120% 80% at 50% -10%, rgb(var(--brand-rgb) / 0.16), transparent 60%),
     linear-gradient(165deg, var(--w-bg-1), var(--w-bg-2));
   border: 1px solid var(--w-card-border);
   border-radius: 16px;
@@ -1849,8 +1860,8 @@ select:focus {
   align-items: center;
   justify-content: space-between;
   padding: 9px 12px 9px 14px;
-  background: linear-gradient(180deg, rgba(47, 179, 128, 0.22), rgba(47, 179, 128, 0.05));
-  border-bottom: 1px solid rgba(47, 179, 128, 0.14);
+  background: linear-gradient(180deg, rgb(var(--brand-rgb) / 0.22), rgb(var(--brand-rgb) / 0.05));
+  border-bottom: 1px solid rgb(var(--brand-rgb) / 0.14);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -1973,14 +1984,14 @@ select:focus {
   height: 19px;
   border-radius: 7px;
   border: 2px solid var(--w-teal-deep);
-  background: rgba(47, 179, 128, 0.08);
+  background: rgb(var(--brand-rgb) / 0.08);
   flex-shrink: 0;
   cursor: pointer;
   transition: transform 0.1s, background 0.12s, border-color 0.12s;
 }
 .widget .subtask-check input:hover {
   border-color: var(--w-teal);
-  background: rgba(47, 179, 128, 0.18);
+  background: rgb(var(--brand-rgb) / 0.18);
   transform: scale(1.08);
 }
 
@@ -1993,8 +2004,8 @@ select:focus {
   font-size: 13px;
   font-weight: 700;
   color: var(--w-teal);
-  background: rgba(47, 179, 128, 0.12);
-  border: 1px solid rgba(47, 179, 128, 0.3);
+  background: rgb(var(--brand-rgb) / 0.12);
+  border: 1px solid rgb(var(--brand-rgb) / 0.3);
 }
 
 .widget .more-hint {
@@ -2058,7 +2069,7 @@ select:focus {
 }
 
 .wlist-item.current {
-  background: linear-gradient(90deg, rgba(47, 179, 128, 0.28), rgba(47, 179, 128, 0.06));
+  background: linear-gradient(90deg, rgb(var(--brand-rgb) / 0.28), rgb(var(--brand-rgb) / 0.06));
   box-shadow: inset 2px 0 0 var(--w-purple);
 }
 
@@ -2102,7 +2113,7 @@ select:focus {
   padding: 11px;
   border-radius: 13px;
   background: linear-gradient(180deg, var(--w-brand), var(--w-brand-deep));
-  box-shadow: 0 4px 0 var(--w-brand-deep), 0 8px 18px rgba(31, 138, 96, 0.4);
+  box-shadow: 0 4px 0 var(--w-brand-deep), 0 8px 18px rgb(var(--brand-deep-rgb) / 0.4);
   transition: transform 0.06s ease, box-shadow 0.06s ease, filter 0.12s;
 }
 .widget-complete:hover {
@@ -2110,7 +2121,7 @@ select:focus {
 }
 .widget-complete:active {
   transform: translateY(4px);
-  box-shadow: 0 0 0 var(--w-purple-deep), 0 2px 8px rgba(31, 138, 96, 0.3);
+  box-shadow: 0 0 0 var(--w-purple-deep), 0 2px 8px rgb(var(--brand-deep-rgb) / 0.3);
 }
 
 /* When all steps are ticked, the button turns to gold treasure and breathes —
@@ -2118,17 +2129,17 @@ select:focus {
 .widget-complete.ready {
   color: #2a1c00;
   background: linear-gradient(180deg, var(--w-gold-bright, #ffcf5c), var(--w-gold-deep));
-  box-shadow: 0 4px 0 var(--w-gold-deep), 0 8px 22px rgba(242, 181, 59, 0.5);
+  box-shadow: 0 4px 0 var(--w-gold-deep), 0 8px 22px rgb(var(--gold-rgb) / 0.5);
   animation: w-ready-pulse 1.8s ease-in-out infinite;
 }
 .widget-complete.ready:active {
   transform: translateY(4px);
-  box-shadow: 0 0 0 var(--w-gold-deep), 0 2px 8px rgba(242, 181, 59, 0.4);
+  box-shadow: 0 0 0 var(--w-gold-deep), 0 2px 8px rgb(var(--gold-rgb) / 0.4);
   animation: none;
 }
 @keyframes w-ready-pulse {
-  0%, 100% { box-shadow: 0 4px 0 var(--w-gold-deep), 0 8px 22px rgba(242, 181, 59, 0.38); }
-  50% { box-shadow: 0 4px 0 var(--w-gold-deep), 0 8px 34px rgba(242, 181, 59, 0.7); }
+  0%, 100% { box-shadow: 0 4px 0 var(--w-gold-deep), 0 8px 22px rgb(var(--gold-rgb) / 0.38); }
+  50% { box-shadow: 0 4px 0 var(--w-gold-deep), 0 8px 34px rgb(var(--gold-rgb) / 0.7); }
 }
 
 /* Themed compact player strip inside the widget (card, not a bare hairline rule). */
