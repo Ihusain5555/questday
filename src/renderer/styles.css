@@ -1537,12 +1537,52 @@ select:focus {
 
 /* Color Clash (Stroop) */
 .cc-field {
+  position: relative;
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 28px 16px 32px;
   text-align: center;
   background: radial-gradient(circle at 50% 30%, rgba(47, 179, 128, 0.06), transparent);
   transition: background 0.12s ease;
+}
+/* Floating "+1" that drifts up and fades on each correct tap. */
+@keyframes score-pop {
+  0% {
+    transform: translate(-50%, 0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -42px);
+    opacity: 0;
+  }
+}
+.cc-pop {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--accent-2);
+  pointer-events: none;
+  animation: score-pop 0.65s ease-out forwards;
+}
+/* Arcade sound toggle — a quiet ghost button in the header. */
+.arcade-mute {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0 4px;
+  font-size: 15px;
+  line-height: 1;
+  filter: grayscale(0.2);
+}
+.arcade-mute:hover {
+  filter: none;
+  transform: scale(1.1);
 }
 .cc-field.good {
   background: rgba(76, 217, 160, 0.14);
@@ -1641,6 +1681,7 @@ select:focus {
   gap: 10px;
   justify-content: center;
   margin: 6px auto 18px;
+  position: relative;
 }
 .nback-cell {
   border-radius: 12px;
@@ -1670,6 +1711,94 @@ select:focus {
   text-align: center;
   margin-top: 10px;
   font-size: 13px;
+}
+
+/* Shared "Get ready" intro overlay + countdown (Color Clash / Flash Recall /
+   N-Back). Keeps the three brain games from starting cold. */
+@keyframes game-pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.cc-ready,
+.ufov-ready,
+.nback-ready {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+}
+.cc-ready {
+  min-height: 180px;
+}
+.ufov-ready,
+.nback-ready {
+  position: absolute;
+  inset: 0;
+  background: rgba(14, 21, 18, 0.55);
+  border-radius: 12px;
+}
+.cc-ready-label,
+.ufov-ready-label,
+.nback-ready-label {
+  color: var(--muted);
+  font-size: 14px;
+}
+.cc-ready-count,
+.ufov-ready-count,
+.nback-ready-count {
+  font-family: var(--font-display);
+  font-size: 56px;
+  font-weight: 700;
+  color: var(--accent-2);
+  animation: game-pop 0.3s var(--ease-spring);
+}
+/* Difficulty picker shown in each game's "ready" intro — a small pill segmented
+   control. Locked (visually unchanged) once play starts. */
+.game-diff {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: var(--r-pill);
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+.game-diff-opt {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  border-radius: var(--r-pill);
+  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.game-diff-opt.on {
+  background: linear-gradient(180deg, var(--brand-bright), var(--brand));
+  color: #06231a;
+}
+.game-diff-opt:hover {
+  filter: brightness(1.06);
+}
+
+/* Color Clash combo chip + the word pop on each new prompt. */
+.cc-combo {
+  color: var(--fire);
+  font-weight: 700;
+}
+.cc-word {
+  animation: game-pop 0.18s var(--ease-spring);
 }
 
 /* ---- Widget ---- */
