@@ -319,7 +319,14 @@ export const balance = {
       flowtime: { name: 'Flowtime', emoji: '🌊', blurb: 'No fixed timer — stop when focus fades.', work: null, breakRatio: 0.2 }
     },
     /** A completed focus session pays a small chest, capped per day. */
-    reward: { coinsPerSession: 3, dailySessionCap: 8 }
+    reward: { coinsPerSession: 3, dailySessionCap: 8 },
+    /**
+     * Timebox (time-blocking slice C): a hard-stop box for the CURRENT quest,
+     * sized from its estimate × a planning-fallacy buffer (research says ×1.5 —
+     * people under-estimate), floored so tiny estimates still give a usable box.
+     * When the box ends it's just "another box, or move on?" — never a penalty.
+     */
+    timebox: { bufferMultiplier: 1.5, minMinutes: 5 }
   },
 
   // --- §4 "current quest" selection scoring --------------------------------

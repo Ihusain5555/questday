@@ -13,6 +13,7 @@
     "start": "electron-vite preview",
     "pw": "node scripts/pw-run.mjs",
     "pw:arcade": "node scripts/pw-arcade.mjs",
+    "pw:timeboxing": "node scripts/pw-timeboxing.mjs",
     "dist": "electron-vite build && electron-builder --win",
     "typecheck:node": "tsc -p tsconfig.node.json --noEmit",
     "typecheck:web": "tsc -p tsconfig.web.json --noEmit",
