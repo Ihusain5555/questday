@@ -80,8 +80,9 @@ try {
 
   // Color Clash (Stroop): tap the swatch whose colour matches the WORD's ink.
   // Read the ink's computed colour, click the matching swatch -> guaranteed hits.
+  // (Wait out the "Ready" countdown — the word/swatches appear once play starts.)
   await playGame('Color Clash')
-  await main.waitForTimeout(400)
+  await main.locator('.cc-swatch').first().waitFor({ timeout: 5000 })
   result('COLORCLASH_LAUNCH_TEST', (await main.locator('.cc-word').count()) === 1, 'Stroop word rendered')
   for (let i = 0; i < 6; i++) {
     const ink = await main.locator('.cc-word').evaluate((el) => getComputedStyle(el).color)
