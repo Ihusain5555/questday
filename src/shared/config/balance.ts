@@ -342,12 +342,14 @@ export const balance = {
     /**
      * The four quadrants — label / blurb / colour, in 2×2 render order
      * (Do, Schedule, Minimize, Later). Tone: "Later", never "Delete".
+     * `icon` names a Phosphor icon (mapped to the component in EisenhowerView) —
+     * crisp + on-brand, replacing the old emoji icons (app-wide convention).
      */
     quadrants: [
-      { key: 'do', name: 'Do now', emoji: '🔥', blurb: 'Urgent & important — tackle these first.', color: 'var(--candy)' },
-      { key: 'schedule', name: 'Schedule', emoji: '📅', blurb: 'Important, not urgent — plan time for these. Your real wins live here.', color: 'var(--brand-bright)' },
-      { key: 'minimize', name: 'Minimize', emoji: '⚡', blurb: 'Urgent, not important — do quickly or batch them.', color: 'var(--gold)' },
-      { key: 'later', name: 'Later', emoji: '🌙', blurb: 'Neither urgent nor important — revisit when you have room.', color: 'var(--muted)' }
+      { key: 'do', name: 'Do now', icon: 'Fire', blurb: 'Urgent & important — tackle these first.', color: 'var(--candy)' },
+      { key: 'schedule', name: 'Schedule', icon: 'CalendarBlank', blurb: 'Important, not urgent — plan time for these. Your real wins live here.', color: 'var(--brand-bright)' },
+      { key: 'minimize', name: 'Minimize', icon: 'Lightning', blurb: 'Urgent, not important — do quickly or batch them.', color: 'var(--gold)' },
+      { key: 'later', name: 'Later', icon: 'Moon', blurb: 'Neither urgent nor important — revisit when you have room.', color: 'var(--muted)' }
     ]
   },
 

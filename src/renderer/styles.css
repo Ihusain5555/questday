@@ -2809,9 +2809,31 @@ code {
   justify-content: space-between;
 }
 .eh-quad-name {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.eh-quad-label {
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 15px;
+}
+/* Icon badge — the Phosphor quadrant icon in a soft tile tinted with that
+   quadrant's colour (--quad, set inline). Replaces the old emoji glyph. */
+.eh-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
+  flex-shrink: 0;
+  color: var(--quad);
+  background: color-mix(in srgb, var(--quad) 18%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--quad) 30%, transparent);
+}
+.eh-title-icon {
+  color: var(--brand-bright);
 }
 .eh-quad-count {
   font-variant-numeric: tabular-nums;
@@ -2829,6 +2851,9 @@ code {
   gap: 7px;
 }
 .eh-empty {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   color: var(--muted);
   font-size: 12px;
   opacity: 0.6;

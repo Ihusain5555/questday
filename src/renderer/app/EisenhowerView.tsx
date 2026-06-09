@@ -4,9 +4,27 @@ import { classifyQuests, type Quadrant } from '@shared/engine/eisenhower'
 import { selectCurrentQuest } from '@shared/engine/selectCurrentQuest'
 import { balance } from '@shared/config/balance'
 import type { Quest } from '@shared/types'
-import { Star } from '@phosphor-icons/react'
+import {
+  Star,
+  Compass,
+  Fire,
+  CalendarBlank,
+  Lightning,
+  Moon,
+  Sparkle,
+  type Icon
+} from '@phosphor-icons/react'
 
 const QUADS = balance.eisenhower.quadrants
+
+/** Quadrant icon name (from balance) -> Phosphor component. Crisp, on-brand
+ *  icons replace the old emoji glyphs (app-wide icon convention). */
+const QUAD_ICON: Record<string, Icon> = {
+  Fire,
+  CalendarBlank,
+  Lightning,
+  Moon
+}
 
 /** A short, friendly due hint (urgency at a glance — never a countdown of shame). */
 function dueHint(dueAt: string, now: Date): string {
@@ -35,7 +53,9 @@ export function EisenhowerView(): JSX.Element {
   return (
     <div className="view eisenhower-view">
       <div className="view-head">
-        <h2>🧭 Eisenhower matrix</h2>
+        <h2>
+          <Compass size={20} weight="fill" className="eh-title-icon" /> Eisenhower matrix
+        </h2>
         <span className="eh-hint">
           {total} active quest{total === 1 ? '' : 's'} · urgent × important
         </span>
@@ -53,23 +73,31 @@ export function EisenhowerView(): JSX.Element {
         <div className="eh-grid">
           {QUADS.map((q) => {
             const quests = groups[q.key as Quadrant]
+            const QuadIcon = QUAD_ICON[q.icon] ?? Sparkle
             return (
               <div
                 key={q.key}
                 className="eh-quad"
                 data-quad={q.key}
-                style={{ borderColor: q.color }}
+                style={{ borderColor: q.color, ['--quad' as string]: q.color }}
               >
                 <div className="eh-quad-head">
-                  <span className="eh-quad-name" style={{ color: q.color }}>
-                    {q.emoji} {q.name}
+                  <span className="eh-quad-name">
+                    <span className="eh-badge">
+                      <QuadIcon size={16} weight="fill" />
+                    </span>
+                    <span className="eh-quad-label" style={{ color: q.color }}>
+                      {q.name}
+                    </span>
                   </span>
                   <span className="eh-quad-count">{quests.length}</span>
                 </div>
                 <div className="eh-quad-blurb">{q.blurb}</div>
                 <div className="eh-chips">
                   {quests.length === 0 ? (
-                    <div className="eh-empty">Nothing here ✨</div>
+                    <div className="eh-empty">
+                      <Sparkle size={13} weight="fill" /> Nothing here
+                    </div>
                   ) : (
                     quests.map((quest) => (
                       <div
