@@ -95,6 +95,7 @@ export function App(): JSX.Element {
         <span className="titlebar-brand">
           <Crown size={15} weight="fill" /> QuestDay
         </span>
+        <span className="titlebar-version">v{__APP_VERSION__}</span>
       </div>
       <div className="app">
       {rolloverMsg && <RolloverBanner message={rolloverMsg} onClose={() => setRolloverMsg(null)} />}
