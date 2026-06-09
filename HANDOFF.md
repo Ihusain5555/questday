@@ -1,21 +1,71 @@
 # QuestDay — Handoff
 
-**Status: v1.5 — full roadmap + themed worlds + harvest economy + Arcade + recurring
-quests.** All 6 original build phases, the post-v1 features, the v1.2 world themes, the
-v1.3 Grow-a-Garden-style harvest economy, the v1.4 ticket-gated arcade (11 minigames),
-and v1.5 recurring quests (all 2026-06-06) — every one verified by driving the real app
-with Playwright. Installer `QuestDay Setup 1.5.0.exe` is built and installed on the
-user's machine.
+**Status: v1.6.4 — v1.5 base + v1.6 productivity tools (⏱️ Focus timer, 🧭 Eisenhower
+matrix, 📦 Timeboxing) + feature toggles + app-wide high-quality (Twemoji) emoji.** v1.5
+shipped the full roadmap, themed worlds, harvest economy, the ticket-gated arcade, and
+recurring quests (all 2026-06-06); the arcade later grew to 14 minigames (brain trio); v1.6
+(2026-06-08 → 2026-06-09) added the productivity tools above. Every feature verified by
+driving the real app with Playwright. Installer `QuestDay Setup 1.6.4.exe` is built and
+installed on the user's machine.
 
-Last worked: 2026-06-06.
+Last worked: 2026-06-09.
 
 **State of the user's machine when this session ended (session closed cleanly):**
-- The installed app is up to date (**1.5.0**, silently installed + relaunched; it is
-  RUNNING in the tray — quit it before any `npm run pw`/`npm run dev`).
+- The installed app is up to date (**1.6.4**, silently installed + relaunched; it is
+  RUNNING — quit it before launching the app, or use the `scripts/with-app.mjs` wrapper /
+  an isolated `--user-data-dir` test which needs no quit). Earlier data counts below are the
+  2026-06-06 snapshot; the v1.6 sessions used isolated test data dirs and never touched the
+  real `db.json`.
 - **Real user data exists** in `%APPDATA%\questday\db.json` and the user is actively
   playing. At close: 6 quests (none recurring yet — feature shipped at end of session),
   24 placed world items, 1,230 coins, level 9, 1 banked arcade ticket, active theme
   "city". The Playwright script stashes/restores db.json automatically; don't wipe it.
+
+## v1.6 (2026-06-08 → 2026-06-09) — ⏱️ Focus, 🧭 Matrix, 📦 Timeboxing, toggles, emoji
+
+User asked for productivity features (time blocking, Pomodoro, Eisenhower). Researched the
+method families first, then built three research-backed tools, each in its OWN git worktree
+(parallel-safe alongside the arcade/redesign terminals), merged to `main`, and installed.
+
+- **⏱️ Focus timer** (`app/FocusView.tsx`, `balance.focus`): ONE timer engine, the whole
+  Pomodoro family as selectable presets (Pomodoro 25/5, 52·17, Deep-work 90, Flowtime).
+  Binds to the current quest. Runs in transient renderer state (no store write per tick);
+  only the chosen preset + a daily earn-cap persist. A finished session pays a small
+  daily-capped coin bonus (`store.finishFocusSession`, mirrors the arcade cap). Non-punitive:
+  abandoning costs nothing, breaks are first-class, Flowtime never interrupts.
+- **📦 Timeboxing** (slice C, inside FocusView): "📦 Timebox · Nm" button sizes a hard-stop
+  countdown from the current quest's `timeEstimateMinutes` × `balance.focus.timebox`
+  buffer (1.5, a planning-fallacy correction). Chosen over rigid "Do At" clock-pinning,
+  which the research flags as the #1 source of over-scheduling guilt and which clashes with
+  QuestDay's single-current-quest model + never-punishing tone.
+- **🧭 Eisenhower matrix** (`app/EisenhowerView.tsx`, `engine/eisenhower.ts`,
+  `balance.eisenhower`): read-only urgent×important 2×2 over EXISTING fields (dueAt=urgent,
+  skippability/priority=important). Quadrants Do / Schedule / Minimize / Later (low/low is
+  "Later", never "Delete"). Current quest is starred. No new data model.
+- **Feature toggles**: `Settings.enabledFeatures` (Record<string,boolean>, missing=on;
+  mirrors `activeModeTiers`), registry `app/features.ts`, switched in Data → "Productivity
+  features"; `App.tsx` hides toggled-off tabs. New optional feature = one registry entry +
+  one App.tsx tab + one key. Off only HIDES the tab — data is kept (tone rule).
+- **High-quality emoji (Twemoji)**: bundled `src/renderer/assets/fonts/Twemoji.woff2` (COLR
+  color webfont, ~466KB, offline) + added `'Twemoji'` after the text fonts in
+  `--font-body`/`--font-display` (`styles.css`) so every emoji (garden, worlds, arcade,
+  weather, labels, widget) renders crisp + consistent instead of Windows' default; letters/
+  numbers stay Satoshi/Clash. Couldn't use MS Fluent (no single color font + can't npm
+  install); Twemoji is the clean web-standard alternative. Per-quadrant / per-preset emoji
+  were briefly removed then restored as high-quality; the Pomodoro tomato 🍅 → ⏲️ timer for
+  theme fit.
+- **Verification**: per-feature isolated Playwright drivers `pw:eisenhower` (11/11) +
+  `pw:timeboxing` (6/6), each launching with its OWN `--user-data-dir` temp folder (never
+  touches the real db.json, own single-instance lock — safe to run anytime). Emoji confirmed
+  by screenshotting arcade/garden/focus/matrix and visually checking the glyphs.
+- **Shipped**: v1.6.0 (3 tools + toggles) → 1.6.1 (matrix emoji cleanup) → 1.6.2 (focus
+  emoji cleanup) → 1.6.3 (Twemoji font) → 1.6.4 (icons restored, high-quality + theme-fit).
+  Each built + silently installed.
+- **Leftover worktrees** (harmless, mergeable work already on `main`): `questday-eisenhower`
+  (`feature/eisenhower`) + `questday-wt/timeboxing` (`feature/timeboxing`). To remove safely
+  (their `node_modules` is a JUNCTION to the shared one — never recursively delete it):
+  `cmd /c rmdir "<worktree>\node_modules"` first (drops the link, not the target), THEN
+  `git worktree remove <worktree>` and `git branch -d <branch>`.
 
 ## v1.4 (2026-06-06) — 🕹️ The Arcade
 

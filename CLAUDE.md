@@ -52,11 +52,23 @@ different features at once (e.g. the Focus timer and the Arcade games), so **iso
 
 Three renderer windows, one main process:
 - **main window** (`src/renderer/app/`) — management UI (tabs: Dashboard, Quests, Time
-  frames, World, Arcade, Stats, Active mode, Data — labels carry emoji icons, e.g.
-  "⚔️ Quests"). The 🕹️ Arcade (v1.4, `app/arcade/`) is ticket-gated: completions earn
+  frames, Focus, Matrix, World, Arcade, Stats, Active mode, Data — labels carry emoji icons,
+  e.g. "⚔️ Quests"). The 🕹️ Arcade (v1.4, `app/arcade/`) is ticket-gated: completions earn
   tickets (cap/day in `balance.arcade`), 14 local minigames pay a small capped coin
   bonus (incl. a brain-training trio — Color Clash/Stroop, Flash Recall/UFOV, N-Back);
   adding a game = one balance entry + one component in the ArcadeView registry.
+  **v1.6 productivity tools**: ⏱️ Focus (`app/FocusView.tsx`, `balance.focus`) = one timer
+  engine with the whole Pomodoro family as presets (Pomodoro/52·17/deep-work-90/Flowtime)
+  bound to the current quest, plus 📦 Timebox (hard-stop countdown sized from the current
+  quest's estimate × `balance.focus.timebox` buffer); a finished session pays a small
+  daily-capped coin bonus (`store.finishFocusSession`, mirrors the arcade cap). 🧭 Matrix
+  (`app/EisenhowerView.tsx`, `engine/eisenhower.ts`, `balance.eisenhower`) = read-only
+  Eisenhower urgent×important 2×2 over EXISTING fields (dueAt=urgent, skippability/priority=
+  important; low/low quadrant is "Later", never "Delete"). Both are **toggleable features**:
+  `Settings.enabledFeatures` (Record<string,boolean>, missing=on; mirrors `activeModeTiers`)
+  + registry `app/features.ts`, switched in Data → "Productivity features"; App.tsx hides
+  toggled-off tabs. A new optional feature = one `features.ts` entry + one App.tsx tab +
+  one `enabledFeatures` key (data is never deleted, only the tab hidden — tone rule).
 - **widget** (`src/renderer/widget/`) — always-on-top, frameless, movable, resizable;
   shows the current quest + immediate sub-task; expands to the full list.
 - **friction window** (`src/renderer/friction/`) — dedicated always-on-top popup for the
@@ -94,6 +106,16 @@ only writer of the data file.
   reset next day (full payout each completion, history kept in `completionDates` for
   stats); off-day quests "rest" (dimmed, never the current quest, never carried/nagged).
 - `activeMode.ts` — frame-ending timing.
+- `eisenhower.ts` — v1.6 Eisenhower matrix: pure urgent×important classifier over existing
+  quest fields (dueAt=urgent within `balance.eisenhower.urgentWithinHours`; skippability/
+  priority=important). Read-only triage (Do/Schedule/Minimize/Later); never mutates quests.
+
+**Emoji rendering (v1.6):** all emoji across every window render via a bundled **Twemoji
+COLR color webfont** (`src/renderer/assets/fonts/Twemoji.woff2`, ~466KB, offline) — added
+AFTER the text fonts in `--font-body`/`--font-display` (`styles.css`), so letters/numbers
+stay Satoshi/Clash and only emoji codepoints fall through to Twemoji (crisp + identical on
+every PC, replacing Windows' default). To re-add an emoji to UI/content, just type it — it
+renders high-quality automatically.
 
 ## Conventions / where things live
 
