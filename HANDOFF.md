@@ -1,10 +1,12 @@
 # QuestDay — Handoff
 
-**Status: Realm Map reward world (in repo at `468f38d`, NOT yet installed) — the garden
-reward-world is REPLACED by the Realm Map (a gains-only "fills-in" fantasy map; a region is
-discovered per quest completion) and the UI-chrome emoji→Phosphor sweep is finished. Built on
-v1.7.2 (Premium Fantasy "Clay Fantasy" redesign, Matrix Phosphor icons, version in title bar).
-The running installed app is still v1.7.2 — not yet rebuilt/installed.**
+**Status: v1.8.0 — the garden reward-world is REPLACED by the REALM MAP + EXPEDITION CHRONICLE.
+Each completed quest earns an "expedition" you spend to chart a region of YOUR choice; your scouts
+then return with a piece of knowledge YOU pick (Cosmos / Nature / History / Wisdom / Surprise) —
+a tease-then-reveal of one surprising, fact-checked truth, collected in a re-readable Chronicle
+codex. Gains-only (a charted region/discovery is kept forever; ↩ Restore trims only the newest).
+The UI-chrome emoji→Phosphor sweep is also finished. Built on v1.7.x (Premium Fantasy "Clay
+Fantasy" redesign + app-wide Phosphor icons). Built + installed as `QuestDay Setup 1.8.0.exe`.**
 v1.5 shipped the full roadmap, themed worlds, harvest economy, the ticket-gated arcade, and
 recurring quests (all 2026-06-06); the arcade grew to 14 minigames; v1.6 (2026-06-08 →
 2026-06-09) added the productivity tools (⏱️ Focus, 🧭 Matrix, 📦 Timeboxing) + feature
@@ -33,23 +35,31 @@ token-efficiency setup — NOT a product change — see the section directly bel
   `.claude/settings.json`, `scripts/cc-hooks/`. These are dev-tooling/docs only — no app code
   or product behaviour changed. Decide whether to commit them (see "Next steps" below).
 
-## Session 2026-06-10 — Realm Map reward world + emoji→Phosphor finish (committed `468f38d`)
+## Session 2026-06-10 — Realm Map + Expedition Chronicle reward world + emoji finish (shipped v1.8.0)
 
-Big product change + icon polish, all Playwright-verified, committed to `main`. **NOT yet built
-into an installer / installed — the running app is still v1.7.2.**
+Big product change + icon polish, all Playwright-verified. Commits: `468f38d` (Realm v1 + emoji
+sweep), `73a693d` (Realm v2: agency + Chronicle), then remember-last-topic + v1.8.0 bump. **Built
++ installed as v1.8.0.**
 
 - **Decision (research-backed):** the garden/harvest/mutations/themed-worlds reward system was
   the "fiddly second game to tend." Replaced with ONE gains-only "fills-in" artifact. Multi-agent
   research (6 angles + adversarial verify) recommended a *representational fantasy map* for the
   broadest, no-tutorial appeal over abstract glass/stars. User chose it after seeing four visual
   mockups (stained-glass / realm-map / mosaic / constellation — generated + screenshotted first).
-- **The Realm Map** (`engine/realm.ts` pure; `app/RealmView.tsx`; `balance.realm`): a fantasy realm
-  (Terra Questa, 15 regions) whose regions are "discovered" as quests are completed. Reveal is a
-  PURE function of all-time completions (`stats.totalCompletions`) — nothing new persisted, no
-  migration, and ↩ Restore reverses a reveal automatically (gains-only; tone rule). 3 regions
-  seeded at 0 (endowed progress); thresholds ramp to 64. Endless growth later = add another atlas
-  (data only). World tab → **"Realm"** (MapTrifold icon); Dashboard `RealmPeek`; completion
-  celebration now announces "Discovered <region>!" instead of garden growth.
+- **The Realm Map + Expedition Chronicle** (`engine/realm.ts` pure; `app/RealmView.tsx`;
+  `balance.realm` geometry; `config/chronicle.ts` knowledge). A fantasy realm (Terra Questa, 15
+  regions). The design evolved across the session (v1 auto-reveal → v2 agency → +Chronicle):
+  - **Agency:** each completed quest earns one "expedition"; the player TAPS any unexplored region
+    to chart it (no fixed order). World tab → **"Realm"** (MapTrifold icon); Dashboard `RealmPeek`.
+  - **Discovery:** charting opens an "expedition returns — what did you have them study?" modal
+    (Cosmos / Nature / History / Wisdom / **Surprise me**; the last topic is remembered + highlighted
+    for fast repeat). Tease-then-reveal of ONE surprising fact → saved to the **Chronicle** codex,
+    re-readable by tapping a charted region. Research-backed (curiosity-gap, earned>given, collection).
+  - **Content:** 66 fact-checked entries in `config/chronicle.ts` (built via a writing+fact-check
+    workflow; `scripts/gen-chronicle.mjs` assembled the file). Original-worded = licensing-safe
+    (facts aren't copyrightable; no CC-BY-SA text; PD-only quotes). The fact-check caught + fixed a myth.
+  - **State:** `settings.realmChronicle` (region+topic+entry records) + `realmLastTopic`. Gains-only;
+    `normalizeChronicle` trims only to mirror an exact ↩ Restore. Verified by `scripts/pw-realm.mjs`.
 - **Garden kept INERT** (tone rule — no data deleted; fully reversible): GardenView/engine/
   `balance.garden` remain; `growOnCompletion` still runs silently so Restore's coin claw-back is
   unchanged. Only the *views* were swapped (App route + Dashboard peek + celebration line).

@@ -138,6 +138,9 @@ export interface Settings {
    * mirror an exact ↩ Restore. Drives the charted map AND the Chronicle codex.
    */
   realmChronicle?: ChronicleRecord[]
+  /** The topic the player chose last in the Realm — highlighted next time for
+   *  quick repeat tapping (they can still pick any). */
+  realmLastTopic?: string
 }
 
 // --- Reward world: the garden (§7 vision, built 2026-06-06) -----------------

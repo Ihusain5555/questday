@@ -216,7 +216,7 @@ function RealmMap({
   )
 }
 
-type Reveal = { topicId: string; entry: ChronicleEntry; stage: 'teaser' | 'fact' }
+type Reveal = { topicId: string; picked: string; entry: ChronicleEntry; stage: 'teaser' | 'fact' }
 
 /**
  * The Realm — QuestDay's reward world. Each completed quest earns an expedition;
@@ -224,7 +224,7 @@ type Reveal = { topicId: string; entry: ChronicleEntry; stage: 'teaser' | 'fact'
  * piece of knowledge they pick. Gains-only (tone rule).
  */
 export function RealmView(): JSX.Element {
-  const { db, claimRegion } = useStore()
+  const { db, claimRegion, updateSettings } = useStore()
   const [claiming, setClaiming] = useState<{ id: string; name: string } | null>(null)
   const [reveal, setReveal] = useState<Reveal | null>(null)
   const [reading, setReading] = useState<ChronicleRecord | null>(null)
@@ -235,6 +235,7 @@ export function RealmView(): JSX.Element {
   const revealed = chartedRegionIds(chronicle)
   const claimable = claimableNow(completions, chronicle)
   const prog = realmProgress(chronicle)
+  const lastTopic = db.settings.realmLastTopic
 
   const openClaim = (id: string): void => {
     const region = ATLAS.regions.find((r) => r.id === id)
@@ -258,12 +259,16 @@ export function RealmView(): JSX.Element {
     const unseen = topic.entries.filter((e) => !seen.has(e.id))
     const pool = unseen.length ? unseen : topic.entries
     const entry = pool[Math.floor(Math.random() * pool.length)]
-    setReveal({ topicId: actualId, entry, stage: 'teaser' })
+    setReveal({ topicId: actualId, picked: topicId, entry, stage: 'teaser' })
     window.setTimeout(() => setReveal((r) => (r ? { ...r, stage: 'fact' } : r)), 1500)
   }
 
   const commit = (): void => {
-    if (claiming && reveal) void claimRegion(claiming.id, reveal.topicId, reveal.entry.id)
+    if (claiming && reveal) {
+      // Remember the topic they deliberately chose (not "surprise") for quick repeat.
+      if (reveal.picked !== 'surprise') void updateSettings({ realmLastTopic: reveal.picked })
+      void claimRegion(claiming.id, reveal.topicId, reveal.entry.id)
+    }
     setReveal(null)
     setClaiming(null)
   }
@@ -408,7 +413,12 @@ export function RealmView(): JSX.Element {
                     {chronicleTopics.map((t) => {
                       const TIcon = TOPIC_ICON[t.icon] ?? Sparkle
                       return (
-                        <button key={t.id} className="rm-topic" onClick={() => pickTopic(t.id)}>
+                        <button
+                          key={t.id}
+                          className={`rm-topic ${lastTopic === t.id ? 'last' : ''}`}
+                          onClick={() => pickTopic(t.id)}
+                        >
+                          {lastTopic === t.id && <span className="rm-last">Last</span>}
                           <span className="rm-topic-badge">
                             <TIcon size={20} weight="fill" />
                           </span>

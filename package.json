@@ -1,6 +1,6 @@
 {
   "name": "questday",
-  "version": "1.7.2",
+  "version": "1.8.0",
   "description": "QuestDay — a quest-based daily productivity guide",
   "private": true,
   "type": "module",
