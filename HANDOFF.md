@@ -9,7 +9,8 @@ toggles + app-wide Twemoji emoji; v1.7 (2026-06-09) merged + shipped the redesig
 polished the Matrix. Every feature verified by driving the real app with Playwright.
 Installer `QuestDay Setup 1.7.2.exe` is built and installed on the user's machine.
 
-Last worked: 2026-06-09.
+Last worked: 2026-06-09 (two sessions that day; the latest was a Claude Code
+token-efficiency setup — NOT a product change — see the section directly below).
 
 **State of the user's machine when this session ended (user is closing the terminal):**
 - The installed app is up to date (**1.7.2**, silently installed + relaunched; it is
@@ -24,6 +25,47 @@ Last worked: 2026-06-09.
   playing. Earlier data counts below are the 2026-06-06 snapshot; the v1.6/v1.7 sessions
   used isolated test data dirs and never touched the real `db.json`. The Playwright scripts
   stash/restore (or fully isolate) db.json automatically; don't wipe it.
+- **Uncommitted Claude Code tooling changes are present** (HEAD = `49f1c23`, NOT committed):
+  `CLAUDE.md` modified + new untracked `.claude/skills/`, `.claude/agents/`,
+  `.claude/settings.json`, `scripts/cc-hooks/`. These are dev-tooling/docs only — no app code
+  or product behaviour changed. Decide whether to commit them (see "Next steps" below).
+
+## Session 2026-06-09 (later) — Claude Code token-efficiency setup (no product change)
+
+Goal: make this repo cheaper/faster to work on with Claude Code. No app code touched; only
+CLAUDE.md, new skills/agents, and Claude Code config. All changes verified.
+
+- **Trimmed `CLAUDE.md`** from 192 → 107 lines: kept the commands, architecture map,
+  conventions, and tone rule; the detailed workflows moved out to skills (below); added three
+  new sections — **compaction guidance** (what to keep when summarizing), **standing
+  efficiency guidance** (prefer CLI over MCP, delegate verbose ops to subagents, build/test
+  one file at a time), and **token-saving reminders** (one-line nudges: `/clear`, `/compact`,
+  `/context`, `/mcp`, `/model`, `/effort`, plan mode, etc.).
+- **New skills** (`.claude/skills/<name>/SKILL.md` — load only when invoked):
+  `codebase-overview` (full architecture/engines/feature detail, so the structure isn't
+  re-explored each session), `playwright-verification`, `parallel-worktrees`,
+  `shipping-and-gotchas` (the release/install steps + Windows/Electron build gotchas that used
+  to live inline in CLAUDE.md).
+- **New haiku subagents** (`.claude/agents/`): `log-reader` and `test-runner` (`model: haiku`)
+  for cheap verbose scanning so only summaries return to the main thread.
+- **Claude Code config** (`.claude/settings.json` — `settings.local.json` permissions left
+  untouched): `MAX_THINKING_TOKENS: 8000` default thinking budget; a **PreToolUse hook**
+  (`scripts/cc-hooks/rewrite-test-cmd.mjs` + `filter-output.mjs`) that pipes
+  test/build/typecheck/playwright output through a filter so only failure lines reach the
+  model. Verified: matching commands get rewritten, non-matching are untouched, a clean run
+  collapses to one line, failures are surfaced.
+- **MCP recommendation (not yet actioned by the user)**: toggle off the **Google Drive** and
+  **Playwright** MCP servers via `/mcp` for typical work (Electron tests use `playwright-core`
+  directly, not the browser MCP); keep the **IDE** server (its `getDiagnostics` is the
+  TypeScript code-intelligence path — no extra plugin needed).
+
+**Blockers / caveats:**
+- The new `.claude/settings.json` hook only loads on a **fresh Claude Code session** (hooks
+  are read at startup) — it is NOT active in the session that created it.
+- The PreToolUse hook spawns `node` on *every* PowerShell/Bash call (~50–100 ms no-op when the
+  command doesn't match). If it ever feels laggy, narrow it with an `if` rule.
+- PowerShell `2>&1` on native exes can wrap stderr oddly; tsc/npm failures print mostly to
+  stdout so it's usually fine, but the more reliable token-saver is the `test-runner` agent.
 
 ## v1.7 (2026-06-09) — Premium Fantasy redesign SHIPPED + Matrix icons + version in title bar
 
@@ -349,6 +391,19 @@ between time frames**; the installer. Then (2026-06-06, all Playwright-verified)
 
 ## Suggested next steps (none required)
 
+**For the Claude Code tooling session (2026-06-09 later):**
+1. **Decide whether to commit the tooling changes.** They're docs/dev-tooling only (no app
+   code): `git add CLAUDE.md .claude scripts/cc-hooks; git commit`. Skip if you'd rather keep
+   them local-only.
+2. **Start a fresh Claude Code session** so the new `.claude/settings.json` hook loads (hooks
+   are read at startup), and toggle off the **Google Drive** + **Playwright** MCP servers via
+   `/mcp` for typical work.
+3. **(Optional)** On the next real `npm run typecheck`/`build`, confirm the output filter
+   behaves as intended; if the per-command hook adds noticeable latency, narrow it with an
+   `if` rule.
+
+**For the product (unchanged from before):**
+
 Everything on the original roadmap is built. **First: the balance-tuning pass above.**
 Then, ideas if appetite returns (rough priority from the 2026-06-06 session):
 - ~~Garden depth: move/rearrange, bigger plot, seasons~~ — built in v1.2, plus themes.
@@ -363,6 +418,9 @@ Then, ideas if appetite returns (rough priority from the 2026-06-06 session):
 
 ## Map of the code
 
-See `CLAUDE.md` for architecture, conventions, the tunable-config location, and the
-important environment gotchas (Electron install under OneDrive, preload `.mjs`, the
-PowerShell `-File` detector, and the electron-builder `winCodeSign` symlink workaround).
+See `CLAUDE.md` for the architecture map, conventions, and the tunable-config location.
+As of the 2026-06-09 token-efficiency pass, the deep detail now lives in **skills** that load
+on demand: the full architecture/engines/feature breakdown in the **codebase-overview** skill,
+and the environment gotchas (Electron install under OneDrive, preload `.mjs`, the PowerShell
+`-File` detector, the electron-builder `winCodeSign` symlink workaround) in the
+**shipping-and-gotchas** skill (`.claude/skills/`).

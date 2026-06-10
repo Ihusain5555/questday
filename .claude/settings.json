@@ -1,0 +1,20 @@
+{
+  "env": {
+    "MAX_THINKING_TOKENS": "8000"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "PowerShell|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "node \"$env:CLAUDE_PROJECT_DIR\\scripts\\cc-hooks\\rewrite-test-cmd.mjs\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}
