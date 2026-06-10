@@ -7,7 +7,9 @@ highest-priority "current quest". Local JSON only — no accounts, no cloud.
 **Tone rule (always applies):** motivating, never punishing — never add health/lives loss,
 point deduction, streak-shaming, or any punitive mechanic. (One sanctioned exception:
 ↩ Restore reverses an accidental completion's payout exactly — correction, not punishment.)
-The garden only ever GAINS — no wilt/decay.
+The reward world only ever GAINS — no wilt/decay. (As of v1.8 the **Realm** replaced the garden in
+the UI; the garden engine is kept INERT — it still runs silently so ↩ Restore's coin claw-back math
+stays intact — so do NOT delete it.)
 
 ## Commands
 
@@ -25,22 +27,25 @@ No unit tests — **verification is driving the real app with Playwright** (per-
 ## Architecture (map)
 
 Three renderer windows, one main process:
-- **main window** (`src/renderer/app/`) — management UI (tabs: Dashboard, Quests, Time frames,
-  Focus, Matrix, World, Arcade, Stats, Active mode, Data). Tabs use **Phosphor icons**.
+- **main window** (`src/renderer/app/`) — management UI, **7 tabs** (v1.8.1): Dashboard (Stats
+  folded in), Quests, Time frames, **Forge** (Focus / Matrix / Active mode sub-nav), **Realm**,
+  Arcade, Data. Tabs use **Phosphor icons**. (Old tab *ids* kept for compat: `world` → Realm.)
 - **widget** (`src/renderer/widget/`) — always-on-top current quest + sub-task.
 - **friction window** (`src/renderer/friction/`) — soft-friction prompt popup.
 - **main process** (`src/main/`) — windows + tray, JSON store, backups, active-mode scheduler,
   typed IPC. State flow: renderer → `store.saveState(patch)` IPC → atomic JSON write →
   broadcast `store:changed` → every window's zustand store updates.
 
-Pure engines live in `src/shared/engine/` (current-quest scoring, rewards, garden, stats,
-rollover, recurrence, active mode, eisenhower).
+Pure engines live in `src/shared/engine/` (current-quest scoring, rewards, **realm**, garden
+(inert), stats, rollover, recurrence, active mode, eisenhower).
 → See the **codebase-overview** skill for the full directory + engine breakdown.
 
 ## Conventions (where things live)
 
 - **ALL tunable numbers** → `src/shared/config/balance.ts` (XP/level/streak, scoring weights,
-  garden economy under `garden.*`, arcade tickets/payouts). Never hardcode weights in logic.
+  garden economy under `garden.*` (inert), arcade tickets + per-game difficulty/`icon`/`color`).
+  Never hardcode weights in logic. (Coins were removed in v1.8.2 — `player.currency` is a dead
+  field kept only for migration; don't surface it.)
 - **ALL visual design tokens** → `src/renderer/theme.css` (`@import`ed at top of `styles.css`).
   Reference `var(--brand)` etc., never raw hex. Title-bar emerald `#10362a` is duplicated in
   3 spots that must stay in sync: `--titlebar` (theme.css), `titleBarOverlay.color`
@@ -77,6 +82,10 @@ per feature, and claim the shared app-lock before opening the app (single-instan
   `test-runner` (haiku) agents in `.claude/agents/`.
 - **Build and test incrementally, one file at a time** — after each file run `npm run typecheck`
   (and the relevant `npm run pw*` driver) before moving on; don't batch many edits then compile.
+- **Reading test/build output:** a PreToolUse hook collapses Bash/PowerShell test output to
+  "no failures detected — N lines hidden". `exit 0` means clean, but to SEE the actual PASS/FAIL
+  lines, redirect to a temp file and `Read` it (the hook filters the tool *result*, not the file;
+  `cygpath -w /tmp/x.txt` gives the Windows path) — or delegate to the `test-runner` agent.
 
 ## When summarizing / compacting this conversation, KEEP:
 

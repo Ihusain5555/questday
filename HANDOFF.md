@@ -1,6 +1,94 @@
 # QuestDay — Handoff
 
-**Status: v1.8.0 — the garden reward-world is REPLACED by the REALM MAP + EXPEDITION CHRONICLE.
+---
+
+# ⏩ RESUME KIT (read this first)
+
+**Updated:** 2026-06-10 · **Installed & running:** **v1.8.6** (last product commit `4aa1347`) · **Branch:** `main`, clean
+
+## Git state
+- `main`, **clean** — everything committed, no stashes. The latest commit is this session's
+  **close-out** (HANDOFF / CLAUDE.md / codebase-overview skill + `SESSION-TRANSCRIPT.md`);
+  the last *product* commit is `4aa1347` (v1.8.6 — the installed build).
+- **This session = `e64379e..4aa1347`** — 11 commits, 58 files, **+4184 / −1776**.
+- Last 5 commits:
+  ```
+  4aa1347  Arcade: emoji -> Phosphor icon badges, colour-coded by skill (v1.8.6)
+  029045e  Arcade: uniform Easy/Medium/Hard difficulty on all 10 brain games (v1.8.5)
+  69c20b9  Arcade tickets: generous free daily floor + uncapped earning (v1.8.4)
+  d63cc93  Arcade: brain-training set only — cut 8 reflex games, add 4 (v1.8.3)
+  5d2a449  Remove coins entirely; show arcade tickets in their place (v1.8.2)
+  ```
+
+## Exact resume commands
+```powershell
+npm install          # only if node_modules is missing — see the OneDrive/electron-extract gotcha in CLAUDE.md
+npm run typecheck    # tsc (node + web). MUST be green before "done". (baseline below: PASS)
+npm run dev          # live dev — QUIT any running QuestDay first (single-instance lock) or use an isolated --user-data-dir
+npm run pw:arcade    # drive the Arcade (stashes/restores the real db.json). Others: pw:eisenhower, pw:realm, pw:timeboxing
+npm run dist         # build NSIS installer -> C:\Users\ihusa\questday-release\QuestDay Setup X.Y.Z.exe
+```
+- **No env vars, no services, no cloud.** Data = local JSON at `%APPDATA%\questday\db.json` (real user data — drivers stash/restore or fully isolate it; never wipe it).
+- **Ship pattern (standing request):** after `npm run dist`, silently install the new exe
+  (`Start-Process "...\QuestDay Setup X.Y.Z.exe" -ArgumentList '/S' -Wait`) then relaunch
+  `%LOCALAPPDATA%\Programs\QuestDay\QuestDay.exe`. Quit the running app first.
+
+## Baseline (last run THIS session — record, don't re-derive)
+| Check | Result |
+|---|---|
+| `npm run typecheck` | **PASS** (exit 0, 0 errors) |
+| `npm run build` | **PASS** (exit 0) |
+| `npm run pw:arcade` | **PASS** — 10/10 cards render + all 7 driven games launch & score (Track Switch = 12 nodes on Medium) |
+| `npm run pw:eisenhower` | **PASS** — ISOLATION, TABS_COUNT=7, DASH_STATS, FREE_TICKETS=3, 8× quadrant, 3× toggle |
+| Unit tests | none (verification = driving the real app) |
+| **Failing tests / open errors** | **none** |
+
+## What changed this session & why (per touched file)
+- **`src/shared/config/balance.ts`** — `realm` atlas (15 regions); arcade rewritten to the 10-game **brain set** with per-mode difficulty params; ticket economy (`ticketsFreePerDay:3`, `ticketsPerDay:20`); each game now carries `icon`+`color` (skill-domain) instead of `emoji`.
+- **`src/shared/types.ts`** — `ChronicleRecord`, `Settings.realmChronicle`/`realmLastTopic`, `ArcadeState.freeGrantedOn`.
+- **`src/shared/defaults.ts`** — seed the new realm/arcade fields (migration stays tolerant via `{...fresh ...db}`).
+- **`src/shared/engine/realm.ts`** *(new)* — pure: charted regions derived from completions + chronicle (gains-only, Restore-safe).
+- **`src/shared/config/chronicle.ts`** *(new)* — 66 fact-checked knowledge entries (via `scripts/gen-chronicle.mjs`).
+- **`src/shared/engine/rewards.ts`** — minor (no-coins path; `newPlayer` field-preserving spread).
+- **`src/renderer/state/store.ts`** — `completeQuest` (no coins; expedition + region celebration), `claimRegion`, `restoreQuest` chronicle trim, daily free-ticket top-up in `runDayChange`; dropped the focus-session coin bonus.
+- **`src/renderer/app/App.tsx`** — 10→**7 tabs**, **Forge** + **Realm** routes, fluid one-row tab layout.
+- **`src/renderer/app/ProductivityView.tsx`** *(new)* — **Forge** tab: Focus / Matrix / Active mode under a sub-nav.
+- **`src/renderer/app/RealmView.tsx`** *(new)* — realm map + `RealmPeek` + claim modal + Chronicle codex.
+- **`src/renderer/app/Dashboard.tsx`** — `RealmPeek` replaces `GardenPeek`; **Stats folded in** (`.dash-stats`).
+- **`src/renderer/app/arcade/gameIcons.tsx`** *(new)* — one icon registry → `GameIcon` / `GameBadge` / `MemoryFace`.
+- **`src/renderer/app/arcade/ArcadeView.tsx`** — tickets (no coins); cards/header/result render Phosphor badges; 10-game registry.
+- **`src/renderer/app/arcade/games/*`** — **4 new** (`MentalSpin`, `TrackSwitch`, `StopTap`, `SpanRecall`), **8 deleted** (Snake, BlockDrop, BubblePop, LaneDash, SpikeRush, FruitSlice, RoadHopper, MazeMuncher); the kept games (`AimTrainer`, `ReactionTime`, `MemoryMatch`, `ColorClash`, `FlashRecall`, `NBack`) gained the Easy/Med/Hard picker + HUD `GameIcon`; `MemoryMatch` faces → 12 gold Phosphor shapes.
+- **`src/renderer/components/PlayerBar.tsx`** — coins → arcade-ticket display.
+- **`src/renderer/components/CompletionCelebration.tsx`** — "discovered a region" line replaces the garden line.
+- **`src/renderer/app/features.ts`** — Forge/realm wiring for the toggle registry.
+- **`src/renderer/app/{FocusView,DataView,QuestsView,QuestForm,TimeFramesView}.tsx`** — emoji→Phosphor + Forge integration.
+- **`src/renderer/theme.css`** — `--skill-memory/-speed/-focus/-flex` arcade domain tokens.
+- **`src/renderer/styles.css`** — realm map, `.subtabs`/`.subtab` (Forge), `.dash-stats`, new game CSS, `.arcade-badge`(.lg), `.rm-*` modal, memory-card colours.
+- **`scripts/`** — `pw-realm.mjs` *(new)*, `gen-chronicle.mjs` *(new)*; `pw-arcade`/`pw-eisenhower`/`pw-timeboxing` updated; `cc-hooks/*` *(new tooling)*.
+- **`.claude/*`** — skills/agents/settings (Claude Code tooling; committed `e64379e`).
+- **`package.json`** — version → **1.8.6**.
+
+## Next steps (file-level targets)
+1. **Balance-tuning pass (still paused, user's call).** Tune `src/shared/config/balance.ts`: arcade ticket cadence feel, recurring-quest XP inflation. (Garden economy is mostly moot now — see below.)
+2. **(Open design)** Arcade badge colours — currently **colour-coded by skill domain** in `balance.arcade.games[*].color` (rendered by `gameIcons.tsx`). User may prefer uniform gold → ~2-line change.
+3. **(Verification gap)** Add a Memory Match flip+screenshot to `scripts/pw-arcade.mjs` — it wasn't visually screenshotted this session (renders via the proven `GameIcon`/`MemoryFace` path; low risk). Aim/Reaction/Memory are not play-driven by that script.
+4. **(Deferred)** Make the **Realm tab toggleable** — add it to `src/renderer/app/features.ts` (left out of the Realm MVP).
+5. **(Deferred cleanup)** `player.currency` is now a **dead field** (earned nowhere, shown nowhere) kept in saved data — decide remove vs leave. And the **garden is kept INERT** (GardenView/engine/`balance.garden` still present, never shown) — fully delete once the Realm is proven.
+
+## Open / deferred (decisions parked)
+- Arcade badge colour-coding vs uniform gold (autonomous call; reversible).
+- Garden kept inert, not deleted (reversible; tone-rule: no data destroyed).
+- `player.currency` dead field retained for migration safety.
+- Realm tab not yet user-toggleable.
+- `pw:arcade` doesn't drive Aim/Reaction/Memory or screenshot Memory Match.
+- Balance-tuning pass paused (arcade "feels right" for now).
+- **No `TODO`/`FIXME` added.** The only lint suppressions are intentional `react-hooks/exhaustive-deps` disables on the game timer effects (each runs once on phase change — adding the deps would re-arm the timer; standard pattern, not debt).
+
+---
+
+## Detailed history
+
+**Status: v1.8.6 — the garden reward-world is REPLACED by the REALM MAP + EXPEDITION CHRONICLE.
 Each completed quest earns an "expedition" you spend to chart a region of YOUR choice; your scouts
 then return with a piece of knowledge YOU pick (Cosmos / Nature / History / Wisdom / Surprise) —
 a tease-then-reveal of one surprising, fact-checked truth, collected in a re-readable Chronicle
@@ -54,23 +142,14 @@ Installer `QuestDay Setup 1.7.2.exe` is built and installed on the user's machin
 Last worked: 2026-06-09 (two sessions that day; the latest was a Claude Code
 token-efficiency setup — NOT a product change — see the section directly below).
 
-**State of the user's machine when this session ended (user is closing the terminal):**
-- The installed app is up to date (**1.7.2**, silently installed + relaunched; it is
-  RUNNING — quit it before launching the app, or use the `scripts/with-app.mjs` wrapper /
-  an isolated `--user-data-dir` test which needs no quit). The title bar now shows
-  "QuestDay v1.7.2".
-- `main` is clean at commit `6fead22`. Worktrees: only `C:\Users\ihusa\questday-wt\redesign`
-  (`feature/premium-fantasy`) remains, and it is now FULLY MERGED into `main` (kept in case
-  the redesign continues; safe to remove with the junction-safe steps below). The four v1.6
-  leftover worktrees (eisenhower/timeboxing/arcade/focus) were removed this session.
-- **Real user data exists** in `%APPDATA%\questday\db.json` and the user is actively
-  playing. Earlier data counts below are the 2026-06-06 snapshot; the v1.6/v1.7 sessions
-  used isolated test data dirs and never touched the real `db.json`. The Playwright scripts
-  stash/restore (or fully isolate) db.json automatically; don't wipe it.
-- **Uncommitted Claude Code tooling changes are present** (HEAD = `49f1c23`, NOT committed):
-  `CLAUDE.md` modified + new untracked `.claude/skills/`, `.claude/agents/`,
-  `.claude/settings.json`, `scripts/cc-hooks/`. These are dev-tooling/docs only — no app code
-  or product behaviour changed. Decide whether to commit them (see "Next steps" below).
+**Machine state — see the RESUME KIT at the top for the authoritative current state**
+(installed **v1.8.6**, `main` clean @ `4aa1347`; the Claude Code tooling that was uncommitted
+here is now COMMITTED at `e64379e`). Still-true environment notes:
+- **Real user data** lives in `%APPDATA%\questday\db.json` (the user actively plays). The
+  Playwright drivers stash/restore or fully isolate it — never wipe it.
+- Worktrees: the v1.6/v1.7 feature worktrees were all removed in earlier sessions; this
+  session worked entirely on `main` (no worktrees). The junction-safe removal recipe is in
+  the **parallel-worktrees** skill.
 
 ## Session 2026-06-10 — Realm Map + Expedition Chronicle reward world + emoji finish (shipped v1.8.0)
 
