@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { play } from '../sound'
 import { Timer } from '@phosphor-icons/react'
+import { GameIcon } from '../gameIcons'
 
 /**
  * 🪜 Span Recall — a memory-span workout (Corsi block-tapping). The grid flashes
@@ -197,7 +198,7 @@ export function SpanRecall({ onFinish }: { onFinish: (score: number) => void }):
   return (
     <div className="game-shell">
       <div className="game-hud">
-        <span>🪜 span {best}</span>
+        <span><GameIcon k="spanrecall" size={15} /> span {best}</span>
         <span className="meta-dim">now {span}</span>
         <span className="hud-timer">
           <Timer size={14} weight="bold" /> {Math.max(0, timeLeft)}s

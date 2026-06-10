@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { GameIcon } from '../gameIcons'
 
 type Phase = 'ready' | 'waiting' | 'go' | 'between'
 type Mode = 'easy' | 'medium' | 'hard'
@@ -77,7 +78,7 @@ export function ReactionTime({ onFinish }: { onFinish: (score: number) => void }
   return (
     <div className="game-shell">
       <div className="game-hud">
-        <span>⚡ trial {Math.min(times.length + 1, trials)}/{trials}</span>
+        <span><GameIcon k="reaction" size={15} /> trial {Math.min(times.length + 1, trials)}/{trials}</span>
         {avg !== null && <span>avg {avg} ms</span>}
         <button onClick={() => times.length > 0 ? finish(times) : onFinish(0)}>End round</button>
       </div>

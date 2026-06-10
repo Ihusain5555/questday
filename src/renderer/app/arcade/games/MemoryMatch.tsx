@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import { balance } from '@shared/config/balance'
 import { play } from '../sound'
-import { Timer } from '@phosphor-icons/react'
+import { Timer, Question } from '@phosphor-icons/react'
+import { GameIcon, MemoryFace, MEMORY_FACE_COUNT } from '../gameIcons'
 
-const POOL = ['🌷', '🏰', '🌽', '🚀', '🐉', '⛲', '🍉', '🛰️', '🌻', '👑', '🎃', '🔭']
+// Card faces are indices into the shared Phosphor face set (see gameIcons):
+// distinct shapes, all drawn in one gold tone, so you recall by shape + position
+// (not colour) — keeping the memory challenge honest.
+const FACES = Array.from({ length: MEMORY_FACE_COUNT }, (_, i) => i)
 
 interface Card {
   id: number
-  emoji: string
+  face: number
 }
 
 // Difficulty: board size (pair count) and a time adjustment vs the base seconds.
@@ -22,10 +26,10 @@ const DIFFS: Record<Mode, { pairs: number; timeDelta: number }> = {
 }
 
 function buildDeck(pairs: number): Card[] {
-  const pick = [...POOL].sort(() => Math.random() - 0.5).slice(0, pairs)
+  const pick = [...FACES].sort(() => Math.random() - 0.5).slice(0, pairs)
   return [...pick, ...pick]
     .sort(() => Math.random() - 0.5)
-    .map((emoji, i) => ({ id: i, emoji }))
+    .map((face, i) => ({ id: i, face }))
 }
 
 /**
@@ -99,7 +103,7 @@ export function MemoryMatch({ onFinish }: { onFinish: (score: number) => void })
     setFlipped(next)
     if (next.length === 2) {
       const [a, b] = next
-      if (deck[a].emoji === deck[b].emoji) {
+      if (deck[a].face === deck[b].face) {
         play('good')
         setMatched((m) => new Set([...m, a, b]))
         setFlipped([])
@@ -121,7 +125,7 @@ export function MemoryMatch({ onFinish }: { onFinish: (score: number) => void })
   return (
     <div className="game-shell">
       <div className="game-hud">
-        <span>🧠 {pairs}/{pairCount} pairs</span>
+        <span><GameIcon k="memory" size={15} /> {pairs}/{pairCount} pairs</span>
         <span className="hud-timer"><Timer size={14} weight="bold" /> {Math.max(0, timeLeft)}s</span>
         <button onClick={endEarly}>End round</button>
       </div>
@@ -160,7 +164,7 @@ export function MemoryMatch({ onFinish }: { onFinish: (score: number) => void })
                 className={`memory-card ${up ? 'up' : ''} ${matched.has(card.id) ? 'matched' : ''}`}
                 onClick={() => flip(card.id)}
               >
-                {up ? card.emoji : '❔'}
+                {up ? <MemoryFace face={card.face} size={30} /> : <Question size={26} weight="bold" />}
               </button>
             )
           })}

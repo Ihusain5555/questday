@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { balance } from '@shared/config/balance'
 import { play } from '../sound'
+import { GameIcon } from '../gameIcons'
 
 /**
  * 👁️ Flash Recall — a Useful-Field-of-View (speed-of-processing) drill. Keep
@@ -125,7 +126,7 @@ export function FlashRecall({ onFinish }: { onFinish: (score: number) => void })
   return (
     <div className="game-shell">
       <div className="game-hud">
-        <span>👁️ {score} found</span>
+        <span><GameIcon k="flashrecall" size={15} /> {score} found</span>
         <span>
           flash {Math.min(trial + 1, cfg.trials)}/{cfg.trials}
         </span>

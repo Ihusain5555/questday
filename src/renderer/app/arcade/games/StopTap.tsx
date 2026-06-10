@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { play } from '../sound'
 import { Timer } from '@phosphor-icons/react'
+import { GameIcon } from '../gameIcons'
 
 /**
  * ✋ Stop Tap — a GO/NO-GO inhibition drill (response stopping). Stimuli flash up
@@ -183,7 +184,7 @@ export function StopTap({ onFinish }: { onFinish: (score: number) => void }): JS
   return (
     <div className="game-shell">
       <div className="game-hud">
-        <span>✋ {score}</span>
+        <span><GameIcon k="stoptap" size={15} /> {score}</span>
         <span className="hud-timer">
           <Timer size={14} weight="bold" /> {Math.max(0, timeLeft)}s
         </span>

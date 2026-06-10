@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { play } from '../sound'
 import { Timer } from '@phosphor-icons/react'
+import { GameIcon } from '../gameIcons'
 
 /**
  * 🌀 Mental Spin — mental rotation (the Shepard–Metzler paradigm). Two shapes
@@ -187,7 +188,7 @@ export function MentalSpin({ onFinish }: { onFinish: (score: number) => void }):
   return (
     <div className="game-shell">
       <div className="game-hud">
-        <span>🌀 {score}</span>
+        <span><GameIcon k="mentalspin" size={15} /> {score}</span>
         <span className="hud-timer"><Timer size={14} weight="bold" /> {Math.max(0, timeLeft)}s</span>
         <button onClick={endEarly}>End round</button>
       </div>

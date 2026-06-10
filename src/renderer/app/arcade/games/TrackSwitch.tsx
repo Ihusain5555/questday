@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { play } from '../sound'
 import { Timer } from '@phosphor-icons/react'
+import { GameIcon } from '../gameIcons'
 
 /**
  * 🔀 Track Switch — task-switching / cognitive flexibility (the Trail-Making B
@@ -184,7 +185,7 @@ export function TrackSwitch({ onFinish }: { onFinish: (score: number) => void })
   return (
     <div className="game-shell">
       <div className="game-hud">
-        <span>🔀 {score}</span>
+        <span><GameIcon k="trackswitch" size={15} /> {score}</span>
         <span className="hud-timer">
           <Timer size={14} weight="bold" /> {Math.max(0, timeLeft)}s
         </span>

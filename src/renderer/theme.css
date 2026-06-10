@@ -37,6 +37,16 @@
   --candy: #ff6b6b; /* high-energy / celebration — sparing */
   --plum: #b566d6; /* rare / special — sparing */
 
+  /* Arcade skill-domain accents — each brain game is colour-coded by the kind of
+     skill it trains (memory / speed / focus / flexibility), so the grid reads as
+     four families at a glance and reinforces the honest "trains a real skill"
+     framing. On-brand jewel tones (reuse plum/gold/emerald + one cool sky). Used
+     only for the small Phosphor icon badges in the Arcade. */
+  --skill-memory: var(--plum); /* working & visual memory — amethyst */
+  --skill-speed: var(--gold); /* processing speed & attention — gold */
+  --skill-focus: var(--brand-bright); /* focus & inhibition — emerald */
+  --skill-flex: #54c8f0; /* flexibility & spatial — sky */
+
   /* ---- Same colours as RGB channels, so semi-transparent tints stay on-theme:
           e.g.  background: rgb(var(--brand-rgb) / 0.16) ---- */
   --brand-rgb: 47 179 128;

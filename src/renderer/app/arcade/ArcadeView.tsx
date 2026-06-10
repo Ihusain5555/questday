@@ -13,6 +13,7 @@ import { SpanRecall } from './games/SpanRecall'
 import { StopTap } from './games/StopTap'
 import { TrackSwitch } from './games/TrackSwitch'
 import { MentalSpin } from './games/MentalSpin'
+import { GameIcon, GameBadge } from './gameIcons'
 
 type GameKey = keyof typeof balance.arcade.games
 
@@ -83,7 +84,7 @@ export function ArcadeView(): JSX.Element {
       <div>
         <div className="view-head">
           <h2>
-            {cfg.emoji} {cfg.name}
+            <GameIcon k={playing} size={20} /> {cfg.name}
           </h2>
           <span className="garden-coins">
             {muteBtn}
@@ -117,7 +118,7 @@ export function ArcadeView(): JSX.Element {
 
       {result && (
         <div className="card arcade-result">
-          {balance.arcade.games[result.key].emoji} <strong>{balance.arcade.games[result.key].name}</strong>
+          <GameIcon k={result.key} size={16} /> <strong>{balance.arcade.games[result.key].name}</strong>
           {' — '}score {result.score}
           {result.newBest && (
             <span className="arcade-result-best">
@@ -140,7 +141,7 @@ export function ArcadeView(): JSX.Element {
           const best = db.arcade.best[key]
           return (
             <div className="card arcade-card" key={key}>
-              <div className="arcade-emoji">{cfg.emoji}</div>
+              <GameBadge k={key} size={26} lg />
               <div className="arcade-name">{cfg.name}</div>
               <div className="meta-dim arcade-blurb">{cfg.blurb}</div>
               <div className="meta-dim arcade-card-meta">

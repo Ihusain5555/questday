@@ -328,20 +328,23 @@ export const balance = {
     ticketsPerCompletion: 1,
     ticketsPerDay: 20,
     games: {
-      // Memory & working memory
-      nback: { name: 'N-Back', emoji: '🔢', blurb: 'Match the cell from 2 steps back — a working-memory workout.' },
-      spanrecall: { name: 'Span Recall', emoji: '🪜', blurb: 'Repeat the growing sequence — stretch your memory span (Corsi).' },
-      memory: { name: 'Memory Match', emoji: '🧠', blurb: 'Pair the cards from memory — a light visual-memory warm-up.', seconds: 90 },
-      // Processing speed & attention
-      flashrecall: { name: 'Flash Recall', emoji: '👁️', blurb: 'Catch the flash, then place it — processing speed & attention (UFOV).', trials: 16 },
-      aim: { name: 'Aim Trainer', emoji: '🎯', blurb: 'Hit the targets fast — sharpens visual attention & hand-eye speed.', seconds: 45 },
-      reaction: { name: 'Reaction Time', emoji: '⚡', blurb: 'Wait for green, then tap — measures your reaction speed.', trials: 5 },
-      // Executive control: inhibition & flexibility
-      colorclash: { name: 'Color Clash', emoji: '🎨', blurb: 'Tap the ink colour, not the word — focus & inhibition (Stroop).', seconds: 45 },
-      stoptap: { name: 'Stop Tap', emoji: '✋', blurb: 'Tap on GO, freeze on STOP — trains response inhibition (go/no-go).' },
-      trackswitch: { name: 'Track Switch', emoji: '🔀', blurb: 'Hop 1-A-2-B… — trains mental flexibility (task-switching).' },
-      // Spatial reasoning
-      mentalspin: { name: 'Mental Spin', emoji: '🌀', blurb: 'Same shape or mirror? Rotate it in your head — spatial reasoning.' }
+      // Each game carries a Phosphor `icon` name + a skill-domain `color` token
+      // (see theme.css --skill-*); the Arcade renders them as tinted badges
+      // (app-wide icon convention — no emoji in UI chrome). Grouped by skill:
+      // Memory & working memory — amethyst
+      nback: { name: 'N-Back', icon: 'Stack', color: 'var(--skill-memory)', blurb: 'Match the cell from 2 steps back — a working-memory workout.' },
+      spanrecall: { name: 'Span Recall', icon: 'Stairs', color: 'var(--skill-memory)', blurb: 'Repeat the growing sequence — stretch your memory span (Corsi).' },
+      memory: { name: 'Memory Match', icon: 'Cards', color: 'var(--skill-memory)', blurb: 'Pair the cards from memory — a light visual-memory warm-up.', seconds: 90 },
+      // Processing speed & attention — gold
+      flashrecall: { name: 'Flash Recall', icon: 'Eye', color: 'var(--skill-speed)', blurb: 'Catch the flash, then place it — processing speed & attention (UFOV).', trials: 16 },
+      aim: { name: 'Aim Trainer', icon: 'Crosshair', color: 'var(--skill-speed)', blurb: 'Hit the targets fast — sharpens visual attention & hand-eye speed.', seconds: 45 },
+      reaction: { name: 'Reaction Time', icon: 'Lightning', color: 'var(--skill-speed)', blurb: 'Wait for green, then tap — measures your reaction speed.', trials: 5 },
+      // Executive control: inhibition — emerald
+      colorclash: { name: 'Color Clash', icon: 'Palette', color: 'var(--skill-focus)', blurb: 'Tap the ink colour, not the word — focus & inhibition (Stroop).', seconds: 45 },
+      stoptap: { name: 'Stop Tap', icon: 'HandPalm', color: 'var(--skill-focus)', blurb: 'Tap on GO, freeze on STOP — trains response inhibition (go/no-go).' },
+      // Flexibility & spatial reasoning — sky
+      trackswitch: { name: 'Track Switch', icon: 'ArrowsLeftRight', color: 'var(--skill-flex)', blurb: 'Hop 1-A-2-B… — trains mental flexibility (task-switching).' },
+      mentalspin: { name: 'Mental Spin', icon: 'ArrowsClockwise', color: 'var(--skill-flex)', blurb: 'Same shape or mirror? Rotate it in your head — spatial reasoning.' }
     }
   },
 

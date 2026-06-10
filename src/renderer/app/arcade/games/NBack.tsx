@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { balance } from '@shared/config/balance'
 import { play } from '../sound'
+import { GameIcon } from '../gameIcons'
 
 /**
  * 🔢 N-Back — the classic working-memory workout. Cells light up one at a time;
@@ -139,7 +140,7 @@ export function NBack({ onFinish }: { onFinish: (score: number) => void }): JSX.
   return (
     <div className="game-shell">
       <div className="game-hud">
-        <span>🔢 {hits} caught</span>
+        <span><GameIcon k="nback" size={15} /> {hits} caught</span>
         {misses > 0 && <span className="meta-dim">{misses} oops</span>}
         <span>{phase === 'playing' ? Math.min(step + 1, TOTAL) : 0}/{TOTAL}</span>
         <button onClick={endEarly}>End round</button>

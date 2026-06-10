@@ -32,6 +32,18 @@ rising incongruence (+combo ramp) · Flash Recall 540/420/300ms start · Span Re
 slow/med/fast cadence + no-go rate (+score ramp) · Aim big/med/small (+shrink ramp) · Reaction
 5/5/8 trials · Memory 6/8/10 pairs. Verified (pw:arcade — 10 cards + 7 driven games launch/score;
 Medium default unchanged so existing tests pass). Built + installed as `QuestDay Setup 1.8.5.exe`.**
+**v1.8.6 — arcade icons (emoji → Phosphor badges).** The 10 game emoji (🔢🪜🧠👁️🎯⚡🎨✋🔀🌀)
+clashed with the premium Phosphor UI. Replaced them with crisp Phosphor glyphs in soft tinted
+tiles (the Eisenhower `.eh-badge` pattern), **colour-coded by the cognitive skill each game
+trains** so the grid reads as four families: memory = amethyst (`--skill-memory`/plum), speed &
+attention = gold, focus & control = emerald, flexibility & spatial = sky (`--skill-flex`, the one
+new token). Mapping in `balance.arcade.games[*].icon`+`.color`; rendered via the new shared
+`app/arcade/gameIcons.tsx` (`GameIcon`/`GameBadge`/`MemoryFace`, single icon registry). ArcadeView
+cards/header/result + every in-game HUD label now use it. Memory Match card faces became 12
+distinct gold Phosphor shapes (shape-recall, not colour). New `--skill-*` tokens in theme.css,
+`.arcade-badge`(.lg) CSS. Verified: typecheck clean; pw:arcade — all 10 cards + 7 driven games
+launch/score; visual check (grid badges + Color Clash HUD palette icon + orange Fire combo render
+crisply). Built + installed as `QuestDay Setup 1.8.6.exe`.**
 v1.5 shipped the full roadmap, themed worlds, harvest economy, the ticket-gated arcade, and
 recurring quests (all 2026-06-06); the arcade grew to 14 minigames; v1.6 (2026-06-08 →
 2026-06-09) added the productivity tools (⏱️ Focus, 🧭 Matrix, 📦 Timeboxing) + feature
