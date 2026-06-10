@@ -6,7 +6,7 @@ import { QuestForm } from './QuestForm'
 import { PRIORITY_COLOR, SKIPPABILITY_COLOR } from './options'
 import { formatDue, formatMinutes } from '@shared/format'
 import { activeTimeFrame } from '@shared/engine/selectCurrentQuest'
-import { questXP, questCurrency } from '@shared/engine/rewards'
+import { questXP } from '@shared/engine/rewards'
 import { isRecurring, isResting, recurLabel, ymdOf } from '@shared/engine/recurrence'
 import {
   Lightning,
@@ -16,7 +16,6 @@ import {
   Trophy,
   DotsSixVertical
 } from '@phosphor-icons/react'
-import { CoinIcon } from '../components/RewardIcons'
 
 export function QuestsView(): JSX.Element {
   const {
@@ -208,9 +207,8 @@ export function QuestsView(): JSX.Element {
                         </span>
                         <span className="badge outline">{q.difficulty}</span>
                         {q.status === 'active' && (
-                          <span className="badge bounty" title="Reward on completion">
-                            <Lightning size={11} weight="fill" /> {questXP(q)}
-                            <CoinIcon size={11} /> {questCurrency(questXP(q))}
+                          <span className="badge bounty" title="XP on completion">
+                            <Lightning size={11} weight="fill" /> {questXP(q)} XP
                           </span>
                         )}
                         <span className="meta-dim">{formatMinutes(q.timeEstimateMinutes)}</span>
@@ -241,7 +239,7 @@ export function QuestsView(): JSX.Element {
                         <button
                           className="ghost"
                           onClick={() => void restoreQuest(q.id)}
-                          title="Mis-click? Back to active — this completion's XP and coins are returned (recent purchases are refunded if needed)"
+                          title="Mis-click? Back to active — this completion's XP is returned (and any realm discovery it charted)"
                         >
 <ArrowUUpLeft size={14} weight="bold" /> Restore
                         </button>

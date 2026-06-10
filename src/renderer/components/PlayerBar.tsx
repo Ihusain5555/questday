@@ -1,7 +1,7 @@
 import { xpForLevel } from '@shared/engine/rewards'
 import type { PlayerState } from '@shared/types'
-import { Sword } from '@phosphor-icons/react'
-import { CoinIcon, FlameIcon, StarBadge } from './RewardIcons'
+import { Sword, Ticket } from '@phosphor-icons/react'
+import { FlameIcon, StarBadge } from './RewardIcons'
 
 interface Props {
   player: PlayerState
@@ -13,8 +13,8 @@ interface Props {
 
 /**
  * The player status bar (gaming look): level star with the XP bar growing out
- * of it (current/needed toward the next level), coins, and streak. The star,
- * coin, and flame are bespoke dimensional glyphs (see RewardIcons).
+ * of it (current/needed toward the next level), arcade tickets, and streak.
+ * The star and flame are bespoke dimensional glyphs (see RewardIcons).
  */
 export function PlayerBar({ player, activeCount, compact = false }: Props): JSX.Element {
   const need = xpForLevel(player.level)
@@ -28,8 +28,8 @@ export function PlayerBar({ player, activeCount, compact = false }: Props): JSX.
           <div className="xp-fill" style={{ width: `${pct}%` }} />
         </div>
         <span className="pstat">
-          <CoinIcon size={15} />
-          {player.currency}
+          <Ticket size={15} weight="fill" color="var(--gold)" />
+          {player.arcadeTickets}
         </span>
         <span className="pstat">
           <FlameIcon size={15} />
@@ -54,9 +54,9 @@ export function PlayerBar({ player, activeCount, compact = false }: Props): JSX.
         </div>
       </div>
       <div className="player-stats">
-        <span className="pstat" title="Coins — spend them in your World">
-          <CoinIcon size={19} />
-          {player.currency}
+        <span className="pstat" title="Arcade tickets — earn one per quest, play in the Arcade">
+          <Ticket size={18} weight="fill" color="var(--gold)" />
+          {player.arcadeTickets}
         </span>
         <span className="pstat" title="Day streak — XP bonus up to +25%">
           <FlameIcon size={19} />

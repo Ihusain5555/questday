@@ -223,7 +223,7 @@ export function QuestForm({ timeFrames, initial, defaultTimeFrameId, onSave, onC
             </div>
             {recurDays.length > 0 && (
               <small className="meta-dim">
-                Completing it counts every time (full XP, coins, growth). It returns fresh the
+                Completing it counts every time (full XP). It returns fresh the
                 next scheduled day, and quietly rests in between.
               </small>
             )}

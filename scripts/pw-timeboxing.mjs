@@ -72,7 +72,7 @@ try {
   const main = app.windows().find((w) => w.url().includes('index.html'))
 
   // Focus now lives under the "Productivity" tab (restructure).
-  await main.getByRole('button', { name: 'Productivity', exact: true }).click()
+  await main.getByRole('button', { name: 'Forge', exact: true }).click()
   await main.waitForTimeout(300)
   await main.getByRole('button', { name: 'Focus', exact: true }).click()
   await main.waitForTimeout(400)

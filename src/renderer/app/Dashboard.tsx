@@ -8,9 +8,8 @@ import {
 import { RealmPeek } from './RealmView'
 import { StatsView } from './StatsView'
 import { PlayerBar } from '../components/PlayerBar'
-import { questXP, questCurrency } from '@shared/engine/rewards'
+import { questXP } from '@shared/engine/rewards'
 import { Lightning, Check } from '@phosphor-icons/react'
-import { CoinIcon } from '../components/RewardIcons'
 
 export function Dashboard(): JSX.Element {
   const { db, completeQuest } = useStore()
@@ -37,9 +36,6 @@ export function Dashboard(): JSX.Element {
               <span className="bounty-label">Bounty</span>
               <span className="bounty-amt">
                 <Lightning size={15} weight="fill" /> {questXP(current)} XP
-              </span>
-              <span className="bounty-amt">
-                <CoinIcon size={15} /> {questCurrency(questXP(current))}
               </span>
             </div>
             <button className="primary cq-complete" onClick={() => void completeQuest(current.id)}>

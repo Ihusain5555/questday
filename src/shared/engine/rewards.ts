@@ -56,7 +56,9 @@ export function applyCompletion(quest: Quest, player: PlayerState, today: string
 
   const baseQuestXP = questXP(quest)
   const xpGained = Math.round(baseQuestXP * streakMultiplier)
-  const currencyGained = questCurrency(xpGained)
+  // Coins removed (v1.8.2): XP + the Realm are the rewards now. The currency
+  // field is kept for save-compat but never earned, so it stays put.
+  const currencyGained = 0
 
   let level = player.level
   let xp = player.xp + xpGained

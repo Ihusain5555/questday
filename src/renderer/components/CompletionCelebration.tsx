@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Star, Ticket, Flag } from '@phosphor-icons/react'
 import { useStore } from '../state/store'
 import { CountUp } from './CountUp'
-import { CoinIcon, FlameIcon } from './RewardIcons'
+import { FlameIcon } from './RewardIcons'
 
 // On-brand confetti (Clay Fantasy palette — no slop purple).
 const PARTICLE_COLORS = ['#2fb380', '#3fe0a8', '#f5b938', '#ffcf5c', '#ff6b6b', '#b566d6']
@@ -93,14 +93,6 @@ export function CompletionCelebration(): JSX.Element {
                   transition={{ delay: 0.18, type: 'spring', stiffness: 320, damping: 14 }}
                 >
                   +<CountUp value={celebration.award.xpGained} /> XP
-                </motion.span>
-                <motion.span
-                  className="reward-cur"
-                  initial={{ scale: 0.6, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.26, type: 'spring', stiffness: 320, damping: 14 }}
-                >
-                  +<CountUp value={celebration.award.currencyGained} /> <CoinIcon size={16} />
                 </motion.span>
               </div>
 

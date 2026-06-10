@@ -146,16 +146,8 @@ interface AppStore {
   // ---- Arcade (v1.4) ----
   /** Spend one ticket to start a round. Returns false if none left. */
   spendArcadeTicket: () => Promise<boolean>
-  /** End a round: pays the (capped) coin bonus and records a new best. */
-  finishArcadeRound: (gameKey: string, score: number) => Promise<{ coins: number; newBest: boolean }>
-
-  // ---- Focus timer ----
-  /**
-   * Record a completed focus session: pays a small coin bonus while under the
-   * daily cap (never punitive — a capped session still "counts" as a win, it
-   * just stops paying). Returns the coins actually awarded (0 once capped).
-   */
-  finishFocusSession: () => Promise<{ coins: number; capped: boolean }>
+  /** End a round: records a new best (high-score only — coins removed). */
+  finishArcadeRound: (gameKey: string, score: number) => Promise<{ newBest: boolean }>
 
   // ---- Time frames ----
   createTimeFrame: (tf: Omit<TimeFrame, 'id' | 'order'>) => Promise<void>
@@ -649,34 +641,15 @@ export const useStore = create<AppStore>((set, get) => ({
    */
   finishArcadeRound: async (gameKey, score) => {
     const db = get().db
-    if (!db) return { coins: 0, newBest: false }
-    const cfg = balance.arcade.games[gameKey as keyof typeof balance.arcade.games]
-    const coins = cfg ? Math.min(cfg.max, Math.max(0, Math.floor(score * cfg.rate))) : 0
+    if (!db) return { newBest: false }
     const prevBest = db.arcade.best[gameKey] ?? 0
     const newBest = score > prevBest
-    await get().save({
-      player: { ...db.player, currency: db.player.currency + coins },
-      arcade: newBest ? { ...db.arcade, best: { ...db.arcade.best, [gameKey]: score } } : db.arcade
-    })
-    return { coins, newBest }
+    if (newBest) {
+      await get().save({ arcade: { ...db.arcade, best: { ...db.arcade.best, [gameKey]: score } } })
+    }
+    return { newBest }
   },
 
-  // ---- Focus timer ---------------------------------------------------------
-  finishFocusSession: async () => {
-    const db = get().db
-    if (!db) return { coins: 0, capped: false }
-    const today = todayStr()
-    const { coinsPerSession, dailySessionCap } = balance.focus.reward
-    const rewardedToday =
-      db.focus.sessionsRewardedOn === today ? db.focus.sessionsRewardedCount : 0
-    if (rewardedToday >= dailySessionCap) return { coins: 0, capped: true }
-    const focus = { sessionsRewardedOn: today, sessionsRewardedCount: rewardedToday + 1 }
-    await get().save({
-      player: { ...db.player, currency: db.player.currency + coinsPerSession },
-      focus
-    })
-    return { coins: coinsPerSession, capped: false }
-  },
 
   // ---- Time frames ---------------------------------------------------------
   createTimeFrame: async (tf) => {

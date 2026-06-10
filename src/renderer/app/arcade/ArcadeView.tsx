@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useStore } from '../../state/store'
 import { balance } from '@shared/config/balance'
 import { GameController, Ticket, Trophy, Play, SpeakerSimpleHigh, SpeakerSimpleSlash } from '@phosphor-icons/react'
-import { CoinIcon } from '../../components/RewardIcons'
 import { play as playSfx, isMuted, toggleMuted } from './sound'
 import { AimTrainer } from './games/AimTrainer'
 import { ReactionTime } from './games/ReactionTime'
@@ -42,15 +41,13 @@ const GAME_COMPONENTS: Record<string, (props: { onFinish: (score: number) => voi
 interface RoundResult {
   key: GameKey
   score: number
-  coins: number
   newBest: boolean
 }
 
 /**
  * 🕹️ The Arcade (v1.4): ticket-gated minigames. Tickets come ONLY from quest
- * completions (capped per day, never expire) — the arcade is an earned reward,
- * not a coin farm. A good round pays a small capped coin bonus. Non-punitive:
- * quitting cashes out, bests only ever celebrate.
+ * completions (capped per day, never expire) — the arcade is an earned reward.
+ * Non-punitive: quitting cashes out, bests only ever celebrate.
  */
 export function ArcadeView(): JSX.Element {
   const { db, spendArcadeTicket, finishArcadeRound } = useStore()
@@ -82,9 +79,9 @@ export function ArcadeView(): JSX.Element {
     const key = playing
     setPlaying(null)
     if (!key) return
-    const { coins, newBest } = await finishArcadeRound(key, score)
+    const { newBest } = await finishArcadeRound(key, score)
     if (newBest) playSfx('best')
-    setResult({ key, score, coins, newBest })
+    setResult({ key, score, newBest })
   }
 
   if (playing) {
@@ -121,19 +118,14 @@ export function ArcadeView(): JSX.Element {
       </div>
       <p className="tagline">
         Earned fun: every quest you complete drops an arcade ticket (up to{' '}
-        {balance.arcade.ticketsPerDay}/day — they never expire). Do well in a round and a small
-        coin bonus comes back with you. 🪙
+        {balance.arcade.ticketsPerDay}/day — they never expire). Spend one on a round and chase a
+        new best.
       </p>
 
       {result && (
         <div className="card arcade-result">
           {balance.arcade.games[result.key].emoji} <strong>{balance.arcade.games[result.key].name}</strong>
           {' — '}score {result.score}
-          {result.coins > 0 && (
-            <span className="arcade-result-coins">
-              {' · '}+{result.coins} <CoinIcon size={13} />
-            </span>
-          )}
           {result.newBest && (
             <span className="arcade-result-best">
               {' · '}
@@ -165,8 +157,7 @@ export function ArcadeView(): JSX.Element {
                   </>
                 ) : (
                   'no rounds yet'
-                )}{' '}
-                · up to {cfg.max} <CoinIcon size={12} />
+                )}
               </div>
               <button
                 className="primary"

@@ -99,7 +99,7 @@ try {
   await main.screenshot({ path: path.join(shots, 'restructure-dashboard.png') })
 
   // --- Open the Matrix tool (Productivity → Matrix sub-tab) ---
-  await main.getByRole('button', { name: 'Productivity', exact: true }).click()
+  await main.getByRole('button', { name: 'Forge', exact: true }).click()
   await main.waitForTimeout(300)
   await main.screenshot({ path: path.join(shots, 'restructure-productivity.png') })
   await main.getByRole('button', { name: 'Matrix', exact: true }).click()
@@ -142,7 +142,7 @@ try {
   result('EH_TOGGLE_PRESENT_TEST', (await sw.count()) === 1, 'Matrix toggle present in settings')
   await sw.uncheck()
   await main.waitForTimeout(300)
-  await main.getByRole('button', { name: 'Productivity', exact: true }).click()
+  await main.getByRole('button', { name: 'Forge', exact: true }).click()
   await main.waitForTimeout(400)
   result('EH_SUBTAB_HIDDEN_TEST',
     (await main.locator('.subtab', { hasText: 'Matrix' }).count()) === 0,
@@ -152,7 +152,7 @@ try {
   sw = main.locator('.feature-toggle', { hasText: 'Eisenhower matrix' }).locator('input')
   await sw.check()
   await main.waitForTimeout(300)
-  await main.getByRole('button', { name: 'Productivity', exact: true }).click()
+  await main.getByRole('button', { name: 'Forge', exact: true }).click()
   await main.waitForTimeout(400)
   result('EH_SUBTAB_RESTORED_TEST',
     (await main.locator('.subtab', { hasText: 'Matrix' }).count()) === 1,

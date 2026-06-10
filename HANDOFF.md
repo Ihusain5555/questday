@@ -8,8 +8,11 @@ codex. Gains-only (a charted region/discovery is kept forever; ↩ Restore trims
 The UI-chrome emoji→Phosphor sweep is also finished. Built on v1.7.x (Premium Fantasy "Clay
 Fantasy" redesign + app-wide Phosphor icons). v1.8.1 also slimmed the top nav (10 → 7 tabs:
 Stats folded into the Dashboard; Focus + Matrix + Active mode combined into a **Forge** tab with
-a sub-nav) and made the layout fill the window (tabs collapse to one row when wide). Built +
-installed as `QuestDay Setup 1.8.1.exe`.**
+a sub-nav) and made the layout fill the window (tabs collapse to one row when wide). v1.8.2
+REMOVED coins entirely (the garden shop was their only sink): XP + the Realm are the rewards now,
+the PlayerBar shows arcade TICKETS in coins' old slot, the arcade is high-score-only, and focus
+sessions just count. The `currency` field is kept in saved data (never earned/shown). Built +
+installed as `QuestDay Setup 1.8.2.exe`.**
 v1.5 shipped the full roadmap, themed worlds, harvest economy, the ticket-gated arcade, and
 recurring quests (all 2026-06-06); the arcade grew to 14 minigames; v1.6 (2026-06-08 →
 2026-06-09) added the productivity tools (⏱️ Focus, 🧭 Matrix, 📦 Timeboxing) + feature
