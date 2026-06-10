@@ -30,6 +30,7 @@ const SHAPES: ReadonlyArray<ReadonlyArray<readonly [number, number]>> = [
 ]
 
 type Answer = 'same' | 'mirror'
+type Mode = 'easy' | 'medium' | 'hard'
 
 interface Trial {
   shape: ReadonlyArray<readonly [number, number]>
@@ -38,17 +39,37 @@ interface Trial {
   mirror: boolean // comparison flipped horizontally before rotating
 }
 
-// Finer rotation steps unlock as the player warms up.
-function angleFor(score: number): number {
+// The mode sets the angle GRANULARITY + how fast it ramps with score; the
+// within-round staircase (score climbing) still pushes skilled players further.
+// - easy:   clean 90° steps the whole round (never finer)
+// - medium: 90° -> 45° -> arbitrary as the score climbs (the original ramp)
+// - hard:   start at 45°, reach arbitrary angles quickly, prefer complex shapes
+function angleFor(score: number, mode: Mode): number {
+  if (mode === 'easy') return Math.floor(Math.random() * 4) * 90 // 0/90/180/270, always
+  if (mode === 'hard') {
+    if (score < 2) return Math.floor(Math.random() * 8) * 45 // start finer (45° steps)
+    return Math.floor(Math.random() * 24) * 15 // arbitrary-ish, very soon
+  }
+  // medium — the original ramp
   if (score < 4) return Math.floor(Math.random() * 4) * 90 // 0/90/180/270
   if (score < 9) return Math.floor(Math.random() * 8) * 45 // +45° steps
   return Math.floor(Math.random() * 24) * 15 // arbitrary-ish
 }
 
-function nextTrial(score: number): Trial {
-  const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)]
+// On hard, lean toward the more visually complex shapes (the staircase and the
+// offset T), which are harder to mentally rotate; other modes pick uniformly.
+const COMPLEX_SHAPES = [2, 3] // indices into SHAPES: W/staircase + skewed T
+function pickShape(mode: Mode): ReadonlyArray<readonly [number, number]> {
+  if (mode === 'hard' && Math.random() < 0.65) {
+    return SHAPES[COMPLEX_SHAPES[Math.floor(Math.random() * COMPLEX_SHAPES.length)]]
+  }
+  return SHAPES[Math.floor(Math.random() * SHAPES.length)]
+}
+
+function nextTrial(score: number, mode: Mode): Trial {
+  const shape = pickShape(mode)
   const mirror = Math.random() < 0.5 // 50/50 same vs mirror
-  return { shape, answer: mirror ? 'mirror' : 'same', angle: angleFor(score), mirror }
+  return { shape, answer: mirror ? 'mirror' : 'same', angle: angleFor(score, mode), mirror }
 }
 
 const CELL = 22 // px per grid cell in the SVG
@@ -91,11 +112,21 @@ export function MentalSpin({ onFinish }: { onFinish: (score: number) => void }):
   const [timeLeft, setTimeLeft] = useState(DURATION_S)
   const [score, setScore] = useState(0)
   const [best, setBest] = useState(0) // best score reached this round (for a 'best' chime)
-  const [trial, setTrial] = useState<Trial>(() => nextTrial(0))
+  const [mode, setMode] = useState<Mode>('medium') // default; Playwright drives this default
+  const [trial, setTrial] = useState<Trial>(() => nextTrial(0, 'medium'))
   const [flash, setFlash] = useState<'good' | 'bad' | null>(null)
   const scoreRef = useRef(0)
+  const modeRef = useRef<Mode>('medium')
   const done = useRef(false)
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Difficulty is chosen during the "ready" countdown, then locked once play starts.
+  const pickMode = (m: Mode): void => {
+    if (phase !== 'ready') return
+    setMode(m)
+    modeRef.current = m
+    setTrial(nextTrial(0, m)) // reflect the new granularity immediately
+  }
 
   const finish = (): void => {
     if (done.current) return
@@ -148,7 +179,7 @@ export function MentalSpin({ onFinish }: { onFinish: (score: number) => void }):
     setFlash(correct ? 'good' : 'bad')
     if (flashTimer.current) clearTimeout(flashTimer.current)
     flashTimer.current = setTimeout(() => setFlash(null), 200)
-    setTrial(nextTrial(scoreRef.current))
+    setTrial(nextTrial(scoreRef.current, modeRef.current))
   }
 
   const endEarly = finish
@@ -163,6 +194,26 @@ export function MentalSpin({ onFinish }: { onFinish: (score: number) => void }):
       <div className={`ms-field${flash === 'bad' ? ' ms-flash' : ''}`} data-answer={trial.answer}>
         {phase === 'ready' ? (
           <div className="ms-ready">
+            <div className="game-diff" role="group" aria-label="difficulty">
+              <button
+                className={'game-diff-opt' + (mode === 'easy' ? ' on' : '')}
+                onClick={() => pickMode('easy')}
+              >
+                Easy
+              </button>
+              <button
+                className={'game-diff-opt' + (mode === 'medium' ? ' on' : '')}
+                onClick={() => pickMode('medium')}
+              >
+                Medium
+              </button>
+              <button
+                className={'game-diff-opt' + (mode === 'hard' ? ' on' : '')}
+                onClick={() => pickMode('hard')}
+              >
+                Hard
+              </button>
+            </div>
             <span className="meta-dim">Same shape — just rotated, or mirrored?</span>
             <span className="ms-ready-count">{count > 0 ? count : 'Go!'}</span>
           </div>

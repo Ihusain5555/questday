@@ -18,13 +18,20 @@ import { Timer } from '@phosphor-icons/react'
 
 const CELLS = 9 // 3x3 grid
 const DURATION_S = 75 // timed round
-const START_L = 3 // starting span length
-const MIN_L = 3
 const MAX_L = 9
 const LIT_MS = 600 // each cell stays lit this long
 const GAP_MS = 220 // blank gap between flashes
 
 type Order = 'forward' | 'backward'
+type Mode = 'easy' | 'medium' | 'hard'
+
+// Each mode sets the recall direction and the STARTING span; the staircase still
+// grows/shrinks from there (min span = the mode's start so it never eases below it).
+const MODES: Record<Mode, { order: Order; start: number }> = {
+  easy: { order: 'forward', start: 2 }, // gentle: forward, span 2
+  medium: { order: 'forward', start: 3 }, // forward, span 3 (default, Playwright-driven)
+  hard: { order: 'backward', start: 3 }, // working-memory twist: reverse, span 3
+}
 
 // A sequence of `len` distinct-from-neighbour cell indices (no immediate repeat).
 function buildSequence(len: number): number[] {
@@ -40,9 +47,9 @@ function buildSequence(len: number): number[] {
 export function SpanRecall({ onFinish }: { onFinish: (score: number) => void }): JSX.Element {
   const [phase, setPhase] = useState<'ready' | 'playing'>('ready')
   const [count, setCount] = useState(3)
-  const [order, setOrder] = useState<Order>('forward')
+  const [mode, setMode] = useState<Mode>('medium') // default = medium (forward, span 3)
   const [timeLeft, setTimeLeft] = useState(DURATION_S)
-  const [span, setSpan] = useState(START_L) // the current sequence length
+  const [span, setSpan] = useState(MODES.medium.start) // the current sequence length
   const [best, setBest] = useState(0) // highest span reproduced this round = score
   const [seq, setSeq] = useState<number[]>([])
   const [showIdx, setShowIdx] = useState(-1) // which cell is lit during "show" (-1 = none)
@@ -56,10 +63,13 @@ export function SpanRecall({ onFinish }: { onFinish: (score: number) => void }):
   const showTimers = useRef<ReturnType<typeof setTimeout>[]>([])
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Difficulty (forward/backward) is locked once play starts.
-  const pickOrder = (o: Order) => {
+  // Mode sets recall direction + starting span; locked once play starts (ready only).
+  const order: Order = MODES[mode].order
+  const minSpan = MODES[mode].start // staircase never eases below the mode's start
+  const pickMode = (m: Mode) => {
     if (phase !== 'ready') return
-    setOrder(o)
+    setMode(m)
+    setSpan(MODES[m].start)
   }
 
   const clearShowTimers = () => {
@@ -169,7 +179,7 @@ export function SpanRecall({ onFinish }: { onFinish: (score: number) => void }):
       // Wrong tap — gentle: no points lost, ease the span back and replay.
       play('bad')
       flashCell(idx, 'wrong')
-      const eased = Math.max(MIN_L, span - 1)
+      const eased = Math.max(minSpan, span - 1)
       setSpan(eased)
       setCaption('close — here it comes again')
       setStep('show')
@@ -203,13 +213,13 @@ export function SpanRecall({ onFinish }: { onFinish: (score: number) => void }):
         {phase === 'ready' ? (
           <div className="sr-ready">
             <div className="game-diff" role="group" aria-label="difficulty">
-              {(['forward', 'backward'] as Order[]).map((o) => (
+              {(['easy', 'medium', 'hard'] as Mode[]).map((m) => (
                 <button
-                  key={o}
-                  className={`game-diff-opt${order === o ? ' on' : ''}`}
-                  onClick={() => pickOrder(o)}
+                  key={m}
+                  className={`game-diff-opt${mode === m ? ' on' : ''}`}
+                  onClick={() => pickMode(m)}
                 >
-                  {o === 'forward' ? 'Forward' : 'Backward'}
+                  {m === 'easy' ? 'Easy' : m === 'medium' ? 'Medium' : 'Hard'}
                 </button>
               ))}
             </div>

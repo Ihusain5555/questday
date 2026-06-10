@@ -16,8 +16,27 @@ import { Timer } from '@phosphor-icons/react'
 
 const DURATION_S = 50
 
-// The interleaved target sequence: 1 A 2 B 3 C 4 D 5 E 6 F (12 nodes).
-const SEQUENCE = ['1', 'A', '2', 'B', '3', 'C', '4', 'D', '5', 'E', '6', 'F'] as const
+// The full interleaved target sequence: 1 A 2 B 3 C … up to 8 H (16 nodes).
+// Each mode slices the first N of these (see DIFFS), so the alternating
+// number/letter rule holds for ANY node count.
+const SEQUENCE = [
+  '1',
+  'A',
+  '2',
+  'B',
+  '3',
+  'C',
+  '4',
+  'D',
+  '5',
+  'E',
+  '6',
+  'F',
+  '7',
+  'G',
+  '8',
+  'H'
+] as const
 
 interface Node {
   label: string
@@ -26,11 +45,18 @@ interface Node {
 }
 
 // Difficulty: how many nodes are on screen at once (a longer trail = more
-// switches to track). Both still use the same interleaved number/letter rule.
+// switches to track). Every mode still uses the same interleaved
+// number/letter rule — only the trail length grows.
+//   Easy   = 8  nodes (1-4 + A-D)
+//   Medium = 12 nodes (1-6 + A-F)
+//   Hard   = 16 nodes (1-8 + A-H)
 const DIFFS = [
-  { key: 'calm', name: 'Calm', count: 8 },
-  { key: 'spicy', name: 'Spicy', count: 12 }
+  { key: 'easy', name: 'Easy', count: 8 },
+  { key: 'medium', name: 'Medium', count: 12 },
+  { key: 'hard', name: 'Hard', count: 16 }
 ] as const
+
+type Mode = (typeof DIFFS)[number]['key']
 
 // Lay the nodes out as a jittered grid: split the field into enough slots,
 // shuffle which slot each node takes, then jitter the node within its slot so
@@ -66,9 +92,11 @@ export function TrackSwitch({ onFinish }: { onFinish: (score: number) => void })
   const [count, setCount] = useState(3)
   const [timeLeft, setTimeLeft] = useState(DURATION_S)
   const [score, setScore] = useState(0)
-  const [diff, setDiff] = useState<(typeof DIFFS)[number]['key']>('calm')
-  const cur = DIFFS.find((d) => d.key === diff) ?? DIFFS[0]
-  const [nodes, setNodes] = useState<Node[]>(() => buildTrail(DIFFS[0].count))
+  // Default mode = "medium" (12 nodes) so Playwright can drive the default
+  // straight after the countdown without touching the picker.
+  const [mode, setMode] = useState<Mode>('medium')
+  const cur = DIFFS.find((d) => d.key === mode) ?? DIFFS[1]
+  const [nodes, setNodes] = useState<Node[]>(() => buildTrail(cur.count))
   const [ptr, setPtr] = useState(0) // index into the current trail's target order
   const [shake, setShake] = useState<string | null>(null) // label currently shaking
 
@@ -80,9 +108,10 @@ export function TrackSwitch({ onFinish }: { onFinish: (score: number) => void })
   const nextLabel = ptr < nodes.length ? nodes[ptr].label : ''
 
   // Difficulty is chosen during the "ready" countdown, then locked.
-  const pickDiff = (d: (typeof DIFFS)[number]) => {
+  const pickMode = (m: Mode) => {
     if (phase !== 'ready') return
-    setDiff(d.key)
+    const d = DIFFS.find((x) => x.key === m) ?? DIFFS[1]
+    setMode(d.key)
     setNodes(buildTrail(d.count))
     setPtr(0)
   }
@@ -128,11 +157,13 @@ export function TrackSwitch({ onFinish }: { onFinish: (score: number) => void })
     if (done.current || phase !== 'playing') return
     if (label === nextLabel) {
       // Correct next-tap: mark done (advance the pointer) and score.
-      play('good')
+      // Completing a whole trail is a "best" beat; an ordinary tap is "good".
+      const next = ptr + 1
+      const trailDone = next >= nodes.length
+      play(trailDone ? 'best' : 'good')
       scoreRef.current += 1
       setScore(scoreRef.current)
-      const next = ptr + 1
-      if (next >= nodes.length) {
+      if (trailDone) {
         // Whole trail complete — reshuffle a brand-new one and keep going.
         setNodes(buildTrail(cur.count))
         setPtr(0)
@@ -166,8 +197,8 @@ export function TrackSwitch({ onFinish }: { onFinish: (score: number) => void })
               {DIFFS.map((d) => (
                 <button
                   key={d.key}
-                  className={`game-diff-opt${diff === d.key ? ' on' : ''}`}
-                  onClick={() => pickDiff(d)}
+                  className={`game-diff-opt${mode === d.key ? ' on' : ''}`}
+                  onClick={() => pickMode(d.key)}
                 >
                   {d.name}
                 </button>

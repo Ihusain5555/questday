@@ -18,11 +18,12 @@ import { play } from '../sound'
 const SLOTS = 8 // positions around the ring (clock face)
 // Start exposure by difficulty (chosen during "ready"); it still adapts from there.
 const STARTS = [
-  { key: 'relaxed', name: 'Relaxed', ms: 520 },
-  { key: 'normal', name: 'Normal', ms: 420 },
-  { key: 'sharp', name: 'Sharp', ms: 320 }
+  { key: 'easy', name: 'Easy', ms: 540 },
+  { key: 'medium', name: 'Medium', ms: 420 },
+  { key: 'hard', name: 'Hard', ms: 300 }
 ] as const
-const START_MS = 420 // default first exposure (Normal)
+type Mode = (typeof STARTS)[number]['key']
+const START_MS = 420 // default first exposure (Medium)
 const MIN_MS = 90 // floor — can't get easier to see than this
 const MAX_MS = 650 // ceiling after misses
 const STEP_DOWN = 40 // shorten on a hit (harder)
@@ -45,13 +46,13 @@ export function FlashRecall({ onFinish }: { onFinish: (score: number) => void })
   const [target, setTarget] = useState(0)
   const [chosen, setChosen] = useState<number | null>(null)
   const [sharpest, setSharpest] = useState<number | null>(null) // briefest flash localised correctly
-  const [diff, setDiff] = useState<(typeof STARTS)[number]['key']>('normal')
+  const [mode, setMode] = useState<Mode>('medium')
   const exposure = useRef(START_MS)
 
   // Difficulty sets the starting exposure (locked once the first flash begins).
-  const pickDiff = (s: (typeof STARTS)[number]) => {
+  const pickMode = (s: (typeof STARTS)[number]) => {
     if (phase !== 'ready') return
-    setDiff(s.key)
+    setMode(s.key)
     exposure.current = s.ms
   }
   const done = useRef(false)
@@ -159,8 +160,8 @@ export function FlashRecall({ onFinish }: { onFinish: (score: number) => void })
               {STARTS.map((s) => (
                 <button
                   key={s.key}
-                  className={`game-diff-opt${diff === s.key ? ' on' : ''}`}
-                  onClick={() => pickDiff(s)}
+                  className={`game-diff-opt${mode === s.key ? ' on' : ''}`}
+                  onClick={() => pickMode(s)}
                 >
                   {s.name}
                 </button>

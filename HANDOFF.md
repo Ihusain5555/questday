@@ -21,6 +21,17 @@ backfires — cf. the Duolingo Energy backlash): **3 FREE brain-breaks/day** top
 (never stacking) + **1 per quest**, no hard cap (`balance.arcade.ticketsFreePerDay: 3`,
 `ticketsPerDay: 20` soft cap; the daily top-up lives in `store.ts` `runDayChange`, new
 `arcade.freeGrantedOn` date-stamp). Built + installed as `QuestDay Setup 1.8.4.exe`.**
+**v1.8.5 — difficulty for every brain game.** Audit found only 3/10 games actually adapted
+(Flash Recall exposure staircase, Span Recall span staircase, Mental Spin angle ramp); the rest
+were fixed or had ad-hoc 2-option pickers. Standardized ALL 10 to a uniform **Easy / Medium /
+Hard** picker in the ready phase (shared `.game-diff`/`.game-diff-opt` pills, default Medium,
+locked once a round starts), while the 3 adaptive games keep their within-round staircases (the
+mode just sets the starting point). Per-mode: N-Back 1/2/3-back · Color Clash 4/5/6 swatches +
+rising incongruence (+combo ramp) · Flash Recall 540/420/300ms start · Span Recall fwd-2 / fwd-3 /
+**back**-3 · Mental Spin 90°/45°/arbitrary angles · Track Switch 8/12/16 nodes · Stop Tap
+slow/med/fast cadence + no-go rate (+score ramp) · Aim big/med/small (+shrink ramp) · Reaction
+5/5/8 trials · Memory 6/8/10 pairs. Verified (pw:arcade — 10 cards + 7 driven games launch/score;
+Medium default unchanged so existing tests pass). Built + installed as `QuestDay Setup 1.8.5.exe`.**
 v1.5 shipped the full roadmap, themed worlds, harvest economy, the ticket-gated arcade, and
 recurring quests (all 2026-06-06); the arcade grew to 14 minigames; v1.6 (2026-06-08 →
 2026-06-09) added the productivity tools (⏱️ Focus, 🧭 Matrix, 📦 Timeboxing) + feature

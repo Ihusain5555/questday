@@ -4,14 +4,15 @@ import { play } from '../sound'
 
 /**
  * 🔢 N-Back — the classic working-memory workout. Cells light up one at a time;
- * press MATCH whenever the lit cell is the same as the one N steps back (here
- * 2-back). You have to hold the last couple of positions in mind and update them
- * every step. Score = correct catches minus false alarms (floored at 0) — a
+ * press MATCH whenever the lit cell is the same as the one N steps back (Easy =
+ * 1-back, Medium = 2-back, Hard = 3-back). You have to hold the last couple of
+ * positions in mind and update them every step. Score = correct catches minus
+ * false alarms (floored at 0) — a
  * wrong tap costs a point in the round but never the product (no streak/level
  * harm). Misses are quiet; the round just rolls on.
  *
  * Feel: a "Get ready" countdown so the sequence never starts cold, and each cell
- * lights then CLEARS before the next (a readable beat) so the 2-back is trackable.
+ * lights then CLEARS before the next (a readable beat) so the n-back is trackable.
  */
 
 const CELLS = 9 // 3x3 grid
@@ -35,9 +36,14 @@ function buildSequence(n: number): number[] {
   return seq
 }
 
+type Mode = 'easy' | 'medium' | 'hard'
+// Modes set the n-level: Easy = 1-back, Medium = 2-back, Hard = 3-back.
+const MODE_N: Record<Mode, number> = { easy: 1, medium: 2, hard: 3 }
+
 export function NBack({ onFinish }: { onFinish: (score: number) => void }): JSX.Element {
-  const [nLevel, setNLevel] = useState(2) // 2-back / 3-back (chosen during "ready")
-  const seq = useRef<number[]>(buildSequence(2))
+  const [mode, setMode] = useState<Mode>('medium') // chosen during "ready"; default playable
+  const nLevel = MODE_N[mode] // n-level derived from mode; everything downstream reads nLevel
+  const seq = useRef<number[]>(buildSequence(MODE_N.medium))
   const [phase, setPhase] = useState<'ready' | 'playing'>('ready')
   const [count, setCount] = useState(3)
   const [step, setStep] = useState(0)
@@ -54,10 +60,10 @@ export function NBack({ onFinish }: { onFinish: (score: number) => void }): JSX.
   const isMatch = (i: number) => i >= nLevel && seq.current[i] === seq.current[i - nLevel]
 
   // Difficulty is locked once play starts; changing it rebuilds the sequence.
-  const pickLevel = (n: number) => {
-    if (phase !== 'ready' || n === nLevel) return
-    setNLevel(n)
-    seq.current = buildSequence(n)
+  const pickMode = (m: Mode) => {
+    if (phase !== 'ready' || m === mode) return
+    setMode(m)
+    seq.current = buildSequence(MODE_N[m])
   }
 
   const finish = () => {
@@ -145,15 +151,24 @@ export function NBack({ onFinish }: { onFinish: (score: number) => void }): JSX.
         {phase === 'ready' && (
           <div className="nback-ready">
             <div className="game-diff" role="group" aria-label="difficulty">
-              {[2, 3].map((n) => (
-                <button
-                  key={n}
-                  className={`game-diff-opt${nLevel === n ? ' on' : ''}`}
-                  onClick={() => pickLevel(n)}
-                >
-                  {n}-back
-                </button>
-              ))}
+              <button
+                className={`game-diff-opt${mode === 'easy' ? ' on' : ''}`}
+                onClick={() => pickMode('easy')}
+              >
+                Easy
+              </button>
+              <button
+                className={`game-diff-opt${mode === 'medium' ? ' on' : ''}`}
+                onClick={() => pickMode('medium')}
+              >
+                Medium
+              </button>
+              <button
+                className={`game-diff-opt${mode === 'hard' ? ' on' : ''}`}
+                onClick={() => pickMode('hard')}
+              >
+                Hard
+              </button>
             </div>
             <span className="nback-ready-label">Get ready…</span>
             <span className="nback-ready-count">{count > 0 ? count : 'Go!'}</span>

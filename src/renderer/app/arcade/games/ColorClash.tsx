@@ -29,12 +29,15 @@ interface Prompt {
   options: number[] // shuffled colour indices to choose from (includes ink)
 }
 
-// Difficulty: how many swatches to choose among, and how often the word is
-// incongruent with the ink (the harder it is to ignore the word).
-const DIFFS = [
-  { key: 'calm', name: 'Calm', count: 4, incong: 0.7 },
-  { key: 'spicy', name: 'Spicy', count: 6, incong: 0.85 }
-] as const
+// Difficulty mode: how many swatches to choose among, and how often the word is
+// incongruent with the ink (the harder it is to ignore the word). Easy/Medium/
+// Hard — the consistent arcade difficulty system. Default = medium.
+type Mode = 'easy' | 'medium' | 'hard'
+const MODES: { key: Mode; name: string; count: number; incong: number }[] = [
+  { key: 'easy', name: 'Easy', count: 4, incong: 0.6 },
+  { key: 'medium', name: 'Medium', count: 5, incong: 0.8 },
+  { key: 'hard', name: 'Hard', count: 6, incong: 0.9 }
+]
 
 function nextPrompt(count: number, incong: number): Prompt {
   const ink = Math.floor(Math.random() * COLORS.length)
@@ -66,20 +69,26 @@ export function ColorClash({ onFinish }: { onFinish: (score: number) => void }):
   const [score, setScore] = useState(0)
   const [combo, setCombo] = useState(0)
   const [bestCombo, setBestCombo] = useState(0)
-  const [diff, setDiff] = useState<(typeof DIFFS)[number]['key']>('calm')
-  const cur = DIFFS.find((d) => d.key === diff) ?? DIFFS[0]
-  const [prompt, setPrompt] = useState<Prompt>(() => nextPrompt(DIFFS[0].count, DIFFS[0].incong))
+  const [mode, setMode] = useState<Mode>('medium')
+  const cur = MODES.find((m) => m.key === mode) ?? MODES[1]
+  const [prompt, setPrompt] = useState<Prompt>(() => nextPrompt(MODES[1].count, MODES[1].incong))
   const [flash, setFlash] = useState<'good' | 'bad' | null>(null)
   const [pop, setPop] = useState(0) // bumps a floating "+1" on each correct tap
 
   // Difficulty is chosen during the "ready" countdown, then locked.
-  const pickDiff = (d: (typeof DIFFS)[number]) => {
+  const pickMode = (m: Mode) => {
     if (phase !== 'ready') return
-    setDiff(d.key)
-    setPrompt(nextPrompt(d.count, d.incong))
+    const picked = MODES.find((x) => x.key === m) ?? MODES[1]
+    setMode(m)
+    setPrompt(nextPrompt(picked.count, picked.incong))
   }
   const done = useRef(false)
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Within-round ramp: every +5 combo nudges incongruence up a touch (cap 0.95),
+  // so a skilled player on any mode keeps getting pushed.
+  const rampedIncong = (combo: number): number =>
+    Math.min(0.95, cur.incong + Math.floor(combo / 5) * 0.02)
 
   // "Ready" countdown -> start play (and the clock).
   useEffect(() => {
@@ -111,14 +120,15 @@ export function ColorClash({ onFinish }: { onFinish: (score: number) => void }):
   const pick = (idx: number) => {
     if (done.current || phase !== 'playing') return
     const correct = idx === prompt.ink
+    let nextCombo = 0
     if (correct) {
       play('good')
       setScore((s) => s + 1)
       setPop((p) => p + 1)
       setCombo((c) => {
-        const n = c + 1
-        setBestCombo((b) => Math.max(b, n))
-        return n
+        nextCombo = c + 1
+        setBestCombo((b) => Math.max(b, nextCombo))
+        return nextCombo
       })
     } else {
       play('bad')
@@ -127,7 +137,8 @@ export function ColorClash({ onFinish }: { onFinish: (score: number) => void }):
     setFlash(correct ? 'good' : 'bad')
     if (flashTimer.current) clearTimeout(flashTimer.current)
     flashTimer.current = setTimeout(() => setFlash(null), 180)
-    setPrompt(nextPrompt(cur.count, cur.incong))
+    // Mode sets the starting incongruence; the combo ramp nudges it up within the round.
+    setPrompt(nextPrompt(cur.count, rampedIncong(nextCombo)))
   }
 
   const endEarly = () => {
@@ -149,13 +160,13 @@ export function ColorClash({ onFinish }: { onFinish: (score: number) => void }):
         {phase === 'ready' ? (
           <div className="cc-ready">
             <div className="game-diff" role="group" aria-label="difficulty">
-              {DIFFS.map((d) => (
+              {MODES.map((m) => (
                 <button
-                  key={d.key}
-                  className={`game-diff-opt${diff === d.key ? ' on' : ''}`}
-                  onClick={() => pickDiff(d)}
+                  key={m.key}
+                  className={`game-diff-opt${mode === m.key ? ' on' : ''}`}
+                  onClick={() => pickMode(m.key)}
                 >
-                  {d.name}
+                  {m.name}
                 </button>
               ))}
             </div>
