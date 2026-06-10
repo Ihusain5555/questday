@@ -6,7 +6,10 @@ then return with a piece of knowledge YOU pick (Cosmos / Nature / History / Wisd
 a tease-then-reveal of one surprising, fact-checked truth, collected in a re-readable Chronicle
 codex. Gains-only (a charted region/discovery is kept forever; ↩ Restore trims only the newest).
 The UI-chrome emoji→Phosphor sweep is also finished. Built on v1.7.x (Premium Fantasy "Clay
-Fantasy" redesign + app-wide Phosphor icons). Built + installed as `QuestDay Setup 1.8.0.exe`.**
+Fantasy" redesign + app-wide Phosphor icons). v1.8.1 also slimmed the top nav (10 → 7 tabs:
+Stats folded into the Dashboard; Focus + Matrix + Active mode combined into a **Forge** tab with
+a sub-nav) and made the layout fill the window (tabs collapse to one row when wide). Built +
+installed as `QuestDay Setup 1.8.1.exe`.**
 v1.5 shipped the full roadmap, themed worlds, harvest economy, the ticket-gated arcade, and
 recurring quests (all 2026-06-06); the arcade grew to 14 minigames; v1.6 (2026-06-08 →
 2026-06-09) added the productivity tools (⏱️ Focus, 🧭 Matrix, 📦 Timeboxing) + feature

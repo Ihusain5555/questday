@@ -87,8 +87,22 @@ try {
     `userData = ${dir} (want isolated temp dir, NOT real APPDATA)`)
   const main = app.windows().find((w) => w.url().includes('index.html'))
 
-  // --- Open the Matrix tab ---
-  await main.getByRole('button', { name: 'Matrix' }).click()
+  // Restructure: tabs collapse to one row on a wide window; Focus/Matrix/Active
+  // now live under the "Productivity" tab; Stats is folded into the Dashboard.
+  const win = await app.browserWindow(main)
+  await win.evaluate((w) => w.setBounds({ width: 1320, height: 860 }))
+  await main.waitForTimeout(300)
+  result('TABS_COUNT_TEST', (await main.locator('nav.tabs .tab').count()) === 7,
+    `${await main.locator('nav.tabs .tab').count()} top-level tabs (want 7)`)
+  result('DASH_STATS_TEST', (await main.locator('.dash-stats').count()) === 1,
+    'Stats folded into the Dashboard')
+  await main.screenshot({ path: path.join(shots, 'restructure-dashboard.png') })
+
+  // --- Open the Matrix tool (Productivity → Matrix sub-tab) ---
+  await main.getByRole('button', { name: 'Productivity', exact: true }).click()
+  await main.waitForTimeout(300)
+  await main.screenshot({ path: path.join(shots, 'restructure-productivity.png') })
+  await main.getByRole('button', { name: 'Matrix', exact: true }).click()
   await main.waitForTimeout(400)
   result('EH_GRID_TEST', (await main.locator('.eh-quad').count()) === 4,
     `${await main.locator('.eh-quad').count()} quadrants (want 4)`)
@@ -121,21 +135,28 @@ try {
       (await main.locator('.eh-quad[data-quad="do"] .eh-chip.current').count()) === 1,
     `${await main.locator('.eh-chip.current').count()} starred (want 1, in Do-now)`)
 
-  // --- Toggle (Data → Productivity features) hides/shows the Matrix tab ---
-  await main.getByRole('button', { name: 'Data' }).click()
+  // --- Toggle (Data → Productivity features) hides/shows the Matrix SUB-tab ---
+  await main.getByRole('button', { name: 'Data', exact: true }).click()
   await main.waitForTimeout(400)
-  const sw = main.locator('.feature-toggle', { hasText: 'Eisenhower matrix' }).locator('input')
+  let sw = main.locator('.feature-toggle', { hasText: 'Eisenhower matrix' }).locator('input')
   result('EH_TOGGLE_PRESENT_TEST', (await sw.count()) === 1, 'Matrix toggle present in settings')
   await sw.uncheck()
+  await main.waitForTimeout(300)
+  await main.getByRole('button', { name: 'Productivity', exact: true }).click()
   await main.waitForTimeout(400)
-  result('EH_TAB_HIDDEN_TEST',
-    (await main.getByRole('button', { name: 'Matrix', exact: true }).count()) === 0,
-    'Matrix tab hidden after toggle off')
+  result('EH_SUBTAB_HIDDEN_TEST',
+    (await main.locator('.subtab', { hasText: 'Matrix' }).count()) === 0,
+    'Matrix sub-tab hidden after toggle off')
+  await main.getByRole('button', { name: 'Data', exact: true }).click()
+  await main.waitForTimeout(400)
+  sw = main.locator('.feature-toggle', { hasText: 'Eisenhower matrix' }).locator('input')
   await sw.check()
+  await main.waitForTimeout(300)
+  await main.getByRole('button', { name: 'Productivity', exact: true }).click()
   await main.waitForTimeout(400)
-  result('EH_TAB_RESTORED_TEST',
-    (await main.getByRole('button', { name: 'Matrix', exact: true }).count()) === 1,
-    'Matrix tab returns after toggle on')
+  result('EH_SUBTAB_RESTORED_TEST',
+    (await main.locator('.subtab', { hasText: 'Matrix' }).count()) === 1,
+    'Matrix sub-tab returns after toggle on')
 
   await app.close()
 } catch (err) {

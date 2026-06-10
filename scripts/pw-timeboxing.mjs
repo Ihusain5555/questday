@@ -71,7 +71,10 @@ try {
     `userData = ${dir} (want isolated temp dir)`)
   const main = app.windows().find((w) => w.url().includes('index.html'))
 
-  await main.getByRole('button', { name: 'Focus' }).click()
+  // Focus now lives under the "Productivity" tab (restructure).
+  await main.getByRole('button', { name: 'Productivity', exact: true }).click()
+  await main.waitForTimeout(300)
+  await main.getByRole('button', { name: 'Focus', exact: true }).click()
   await main.waitForTimeout(400)
 
   // --- Timebox button present, sized 20 × 1.5 = 30m ---

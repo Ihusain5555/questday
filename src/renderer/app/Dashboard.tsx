@@ -6,6 +6,7 @@ import {
   immediateSubTask
 } from '@shared/engine/selectCurrentQuest'
 import { RealmPeek } from './RealmView'
+import { StatsView } from './StatsView'
 import { PlayerBar } from '../components/PlayerBar'
 import { questXP, questCurrency } from '@shared/engine/rewards'
 import { Lightning, Check } from '@phosphor-icons/react'
@@ -55,6 +56,10 @@ export function Dashboard(): JSX.Element {
       </div>
 
       <RealmPeek />
+
+      <div className="dash-stats">
+        <StatsView />
+      </div>
     </div>
   )
 }

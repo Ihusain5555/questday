@@ -190,8 +190,11 @@ body:not(.widget-body) {
 }
 
 .app {
+  /* Fluid: fills the window so a maximized/full-screen window uses the space
+     (the tab bar collapses to one row when wide). A high cap keeps prose from
+     running absurdly wide on ultrawide monitors. */
   padding: 20px 32px 28px;
-  max-width: 900px;
+  max-width: 1600px;
   margin: 0 auto;
 }
 
@@ -247,6 +250,42 @@ body:not(.widget-body) {
 }
 .tab.on:hover {
   filter: brightness(1.05);
+}
+
+/* Secondary sub-nav (e.g. inside the Productivity tab) — subtler than the main tabs */
+.subtabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.subtab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 6px 13px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--muted);
+}
+.subtab:hover {
+  color: var(--text);
+  background: var(--panel-2);
+}
+.subtab.on {
+  color: var(--brand-bright);
+  border-color: color-mix(in srgb, var(--brand-bright) 45%, var(--border));
+  background: color-mix(in srgb, var(--brand-bright) 12%, transparent);
+}
+
+/* Stats folded into the bottom of the Dashboard */
+.dash-stats {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
 }
 
 .view-head {

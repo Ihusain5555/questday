@@ -4,12 +4,9 @@ import { useNow } from '../hooks/useNow'
 import { Dashboard } from './Dashboard'
 import { QuestsView } from './QuestsView'
 import { TimeFramesView } from './TimeFramesView'
-import { FocusView } from './FocusView'
-import { EisenhowerView } from './EisenhowerView'
-import { ActiveModeSettings } from './ActiveModeSettings'
+import { ProductivityView } from './ProductivityView'
 import { RealmView } from './RealmView'
 import { ArcadeView } from './arcade/ArcadeView'
-import { StatsView } from './StatsView'
 import { DataView } from './DataView'
 import { CompletionCelebration } from '../components/CompletionCelebration'
 import { RolloverBanner } from './RolloverBanner'
@@ -21,27 +18,21 @@ import {
   Crown,
   Sword,
   Hourglass,
-  Timer,
-  Compass,
+  Hammer,
   MapTrifold,
   GameController,
-  ChartBar,
-  Target,
   FloppyDisk
 } from '@phosphor-icons/react'
 
-type Tab = 'dashboard' | 'quests' | 'frames' | 'focus' | 'matrix' | 'world' | 'arcade' | 'stats' | 'active' | 'data'
+type Tab = 'dashboard' | 'quests' | 'frames' | 'productivity' | 'world' | 'arcade' | 'data'
 
 const TABS: { id: Tab; label: string; icon: JSX.Element }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: <Crown size={16} weight="fill" /> },
   { id: 'quests', label: 'Quests', icon: <Sword size={16} weight="fill" /> },
   { id: 'frames', label: 'Time frames', icon: <Hourglass size={16} weight="fill" /> },
-  { id: 'focus', label: 'Focus', icon: <Timer size={16} weight="fill" /> },
-  { id: 'matrix', label: 'Matrix', icon: <Compass size={16} weight="fill" /> },
+  { id: 'productivity', label: 'Forge', icon: <Hammer size={16} weight="fill" /> },
   { id: 'world', label: 'Realm', icon: <MapTrifold size={16} weight="fill" /> },
   { id: 'arcade', label: 'Arcade', icon: <GameController size={16} weight="fill" /> },
-  { id: 'stats', label: 'Stats', icon: <ChartBar size={16} weight="fill" /> },
-  { id: 'active', label: 'Active mode', icon: <Target size={16} weight="fill" /> },
   { id: 'data', label: 'Data', icon: <FloppyDisk size={16} weight="fill" /> }
 ]
 
@@ -125,12 +116,9 @@ export function App(): JSX.Element {
             {tab === 'dashboard' && <Dashboard />}
             {tab === 'quests' && <QuestsView />}
             {tab === 'frames' && <TimeFramesView />}
-            {tab === 'focus' && <FocusView />}
-            {tab === 'matrix' && <EisenhowerView />}
+            {tab === 'productivity' && <ProductivityView />}
             {tab === 'world' && <RealmView />}
             {tab === 'arcade' && <ArcadeView />}
-            {tab === 'stats' && <StatsView />}
-            {tab === 'active' && <ActiveModeSettings />}
             {tab === 'data' && <DataView />}
           </motion.div>
         </AnimatePresence>
