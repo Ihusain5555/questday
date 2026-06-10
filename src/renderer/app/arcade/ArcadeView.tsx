@@ -6,17 +6,13 @@ import { play as playSfx, isMuted, toggleMuted } from './sound'
 import { AimTrainer } from './games/AimTrainer'
 import { ReactionTime } from './games/ReactionTime'
 import { MemoryMatch } from './games/MemoryMatch'
-import { Snake } from './games/Snake'
-import { BlockDrop } from './games/BlockDrop'
-import { BubblePop } from './games/BubblePop'
-import { LaneDash } from './games/LaneDash'
-import { SpikeRush } from './games/SpikeRush'
-import { FruitSlice } from './games/FruitSlice'
-import { RoadHopper } from './games/RoadHopper'
-import { MazeMuncher } from './games/MazeMuncher'
 import { ColorClash } from './games/ColorClash'
 import { FlashRecall } from './games/FlashRecall'
 import { NBack } from './games/NBack'
+import { SpanRecall } from './games/SpanRecall'
+import { StopTap } from './games/StopTap'
+import { TrackSwitch } from './games/TrackSwitch'
+import { MentalSpin } from './games/MentalSpin'
 
 type GameKey = keyof typeof balance.arcade.games
 
@@ -25,17 +21,13 @@ const GAME_COMPONENTS: Record<string, (props: { onFinish: (score: number) => voi
   aim: AimTrainer,
   reaction: ReactionTime,
   memory: MemoryMatch,
-  snake: Snake,
-  blockdrop: BlockDrop,
-  bubble: BubblePop,
-  runner: LaneDash,
-  rhythm: SpikeRush,
-  fruit: FruitSlice,
-  hopper: RoadHopper,
-  maze: MazeMuncher,
   colorclash: ColorClash,
   flashrecall: FlashRecall,
-  nback: NBack
+  nback: NBack,
+  spanrecall: SpanRecall,
+  stoptap: StopTap,
+  trackswitch: TrackSwitch,
+  mentalspin: MentalSpin
 }
 
 interface RoundResult {
@@ -117,9 +109,10 @@ export function ArcadeView(): JSX.Element {
         </span>
       </div>
       <p className="tagline">
-        Earned fun: every quest you complete drops an arcade ticket (up to{' '}
-        {balance.arcade.ticketsPerDay}/day — they never expire). Spend one on a round and chase a
-        new best.
+        Every quest you finish drops an arcade ticket (up to {balance.arcade.ticketsPerDay}/day —
+        they never expire). Spend one on a quick brain workout: each game trains a real skill —
+        attention, memory, processing speed, focus, flexibility. You get better at what you
+        practice (no, it won&apos;t make you a genius — just sharper at the game).
       </p>
 
       {result && (

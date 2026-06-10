@@ -11,8 +11,12 @@ Stats folded into the Dashboard; Focus + Matrix + Active mode combined into a **
 a sub-nav) and made the layout fill the window (tabs collapse to one row when wide). v1.8.2
 REMOVED coins entirely (the garden shop was their only sink): XP + the Realm are the rewards now,
 the PlayerBar shows arcade TICKETS in coins' old slot, the arcade is high-score-only, and focus
-sessions just count. The `currency` field is kept in saved data (never earned/shown). Built +
-installed as `QuestDay Setup 1.8.2.exe`.**
+sessions just count. The `currency` field is kept in saved data (never earned/shown). v1.8.3
+turned the **Arcade into a brain-training set**: cut the 8 pure-reflex games, kept the 6 with a
+cognitive angle, and added 4 evidence-based games (🌀 Mental Spin = mental rotation/spatial, 🔀
+Track Switch = task-switching, ✋ Stop Tap = go/no-go inhibition, 🪜 Span Recall = Corsi/digit
+span) → 10 games, each blurb honestly naming the skill it trains (research-backed; no "gets you
+smarter" overclaiming). Built + installed as `QuestDay Setup 1.8.3.exe`.**
 v1.5 shipped the full roadmap, themed worlds, harvest economy, the ticket-gated arcade, and
 recurring quests (all 2026-06-06); the arcade grew to 14 minigames; v1.6 (2026-06-08 →
 2026-06-09) added the productivity tools (⏱️ Focus, 🧭 Matrix, 📦 Timeboxing) + feature

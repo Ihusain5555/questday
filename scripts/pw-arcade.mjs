@@ -40,7 +40,7 @@ const seed = {
     }
   ],
   timeFrames: frames,
-  player: { xp: 0, level: 3, currency: 100, streakCount: 0, lastCompletionDate: null, arcadeTickets: 5 },
+  player: { xp: 0, level: 3, currency: 0, streakCount: 0, lastCompletionDate: null, arcadeTickets: 12 },
   garden: { theme: 'garden', items: [], visitors: [], bestStreak: 0 },
   arcade: { best: {}, ticketsEarnedOn: null, ticketsEarnedCount: 0 },
   settings: {
@@ -71,7 +71,7 @@ try {
   await main.getByRole('button', { name: 'Arcade' }).click()
   await main.waitForTimeout(400)
   const cards = main.locator('.arcade-card')
-  result('ARCADE_CARDS_TEST', (await cards.count()) === 14, `${await cards.count()} games (want 14)`)
+  result('ARCADE_CARDS_TEST', (await cards.count()) === 10, `${await cards.count()} games (want 10)`)
   await main.screenshot({ path: path.join(shots, 'arcade.png') })
 
   const playGame = (name) => main.locator('.arcade-card', { hasText: name }).getByRole('button').click()
@@ -156,6 +156,67 @@ try {
   await endRound()
   await main.waitForTimeout(500)
   result('NBACK_PLAY_TEST', (await resultText()).includes('N-Back'), `result: "${(await resultText()).trim()}"`)
+
+  // --- Mental Spin (mental rotation): read data-answer, click Same/Mirror. ---
+  await playGame('Mental Spin')
+  await main.locator('.ms-choice').first().waitFor({ timeout: 6000 })
+  result('MENTALSPIN_LAUNCH_TEST', (await main.locator('.ms-board').count()) === 1, 'two shapes rendered')
+  for (let i = 0; i < 5; i++) {
+    const ans = await main.locator('.ms-field').getAttribute('data-answer')
+    await main.locator(ans === 'mirror' ? '.ms-mirror' : '.ms-same').click()
+    await main.waitForTimeout(170)
+  }
+  await main.screenshot({ path: path.join(shots, 'arcade-mentalspin.png') })
+  await endRound()
+  await main.waitForTimeout(400)
+  result('MENTALSPIN_PLAY_TEST', (await resultText()).includes('Mental Spin'), `result: "${(await resultText()).trim()}"`)
+
+  // --- Track Switch (task-switching): tap nodes in the data-next order. ---
+  await playGame('Track Switch')
+  await main.locator('.ts-node').first().waitFor({ timeout: 6000 })
+  result('TRACKSWITCH_LAUNCH_TEST', (await main.locator('.ts-node').count()) >= 6, `${await main.locator('.ts-node').count()} nodes`)
+  for (let i = 0; i < 6; i++) {
+    const next = await main.locator('.ts-field').getAttribute('data-next')
+    if (!next) break
+    await main.locator(`.ts-node[data-label="${next}"]`).first().click().catch(() => {})
+    await main.waitForTimeout(140)
+  }
+  await main.screenshot({ path: path.join(shots, 'arcade-trackswitch.png') })
+  await endRound()
+  await main.waitForTimeout(400)
+  result('TRACKSWITCH_PLAY_TEST', (await resultText()).includes('Track Switch'), `result: "${(await resultText()).trim()}"`)
+
+  // --- Stop Tap (go/no-go): tap only when data-stim==="go". ---
+  await playGame('Stop Tap')
+  await main.locator('.st-field').waitFor({ timeout: 6000 })
+  result('STOPTAP_LAUNCH_TEST', (await main.locator('.st-field').count()) === 1, 'go/no-go field rendered')
+  await main.waitForTimeout(2300) // ready countdown
+  for (let i = 0; i < 10; i++) {
+    if ((await main.locator('.st-field').getAttribute('data-stim')) === 'go') await main.locator('.st-field').click()
+    await main.waitForTimeout(220)
+  }
+  await main.screenshot({ path: path.join(shots, 'arcade-stoptap.png') })
+  await endRound()
+  await main.waitForTimeout(400)
+  result('STOPTAP_PLAY_TEST', (await resultText()).includes('Stop Tap'), `result: "${(await resultText()).trim()}"`)
+
+  // --- Span Recall (Corsi span): reproduce the flashed data-sequence. ---
+  await playGame('Span Recall')
+  await main.locator('.sr-grid').waitFor({ timeout: 6000 })
+  result('SPANRECALL_LAUNCH_TEST', (await main.locator('.sr-cell').count()) === 9, '3x3 grid rendered')
+  await main.locator('.sr-field[data-phase="input"]').waitFor({ timeout: 7000 }).catch(() => {})
+  const seq = (await main.locator('.sr-field').getAttribute('data-sequence')) ?? ''
+  const order = (await main.locator('.sr-field').getAttribute('data-order')) ?? 'forward'
+  let idxs = seq.split(',').map((s) => s.trim()).filter(Boolean)
+  if (order === 'backward') idxs = idxs.reverse()
+  for (const ix of idxs) {
+    await main.locator(`.sr-cell[data-index="${ix}"]`).click().catch(() => {})
+    await main.waitForTimeout(130)
+  }
+  await main.screenshot({ path: path.join(shots, 'arcade-spanrecall.png') })
+  await endRound()
+  await main.waitForTimeout(400)
+  result('SPANRECALL_PLAY_TEST', (await resultText()).includes('Span Recall'), `result: "${(await resultText()).trim()}"`)
 
   await app.close()
 } finally {

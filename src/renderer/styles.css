@@ -1519,6 +1519,229 @@ select:focus {
   gap: 5px;
 }
 
+/* ---- New brain games: Mental Spin / Track Switch / Stop Tap / Span Recall ---- */
+.ms-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  min-height: 300px;
+  border-radius: var(--r-card);
+  transition: background 0.18s;
+}
+.ms-field.ms-flash {
+  background: rgb(var(--candy-rgb) / 0.12);
+}
+.ms-ready,
+.ts-ready,
+.st-ready,
+.sr-ready {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.ms-ready-count,
+.ts-ready-count,
+.st-ready-count,
+.sr-span {
+  font-family: var(--font-display);
+  font-size: 46px;
+  font-weight: 700;
+  color: var(--brand-bright);
+}
+.ms-board {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+}
+.ms-shape {
+  background: rgb(var(--brand-rgb) / 0.06);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 6px;
+}
+.ms-choices {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  max-width: 340px;
+}
+.ms-choice {
+  flex: 1;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.ms-mirror {
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+  color: #2a1e06;
+  box-shadow: 0 3px 0 var(--gold-deep);
+  border-color: transparent;
+}
+
+/* Track Switch — scattered nodes tapped in 1-A-2-B order */
+.ts-field {
+  position: relative;
+  min-height: 340px;
+  border-radius: var(--r-card);
+  background: rgba(0, 0, 0, 0.14);
+  overflow: hidden;
+}
+.ts-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.ts-node:hover {
+  background: var(--panel-3);
+}
+.ts-node.ts-next {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 2px rgb(var(--brand-rgb) / 0.4);
+}
+.ts-node.ts-done {
+  opacity: 0.32;
+  background: var(--panel);
+}
+.ts-node.ts-shake {
+  animation: ts-shake 0.22s;
+  border-color: var(--candy);
+}
+@keyframes ts-shake {
+  0%, 100% { transform: translate(-50%, -50%); }
+  25% { transform: translate(-58%, -50%); }
+  75% { transform: translate(-42%, -50%); }
+}
+.ts-ready {
+  position: absolute;
+  inset: 0;
+  justify-content: center;
+}
+.ts-ready-label {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Stop Tap — go / no-go */
+.st-field {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  border-radius: var(--r-card);
+  background: var(--panel-2);
+  cursor: pointer;
+  position: relative;
+  transition: background 0.14s;
+  user-select: none;
+}
+.st-field.st-go {
+  background: rgb(var(--brand-rgb) / 0.16);
+}
+.st-field.st-nogo {
+  background: rgb(var(--candy-rgb) / 0.12);
+}
+.st-field.st-flash {
+  animation: st-flash 0.24s;
+}
+@keyframes st-flash {
+  0% { background: rgb(var(--candy-rgb) / 0.34); }
+  100% { background: var(--panel-2); }
+}
+.st-stim {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.st-stim-go {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #6ff0b8, #1f7a55);
+  box-shadow: 0 0 24px rgb(var(--brand-bright-rgb) / 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.st-stim-nogo {
+  width: 120px;
+  height: 120px;
+  background: #ef4444;
+  clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.st-stim-blank {
+  color: var(--muted);
+  font-size: 13px;
+  opacity: 0.55;
+}
+.st-label {
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: 0.08em;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+/* Span Recall — Corsi / digit span */
+.sr-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 300px;
+}
+.sr-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 240px;
+}
+.sr-cell {
+  aspect-ratio: 1;
+  border-radius: var(--r-sm);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s, transform 0.1s;
+}
+.sr-cell:hover {
+  background: var(--panel-3);
+}
+.sr-cell.lit {
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+  box-shadow: 0 0 18px rgb(var(--gold-rgb) / 0.5);
+}
+.sr-cell.correct {
+  background: rgb(var(--brand-rgb) / 0.4);
+}
+.sr-cell.wrong {
+  background: rgb(var(--candy-rgb) / 0.3);
+  animation: ts-shake 0.2s;
+}
+.sr-caption {
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+
 .game-canvas {
   border: 1px solid var(--border);
   border-radius: 10px;

@@ -312,31 +312,32 @@ export const balance = {
     ]
   },
 
-  // --- The Arcade (v1.4) -----------------------------------------------------
-  // Ticket-gated minigames: completions earn tickets (capped/day, never expire),
-  // a good round pays a SMALL coin bonus (capped) — a chest on top of real
-  // effort, never a coin farm. coins = min(max, floor(score * rate)).
+  // --- The Arcade — quick brain-training breaks ------------------------------
+  // Ticket-gated minigames (completions earn tickets, capped/day, never expire),
+  // each a short workout for a REAL cognitive skill — attention, working memory,
+  // processing speed, inhibition, flexibility, spatial reasoning. Honest framing:
+  // you get better at the trained skill (and closely related ones); we do NOT
+  // claim they make you "smarter" / raise IQ / prevent dementia. Tone rule: a
+  // wrong answer never punishes — it just doesn't score.
   arcade: {
     /** Tickets granted per quest completion, and the daily earn cap. */
     ticketsPerCompletion: 1,
     ticketsPerDay: 3,
     games: {
-      aim: { name: 'Aim Trainer', emoji: '🎯', blurb: 'Click the targets — fast.', rate: 0.5, max: 15, seconds: 45 },
-      reaction: { name: 'Reaction Time', emoji: '⚡', blurb: 'Wait for green. Click.', rate: 0.1, max: 15, trials: 5 },
-      memory: { name: 'Memory Match', emoji: '🧠', blurb: 'Flip the pairs before time runs out.', rate: 1, max: 15, seconds: 90 },
-      snake: { name: 'Snake', emoji: '🐍', blurb: 'Eat. Grow. Don’t bite yourself.', rate: 1, max: 15 },
-      blockdrop: { name: 'Block Drop', emoji: '🧱', blurb: 'Stack falling blocks, clear lines.', rate: 3, max: 15, seconds: 120 },
-      bubble: { name: 'Bubble Pop', emoji: '🫧', blurb: 'Shoot bubbles into same-color groups.', rate: 0.25, max: 15, seconds: 120 },
-      runner: { name: 'Lane Dash', emoji: '🏃', blurb: 'Three lanes. Dodge everything.', rate: 0.5, max: 15 },
-      rhythm: { name: 'Spike Rush', emoji: '🔺', blurb: 'One button. Jump the spikes.', rate: 0.5, max: 15 },
-      fruit: { name: 'Fruit Slice', emoji: '🍉', blurb: 'Slice the fruit, skip the bombs.', rate: 0.5, max: 15, seconds: 60 },
-      hopper: { name: 'Road Hopper', emoji: '🐔', blurb: 'Hop across the traffic.', rate: 1, max: 15 },
-      maze: { name: 'Maze Muncher', emoji: '👾', blurb: 'Eat the dots, dodge the ghosts.', rate: 0.25, max: 15, seconds: 90 },
-      // Brain-training trio (inspired by cognitive-training research): each is a
-      // real, evidence-grounded mental workout dressed as a quick arcade round.
-      colorclash: { name: 'Color Clash', emoji: '🎨', blurb: 'Tap the ink colour, not the word.', rate: 0.5, max: 15, seconds: 45 },
-      flashrecall: { name: 'Flash Recall', emoji: '👁️', blurb: 'A flash, then gone — where was it?', rate: 1, max: 15, trials: 16 },
-      nback: { name: 'N-Back', emoji: '🔢', blurb: 'Match the cell from 2 steps back.', rate: 2, max: 15 }
+      // Memory & working memory
+      nback: { name: 'N-Back', emoji: '🔢', blurb: 'Match the cell from 2 steps back — a working-memory workout.' },
+      spanrecall: { name: 'Span Recall', emoji: '🪜', blurb: 'Repeat the growing sequence — stretch your memory span (Corsi).' },
+      memory: { name: 'Memory Match', emoji: '🧠', blurb: 'Pair the cards from memory — a light visual-memory warm-up.', seconds: 90 },
+      // Processing speed & attention
+      flashrecall: { name: 'Flash Recall', emoji: '👁️', blurb: 'Catch the flash, then place it — processing speed & attention (UFOV).', trials: 16 },
+      aim: { name: 'Aim Trainer', emoji: '🎯', blurb: 'Hit the targets fast — sharpens visual attention & hand-eye speed.', seconds: 45 },
+      reaction: { name: 'Reaction Time', emoji: '⚡', blurb: 'Wait for green, then tap — measures your reaction speed.', trials: 5 },
+      // Executive control: inhibition & flexibility
+      colorclash: { name: 'Color Clash', emoji: '🎨', blurb: 'Tap the ink colour, not the word — focus & inhibition (Stroop).', seconds: 45 },
+      stoptap: { name: 'Stop Tap', emoji: '✋', blurb: 'Tap on GO, freeze on STOP — trains response inhibition (go/no-go).' },
+      trackswitch: { name: 'Track Switch', emoji: '🔀', blurb: 'Hop 1-A-2-B… — trains mental flexibility (task-switching).' },
+      // Spatial reasoning
+      mentalspin: { name: 'Mental Spin', emoji: '🌀', blurb: 'Same shape or mirror? Rotate it in your head — spatial reasoning.' }
     }
   },
 
