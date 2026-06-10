@@ -1,7 +1,10 @@
 # QuestDay — Handoff
 
-**Status: v1.7.2 — v1.6 base + the Premium Fantasy ("Clay Fantasy") visual redesign now
-SHIPPED, the Matrix re-iconed to Phosphor, and the app version shown in the title bar.**
+**Status: Realm Map reward world (in repo at `468f38d`, NOT yet installed) — the garden
+reward-world is REPLACED by the Realm Map (a gains-only "fills-in" fantasy map; a region is
+discovered per quest completion) and the UI-chrome emoji→Phosphor sweep is finished. Built on
+v1.7.2 (Premium Fantasy "Clay Fantasy" redesign, Matrix Phosphor icons, version in title bar).
+The running installed app is still v1.7.2 — not yet rebuilt/installed.**
 v1.5 shipped the full roadmap, themed worlds, harvest economy, the ticket-gated arcade, and
 recurring quests (all 2026-06-06); the arcade grew to 14 minigames; v1.6 (2026-06-08 →
 2026-06-09) added the productivity tools (⏱️ Focus, 🧭 Matrix, 📦 Timeboxing) + feature
@@ -29,6 +32,46 @@ token-efficiency setup — NOT a product change — see the section directly bel
   `CLAUDE.md` modified + new untracked `.claude/skills/`, `.claude/agents/`,
   `.claude/settings.json`, `scripts/cc-hooks/`. These are dev-tooling/docs only — no app code
   or product behaviour changed. Decide whether to commit them (see "Next steps" below).
+
+## Session 2026-06-10 — Realm Map reward world + emoji→Phosphor finish (committed `468f38d`)
+
+Big product change + icon polish, all Playwright-verified, committed to `main`. **NOT yet built
+into an installer / installed — the running app is still v1.7.2.**
+
+- **Decision (research-backed):** the garden/harvest/mutations/themed-worlds reward system was
+  the "fiddly second game to tend." Replaced with ONE gains-only "fills-in" artifact. Multi-agent
+  research (6 angles + adversarial verify) recommended a *representational fantasy map* for the
+  broadest, no-tutorial appeal over abstract glass/stars. User chose it after seeing four visual
+  mockups (stained-glass / realm-map / mosaic / constellation — generated + screenshotted first).
+- **The Realm Map** (`engine/realm.ts` pure; `app/RealmView.tsx`; `balance.realm`): a fantasy realm
+  (Terra Questa, 15 regions) whose regions are "discovered" as quests are completed. Reveal is a
+  PURE function of all-time completions (`stats.totalCompletions`) — nothing new persisted, no
+  migration, and ↩ Restore reverses a reveal automatically (gains-only; tone rule). 3 regions
+  seeded at 0 (endowed progress); thresholds ramp to 64. Endless growth later = add another atlas
+  (data only). World tab → **"Realm"** (MapTrifold icon); Dashboard `RealmPeek`; completion
+  celebration now announces "Discovered <region>!" instead of garden growth.
+- **Garden kept INERT** (tone rule — no data deleted; fully reversible): GardenView/engine/
+  `balance.garden` remain; `growOnCompletion` still runs silently so Restore's coin claw-back is
+  unchanged. Only the *views* were swapped (App route + Dashboard peek + celebration line).
+- **FLAGGED follow-up (deferred to the paused balance-tuning pass):** the garden shop was the ONLY
+  coin sink. Coins still earn + show in the PlayerBar, but now have NO sink. Decide later: repurpose
+  as cosmetic map unlocks (an optional, non-fiddly sink) or leave as a treasury stat.
+- **Emoji→Phosphor finish** (icon convention): Focus presets in tinted badges (gold when selected)
+  + Timer heading + BoundingBox Timebox; `52/17`→HourglassMedium (avoids the Time-frames tab
+  clash); Data feature toggles → Timer/Compass; Arcade mute → speaker icons; Time-frames reorder
+  `▲▼` → carets; arcade HUD `⏱` → Phosphor clock across 7 games. Content/decoration emoji (game
+  sprites, garden, celebrations) kept (Twemoji). Icon picks research-backed + adversarially verified.
+- **Verification:** new isolated `scripts/pw-realm.mjs` (`npm run pw:realm`, own --user-data-dir) —
+  reveal counts (7/15 → 8/15 after a completion), the celebration region line, Dashboard peek;
+  screenshots in `pw-shots/`. Bundled emoji visual check (Focus/Time-frames/Arcade/Data). `npm run
+  typecheck` green throughout.
+- **Balance tuning: still PAUSED** at the user's request (arcade "feels right"; coin flow, garden
+  economy, mutation cadence, recurring-XP all to revisit). When resuming, also settle the coin-sink
+  question above.
+
+**Next step the user is deciding:** whether to `npm run dist` (build the NSIS installer, bump the
+version, silently install + relaunch per the standing request) so the Realm Map lands in the
+installed app — OR keep iterating first.
 
 ## Session 2026-06-09 (later) — Claude Code token-efficiency setup (no product change)
 
