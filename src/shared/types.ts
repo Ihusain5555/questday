@@ -96,6 +96,14 @@ export interface FocusState {
 
 export type ActiveModeTier = 'awareness' | 'nudge' | 'softFriction' | 'hardBlock'
 
+/** One discovery in the Realm Chronicle: the region charted, the topic the player
+ *  chose to study, and the knowledge entry their expedition returned with. */
+export interface ChronicleRecord {
+  region: string
+  topic: string
+  entry: string
+}
+
 export interface Settings {
   activeModeEnabled: boolean
   activeModeTiers: Record<ActiveModeTier, boolean>
@@ -122,6 +130,14 @@ export interface Settings {
    * never lost. New features slot in as one more entry here.
    */
   enabledFeatures: Record<string, boolean>
+  /**
+   * Realm Chronicle: what each charted region's expedition brought back (region +
+   * chosen topic + knowledge entry id), oldest first — one record per charted
+   * region. Each completed quest earns one expedition; the user spends it by
+   * charting a region and choosing what to learn. Gains-only; trimmed only to
+   * mirror an exact ↩ Restore. Drives the charted map AND the Chronicle codex.
+   */
+  realmChronicle?: ChronicleRecord[]
 }
 
 // --- Reward world: the garden (§7 vision, built 2026-06-06) -----------------

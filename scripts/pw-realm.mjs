@@ -1,12 +1,8 @@
-// Playwright driver — 🗺️ The Realm map (reward artifact). Verifies regions
-// reveal from all-time completions, the Dashboard peek reads right, completing
-// a quest charts the NEXT region with a celebration line, and the count moves.
-// Also bundles a visual check of the recent emoji→Phosphor conversions (Focus,
-// Time frames, Arcade, Data).
-//
-// ISOLATION: launches Electron with its OWN --user-data-dir (a temp folder), so
-// it NEVER touches the real %APPDATA%\questday\db.json and gets its OWN
-// single-instance lock — safe to run anytime. No stash/restore needed.
+// Playwright driver — 🗺️ The Realm map + Expedition Chronicle. Verifies you earn
+// an expedition per completed quest, tapping an unexplored region opens the
+// "pick what to learn" modal (tease -> reveal), adding to the Chronicle charts
+// the region, charted regions re-read, and completing a quest prompts another.
+// Isolated --user-data-dir (own db.json + lock) — safe to run anytime.
 import { _electron as electron } from 'playwright-core'
 import { mkdirSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
@@ -37,17 +33,16 @@ const covers = (f) =>
     : nowMin >= f.startMinute || nowMin < f.endMinute
 const activeFrame = frames.find(covers) ?? frames[0]
 
-// 8 already-completed quests => totalCompletions starts at 8 (reveals the 7
-// regions with at<=8). Plus ONE active current quest; completing it makes 9,
-// which charts "Pale Vale" (at:9) — the celebration should announce it.
-const done = Array.from({ length: 8 }, (_, i) => ({
+// 10 completed quests => 10 expeditions; 4 regions already charted (with their
+// Chronicle discoveries) => 6 spendable now. Plus one active quest to complete.
+const done = Array.from({ length: 10 }, (_, i) => ({
   id: `done-${i}`, title: `Past quest ${i + 1}`, subTasks: [], difficulty: 'Easy',
   priority: 'Medium', skippability: 'Should do', timeEstimateMinutes: 10, dueAt: null,
   timeFrameId: frames[0].id, status: 'completed', createdAt: d.toISOString(),
   completedAt: d.toISOString(), sortOrder: i, completionAward: { xp: 10, currency: 5 }
 }))
 const current = {
-  id: 'q-current', title: 'Chart the next region', subTasks: [], difficulty: 'Medium',
+  id: 'q-current', title: 'Chart your realm', subTasks: [], difficulty: 'Medium',
   priority: 'Critical', skippability: 'Must do', timeEstimateMinutes: 20, dueAt: iso(2 * H),
   timeFrameId: activeFrame.id, status: 'active', createdAt: d.toISOString(),
   completedAt: null, sortOrder: 0
@@ -66,7 +61,13 @@ const seed = {
     activeModeTiers: { awareness: true, nudge: false, softFriction: false, hardBlock: false },
     distractingApps: [], reminderIntervalMin: 30, frameEndingLeadMin: 10, nudgeSnoozeMin: 15,
     widgetBounds: null, widgetExpanded: false, launchOnLogin: false, blockBreakPassMin: 5,
-    focusPreset: 'pomodoro', enabledFeatures: { focus: true, matrix: true }
+    focusPreset: 'pomodoro', enabledFeatures: { focus: true, matrix: true },
+    realmChronicle: [
+      { region: 'embergreen', topic: 'cosmos', entry: 'venus-day-longer-than-year' },
+      { region: 'goldfield', topic: 'nature', entry: 'tardigrade-vacuum' },
+      { region: 'sunmeadow', topic: 'history', entry: 'cleopatra-moon-landing' },
+      { region: 'crownspire', topic: 'wisdom', entry: 'aurelius-obstacle-is-the-way' }
+    ]
   },
   lastSeenDate: ymd(d)
 }
@@ -84,44 +85,53 @@ try {
   result('ISOLATION_TEST', dir.toLowerCase() === isoDir.toLowerCase(), `userData = ${dir}`)
   const main = app.windows().find((w) => w.url().includes('index.html'))
 
-  // --- Dashboard peek reads the realm progress (8 completions => 7/15) ---
-  result('PEEK_PRESENT_TEST', (await main.locator('.realm-peek').count()) === 1, 'Dashboard realm peek present')
-  const peekCount = await text(main.locator('.realm-peek-count'))
-  result('PEEK_COUNT_TEST', peekCount.includes('7 / 15'), `peek: "${peekCount}" (want 7 / 15)`)
-  await main.screenshot({ path: path.join(shots, 'realm-dashboard-peek.png') })
-
-  // --- Complete the current quest => charts Pale Vale, celebration announces it ---
-  await main.locator('.cq-complete').first().click()
-  await main.waitForSelector('.celebrate-region', { timeout: 6000 })
-  const region = await text(main.locator('.celebrate-region'))
-  result('CELEBRATION_REGION_TEST', region.includes('Pale Vale'), `celebration: "${region}"`)
-  await main.screenshot({ path: path.join(shots, 'realm-celebration.png') })
-  // let the celebration auto-dismiss
-  await main.waitForSelector('.celebrate-region', { state: 'detached', timeout: 8000 }).catch(() => {})
-  await main.waitForTimeout(400)
-
-  // --- Realm tab now shows 8/15 discovered (Pale Vale charted) ---
+  // --- Realm tab: 4/15 charted, expeditions banner, claimable fog ---
   await main.getByRole('button', { name: 'Realm', exact: true }).click()
   await main.waitForTimeout(500)
-  const hint = await text(main.locator('.realm-hint'))
-  result('REALM_COUNT_TEST', hint.includes('8 / 15'), `realm hint: "${hint}" (want 8 / 15)`)
-  result('REALM_SVG_TEST', (await main.locator('.realm-svg').count()) === 1, 'realm SVG rendered')
-  result('REALM_NEXT_TEST', (await text(main.locator('.realm-next'))).toLowerCase().includes('next'),
-    `next: "${await text(main.locator('.realm-next'))}"`)
+  result('REALM_COUNT_TEST', (await text(main.locator('.realm-hint'))).includes('4 / 15'),
+    `realm hint: "${await text(main.locator('.realm-hint'))}"`)
+  result('CHRONICLE_CODEX_TEST', (await main.locator('.rc-item').count()) === 4,
+    `${await main.locator('.rc-item').count()} chronicle entries (want 4)`)
   await main.screenshot({ path: path.join(shots, 'realm-tab.png') })
 
-  // --- Bundled emoji→Phosphor visual check (screenshots only) ---
-  for (const [tab, file] of [
-    ['Focus', 'emoji-focus.png'],
-    ['Time frames', 'emoji-timeframes.png'],
-    ['Arcade', 'emoji-arcade.png'],
-    ['Data', 'emoji-data.png']
-  ]) {
-    await main.getByRole('button', { name: tab, exact: true }).click()
-    await main.waitForTimeout(450)
-    await main.screenshot({ path: path.join(shots, file) })
-  }
-  result('EMOJI_SHOTS_TEST', true, 'captured Focus/Time frames/Arcade/Data for visual review')
+  // --- Tap a fog region => the "what to learn" modal opens ---
+  await main.locator('.realm-claimable').first().click()
+  await main.waitForSelector('.rm-topics', { timeout: 4000 })
+  result('MODAL_TOPICS_TEST', (await main.locator('.rm-topic').count()) === 5,
+    `${await main.locator('.rm-topic').count()} topic choices (want 5 incl. Surprise)`)
+  await main.screenshot({ path: path.join(shots, 'realm-modal-pick.png') })
+
+  // --- Pick a topic => tease then reveal the fact ---
+  await main.locator('.rm-topic').first().click()
+  await main.waitForSelector('.rm-keep', { timeout: 4000 })
+  result('REVEAL_TEST', (await text(main.locator('.rm-fact-text'))).length > 20,
+    `fact: "${(await text(main.locator('.rm-fact-text'))).slice(0, 60)}…"`)
+  await main.screenshot({ path: path.join(shots, 'realm-modal-reveal.png') })
+
+  // --- Add to Chronicle => region charts (4 -> 5) ---
+  await main.locator('.rm-keep').click()
+  await main.waitForTimeout(500)
+  result('CLAIM_TEST', (await text(main.locator('.realm-hint'))).includes('5 / 15'),
+    `after claim: "${await text(main.locator('.realm-hint'))}"`)
+
+  // --- Re-read a charted region ---
+  await main.locator('.realm-charted').first().click()
+  await main.waitForSelector('.realm-modal.reading', { timeout: 4000 })
+  result('REREAD_TEST', (await text(main.locator('.realm-modal.reading .rm-fact-text'))).length > 20,
+    're-read shows the stored discovery')
+  await main.screenshot({ path: path.join(shots, 'realm-reread.png') })
+  await main.locator('.realm-modal.reading .rm-close').click()
+  await main.waitForTimeout(300)
+
+  // --- Completing a quest earns another expedition (celebration prompt) ---
+  await main.getByRole('button', { name: 'Dashboard', exact: true }).click()
+  await main.waitForTimeout(400)
+  await main.locator('.cq-complete').first().click()
+  await main.waitForSelector('.celebrate-region', { timeout: 6000 })
+  result('EXPEDITION_CELEBRATION_TEST',
+    (await text(main.locator('.celebrate-region'))).toLowerCase().includes('expedition'),
+    `celebration: "${await text(main.locator('.celebrate-region'))}"`)
+  await main.screenshot({ path: path.join(shots, 'realm-celebration.png') })
 
   await app.close()
 } catch (err) {

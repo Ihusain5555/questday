@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Star, Ticket, MapTrifold } from '@phosphor-icons/react'
+import { Star, Ticket, Flag } from '@phosphor-icons/react'
 import { useStore } from '../state/store'
 import { CountUp } from './CountUp'
 import { CoinIcon, FlameIcon } from './RewardIcons'
@@ -22,7 +22,7 @@ export function CompletionCelebration(): JSX.Element {
     // A mutation is a jackpot moment — let it land a beat longer.
     const id = setTimeout(
       clearCelebration,
-      celebration.regionRevealed ? DISMISS_MS + 1200 : DISMISS_MS
+      celebration.expedition ? DISMISS_MS + 1200 : DISMISS_MS
     )
     return () => clearTimeout(id)
   }, [celebration, clearCelebration])
@@ -128,14 +128,14 @@ export function CompletionCelebration(): JSX.Element {
                 </motion.div>
               )}
 
-              {celebration.regionRevealed && (
+              {celebration.expedition && (
                 <motion.div
                   className="celebrate-region"
                   initial={{ scale: 0, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.5, type: 'spring', stiffness: 280, damping: 12 }}
                 >
-                  <MapTrifold size={16} weight="fill" /> Discovered {celebration.regionRevealed.name}!
+                  <Flag size={16} weight="fill" /> Expedition earned — chart a region in your Realm
                 </motion.div>
               )}
 

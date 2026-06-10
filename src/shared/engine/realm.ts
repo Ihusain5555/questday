@@ -1,60 +1,66 @@
 // ---------------------------------------------------------------------------
-// QuestDay — the Realm map (logic layer). Pure: all-time completions -> which
-// regions are revealed on the reward map. Tone rule: regions only ever GAIN —
-// a charted region is charted forever. Reveal is DERIVED from the completion
-// count (nothing persisted separately), so the one sanctioned correction
-// (↩ Restore, which lowers the count by one) hides exactly the most-recent
-// region — a correction, never a punishment.
+// QuestDay — the Realm map (logic layer). The reward artifact is YOUR realm,
+// charted YOUR way: each completed quest earns one "expedition," and you spend
+// it by charting any region AND choosing what to learn — your expedition returns
+// with a knowledge entry (the Chronicle). Tone rule: gains only — a charted
+// region is charted forever, and the Chronicle is never trimmed except to mirror
+// an exact ↩ Restore (the newest discovery drops). The user's discoveries live
+// in settings.realmChronicle (records, oldest first).
 // ---------------------------------------------------------------------------
 
 import { balance } from '../config/balance'
+import type { ChronicleRecord } from '../types'
 
 export type RealmRegion = (typeof balance.realm.atlases)[number]['regions'][number]
 
-/** Every region across all atlases, in reveal order (lowest threshold first). */
+/** Every region across all atlases. */
 export function allRegions(): RealmRegion[] {
-  return balance.realm.atlases
-    .flatMap((a) => a.regions)
-    .slice()
-    .sort((a, b) => a.at - b.at)
+  return balance.realm.atlases.flatMap((a) => a.regions)
 }
 
-/** Ids of regions charted at this completion count. */
-export function revealedRegionIds(completions: number): Set<string> {
-  return new Set(allRegions().filter((r) => completions >= r.at).map((r) => r.id))
+/** The set of charted region ids (for fast membership checks in the view). */
+export function chartedRegionIds(chronicle: ChronicleRecord[]): Set<string> {
+  return new Set(chronicle.map((r) => r.region))
+}
+
+/** Expeditions earned but not yet spent (1 earned per completed quest). */
+export function claimsAvailable(completions: number, chartedCount: number): number {
+  return Math.max(0, completions - chartedCount)
+}
+
+/** Expeditions you can actually spend right now — banked claims, capped by the
+ *  number of regions still unexplored (no point banking past a full realm). */
+export function claimableNow(completions: number, chronicle: ChronicleRecord[]): number {
+  const unclaimed = allRegions().length - chronicle.length
+  return Math.max(0, Math.min(claimsAvailable(completions, chronicle.length), unclaimed))
 }
 
 /**
- * Regions that cross from hidden -> charted as completions go prev -> now.
- * Used to announce a discovery in the completion celebration.
+ * Trim Chronicle records that exceed earned completions (after ↩ Restore drops
+ * the count). Newest discoveries fall first (slice keeps the oldest), so a
+ * restore reverses the most recent charting exactly.
  */
-export function newlyRevealed(prev: number, now: number): { id: string; name: string }[] {
-  if (now <= prev) return []
-  return allRegions()
-    .filter((r) => r.at > prev && r.at <= now)
-    .map((r) => ({ id: r.id, name: r.name }))
+export function normalizeChronicle(completions: number, chronicle: ChronicleRecord[]): ChronicleRecord[] {
+  return chronicle.length <= completions
+    ? chronicle
+    : chronicle.slice(0, Math.max(0, completions))
 }
 
 export interface RealmProgress {
   revealedCount: number
   total: number
-  /** The next region to reveal (null once the whole atlas is charted). */
-  next: RealmRegion | null
-  /** Completions still needed for `next` (0 when fully charted). */
-  toNext: number
-  /** Percent of the realm charted (0–100). */
+  remaining: number
   percent: number
 }
 
-export function realmProgress(completions: number): RealmProgress {
-  const regions = allRegions()
-  const revealed = regions.filter((r) => completions >= r.at)
-  const next = regions.find((r) => r.at > completions) ?? null
+export function realmProgress(chronicle: ChronicleRecord[]): RealmProgress {
+  const ids = new Set<string>(allRegions().map((r) => r.id))
+  const charted = chronicle.filter((r) => ids.has(r.region)).length
+  const total = allRegions().length
   return {
-    revealedCount: revealed.length,
-    total: regions.length,
-    next,
-    toNext: next ? Math.max(0, next.at - completions) : 0,
-    percent: regions.length ? Math.round((revealed.length / regions.length) * 100) : 0
+    revealedCount: charted,
+    total,
+    remaining: Math.max(0, total - charted),
+    percent: total ? Math.round((charted / total) * 100) : 0
   }
 }

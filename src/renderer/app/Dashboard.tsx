@@ -54,7 +54,7 @@ export function Dashboard(): JSX.Element {
         )}
       </div>
 
-      <RealmPeek quests={db.quests} />
+      <RealmPeek />
     </div>
   )
 }

@@ -29,7 +29,7 @@ import {
 } from '@shared/engine/garden'
 import { balance } from '@shared/config/balance'
 import { totalCompletions } from '@shared/engine/stats'
-import { newlyRevealed } from '@shared/engine/realm'
+import { claimableNow, normalizeChronicle, claimsAvailable, allRegions } from '@shared/engine/realm'
 
 /** Transient celebration payload (local to the window that completed a quest). */
 export interface Celebration {
@@ -41,8 +41,9 @@ export interface Celebration {
   mutation?: { name: string; emoji: string; mult: number } | null
   /** True when this completion earned an arcade ticket (within the daily cap). */
   ticket?: boolean
-  /** A realm region this completion newly discovered (the reward artifact), if any. */
-  regionRevealed?: { name: string } | null
+  /** Expeditions (region claims) ready to spend after this completion — the reward
+   *  artifact prompt — or null when none are available / the realm is fully charted. */
+  expedition?: number | null
 }
 
 /** Transient harvest payout flash (local to the harvesting window). */
@@ -110,6 +111,8 @@ interface AppStore {
   completeQuest: (id: string) => Promise<void>
   /** Undo an accidental complete: back to active. Earned rewards are kept. */
   restoreQuest: (id: string) => Promise<void>
+  /** Spend an expedition to chart a chosen region, learning a chosen topic's entry. */
+  claimRegion: (regionId: string, topicId: string, entryId: string) => Promise<void>
 
   // ---- Daily rollover (§6) ----
   /** Process a transition into today (carry over + flag past-due). Idempotent per day. */
@@ -317,8 +320,6 @@ export const useStore = create<AppStore>((set, get) => ({
     if (!db) return
     const quest = db.quests.find((q) => q.id === id && q.status === 'active')
     if (!quest) return
-    // Snapshot all-time completions BEFORE this one, to detect a newly-charted region.
-    const prevCompletions = totalCompletions(db.quests)
     const today = todayStr()
     const award = applyCompletion(quest, db.player, today)
     const completedAt = new Date().toISOString()
@@ -379,9 +380,10 @@ export const useStore = create<AppStore>((set, get) => ({
       ticket = true
     }
 
-    // A completed quest charts the next realm region — the reward artifact (a pure
-    // function of total completions, so Restore reverses it automatically).
-    const reveal = newlyRevealed(prevCompletions, totalCompletions(quests))[0] ?? null
+    // A completed quest earns one expedition — a claim the user spends by choosing
+    // any unexplored region to chart (settings.realmClaimed). Gains-only; Restore
+    // trims the newest claim to match.
+    const expeditions = claimableNow(totalCompletions(quests), db.settings.realmChronicle ?? [])
 
     await get().save({ quests, player, garden, arcade })
     set({
@@ -391,7 +393,7 @@ export const useStore = create<AppStore>((set, get) => ({
         grew,
         mutation,
         ticket,
-        regionRevealed: reveal ? { name: reveal.name } : null
+        expedition: expeditions > 0 ? expeditions : null
       }
     })
   },
@@ -460,7 +462,31 @@ export const useStore = create<AppStore>((set, get) => ({
           }
         : q
     )
-    await get().save({ quests, player: { ...db.player, xp, level, currency }, garden })
+    // Restoring removes a completion, so trim the newest Chronicle discovery if it
+    // now exceeds earned expeditions (mirrors the exact reversal — gains-only).
+    const realmChronicle = normalizeChronicle(totalCompletions(quests), db.settings.realmChronicle ?? [])
+
+    await get().save({
+      quests,
+      player: { ...db.player, xp, level, currency },
+      garden,
+      settings: { ...db.settings, realmChronicle }
+    })
+  },
+
+  claimRegion: async (regionId, topicId, entryId) => {
+    const db = get().db
+    if (!db) return
+    const chronicle = db.settings.realmChronicle ?? []
+    if (chronicle.some((r) => r.region === regionId)) return
+    if (!allRegions().some((r) => r.id === regionId)) return
+    if (claimsAvailable(totalCompletions(db.quests), chronicle.length) < 1) return
+    await get().save({
+      settings: {
+        ...db.settings,
+        realmChronicle: [...chronicle, { region: regionId, topic: topicId, entry: entryId }]
+      }
+    })
   },
 
   clearCelebration: () => set({ celebration: null }),

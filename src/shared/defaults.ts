@@ -57,7 +57,8 @@ export function createDefaultDatabase(): Database {
       widgetExpanded: false,
       launchOnLogin: false,
       focusPreset: 'pomodoro',
-      enabledFeatures: { focus: true, matrix: true }
+      enabledFeatures: { focus: true, matrix: true },
+      realmChronicle: []
     },
     lastSeenDate: null
   }

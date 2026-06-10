@@ -2999,6 +2999,249 @@ code {
   gap: 6px;
   justify-content: center;
 }
+/* "Expeditions ready" banner above the map */
+.realm-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 9px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+}
+.realm-banner.ready {
+  color: var(--gold-bright);
+  background: color-mix(in srgb, var(--gold-bright) 12%, transparent);
+  border-color: color-mix(in srgb, var(--gold-bright) 35%, transparent);
+}
+/* Fog (unexplored) regions, and the tap-to-chart affordance when claimable */
+.realm-svg .realm-fog {
+  fill: rgba(233, 243, 238, 0.018);
+  stroke: rgba(233, 243, 238, 0.1);
+  stroke-width: 1.4;
+  stroke-dasharray: 5 5;
+}
+.realm-svg .realm-claimable {
+  cursor: pointer;
+}
+.realm-svg .realm-claimable .realm-fog {
+  fill: rgba(244, 215, 122, 0.05);
+  stroke: rgba(244, 215, 122, 0.4);
+}
+.realm-svg .realm-claimable:hover .realm-fog {
+  fill: rgba(244, 215, 122, 0.13);
+  stroke: rgba(244, 215, 122, 0.85);
+  stroke-dasharray: none;
+}
+.realm-svg .realm-claimable:hover .realm-label-fog {
+  fill: rgba(244, 215, 122, 0.95);
+  font-style: normal;
+}
+.realm-svg .realm-charted {
+  cursor: pointer;
+}
+.realm-svg .realm-charted:hover .realm-label {
+  fill: var(--gold-bright);
+}
+
+/* ---- Expedition-returns modal + re-read ---- */
+.realm-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(4, 10, 8, 0.62);
+  backdrop-filter: blur(3px);
+}
+.realm-modal {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  padding: 24px 26px 26px;
+  border-radius: var(--r-card);
+  background: linear-gradient(160deg, var(--panel-2), var(--panel));
+  box-shadow: var(--shadow-2), 0 0 0 1px rgba(201, 162, 74, 0.22);
+}
+.rm-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  color: var(--muted);
+}
+.rm-close:hover {
+  color: var(--text);
+}
+.rm-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 600;
+}
+.rm-title {
+  margin: 6px 0 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--text);
+}
+.rm-sub {
+  margin: 4px 0 16px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.rm-topics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.rm-topic {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  text-align: left;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-btn);
+  background: var(--panel-2);
+}
+.rm-topic:hover {
+  border-color: var(--brand);
+  background: var(--panel-3);
+}
+.rm-topic-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-sm);
+  margin-bottom: 4px;
+  color: var(--brand-bright);
+  background: color-mix(in srgb, var(--brand-bright) 16%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand-bright) 28%, transparent);
+}
+.rm-topic.surprise .rm-topic-badge {
+  color: var(--gold-bright);
+  background: color-mix(in srgb, var(--gold-bright) 16%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gold-bright) 30%, transparent);
+}
+.rm-topic-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 15px;
+}
+.rm-topic-blurb {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.rm-reveal {
+  text-align: center;
+  padding: 10px 4px 4px;
+}
+.rm-teaser {
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: 15px;
+  color: var(--gold-bright);
+  line-height: 1.5;
+}
+.rm-dots {
+  margin-top: 14px;
+  letter-spacing: 6px;
+  color: var(--muted);
+  animation: rm-pulse 1.2s ease-in-out infinite;
+}
+@keyframes rm-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+.rm-fact {
+  margin-top: 14px;
+}
+.rm-fact-text {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text);
+}
+.rm-keep {
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.realm-modal.reading .rm-teaser {
+  margin: 8px 0 10px;
+}
+.realm-modal.reading .rm-fact-text {
+  text-align: left;
+}
+
+/* ---- The Chronicle codex ---- */
+.realm-chronicle {
+  margin-top: 18px;
+}
+.rc-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-family: var(--font-display);
+  font-size: 17px;
+  color: var(--text);
+}
+.rc-count {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+.rc-list {
+  display: grid;
+  gap: 8px;
+}
+.rc-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  text-align: left;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-btn);
+  background: var(--panel);
+}
+.rc-item:hover {
+  border-color: color-mix(in srgb, var(--gold) 45%, var(--border));
+  background: var(--panel-2);
+}
+.rc-region {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--gold-bright);
+}
+.rc-fact {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.45;
+}
 .feature-toggle .ft-blurb {
   margin-top: 2px;
   font-size: 12px;
