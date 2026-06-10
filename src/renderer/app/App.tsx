@@ -7,7 +7,7 @@ import { TimeFramesView } from './TimeFramesView'
 import { FocusView } from './FocusView'
 import { EisenhowerView } from './EisenhowerView'
 import { ActiveModeSettings } from './ActiveModeSettings'
-import { GardenView } from './GardenView'
+import { RealmView } from './RealmView'
 import { ArcadeView } from './arcade/ArcadeView'
 import { StatsView } from './StatsView'
 import { DataView } from './DataView'
@@ -23,7 +23,7 @@ import {
   Hourglass,
   Timer,
   Compass,
-  Plant,
+  MapTrifold,
   GameController,
   ChartBar,
   Target,
@@ -38,7 +38,7 @@ const TABS: { id: Tab; label: string; icon: JSX.Element }[] = [
   { id: 'frames', label: 'Time frames', icon: <Hourglass size={16} weight="fill" /> },
   { id: 'focus', label: 'Focus', icon: <Timer size={16} weight="fill" /> },
   { id: 'matrix', label: 'Matrix', icon: <Compass size={16} weight="fill" /> },
-  { id: 'world', label: 'World', icon: <Plant size={16} weight="fill" /> },
+  { id: 'world', label: 'Realm', icon: <MapTrifold size={16} weight="fill" /> },
   { id: 'arcade', label: 'Arcade', icon: <GameController size={16} weight="fill" /> },
   { id: 'stats', label: 'Stats', icon: <ChartBar size={16} weight="fill" /> },
   { id: 'active', label: 'Active mode', icon: <Target size={16} weight="fill" /> },
@@ -127,7 +127,7 @@ export function App(): JSX.Element {
             {tab === 'frames' && <TimeFramesView />}
             {tab === 'focus' && <FocusView />}
             {tab === 'matrix' && <EisenhowerView />}
-            {tab === 'world' && <GardenView />}
+            {tab === 'world' && <RealmView />}
             {tab === 'arcade' && <ArcadeView />}
             {tab === 'stats' && <StatsView />}
             {tab === 'active' && <ActiveModeSettings />}

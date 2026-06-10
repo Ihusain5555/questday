@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Star, Ticket } from '@phosphor-icons/react'
+import { Star, Ticket, MapTrifold } from '@phosphor-icons/react'
 import { useStore } from '../state/store'
 import { CountUp } from './CountUp'
 import { CoinIcon, FlameIcon } from './RewardIcons'
@@ -20,7 +20,10 @@ export function CompletionCelebration(): JSX.Element {
   useEffect(() => {
     if (!celebration) return
     // A mutation is a jackpot moment — let it land a beat longer.
-    const id = setTimeout(clearCelebration, celebration.mutation ? DISMISS_MS + 1200 : DISMISS_MS)
+    const id = setTimeout(
+      clearCelebration,
+      celebration.regionRevealed ? DISMISS_MS + 1200 : DISMISS_MS
+    )
     return () => clearTimeout(id)
   }, [celebration, clearCelebration])
 
@@ -125,26 +128,14 @@ export function CompletionCelebration(): JSX.Element {
                 </motion.div>
               )}
 
-              {celebration.grew && (
+              {celebration.regionRevealed && (
                 <motion.div
-                  className="celebrate-grew"
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.46 }}
-                >
-                  {celebration.grew.emoji} Your {celebration.grew.name.toLowerCase()} grew!
-                </motion.div>
-              )}
-
-              {celebration.mutation && (
-                <motion.div
-                  className="celebrate-mutation"
+                  className="celebrate-region"
                   initial={{ scale: 0, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.55, type: 'spring', stiffness: 280, damping: 11 }}
+                  transition={{ delay: 0.5, type: 'spring', stiffness: 280, damping: 12 }}
                 >
-                  {celebration.mutation.emoji} {celebration.mutation.name} mutation! Next harvest ×
-                  {celebration.mutation.mult}
+                  <MapTrifold size={16} weight="fill" /> Discovered {celebration.regionRevealed.name}!
                 </motion.div>
               )}
 

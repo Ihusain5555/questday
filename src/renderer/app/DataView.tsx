@@ -8,8 +8,15 @@ import {
   Hourglass,
   DownloadSimple,
   UploadSimple,
-  Trash
+  Trash,
+  Timer,
+  Compass,
+  type Icon
 } from '@phosphor-icons/react'
+
+/** Feature icon name (from the registry) -> Phosphor component, mirroring the
+ *  tab icons in App.tsx so the toggle list matches the tabs. */
+const FEATURE_ICON: Record<string, Icon> = { Timer, Compass }
 
 /**
  * Data & backup (§10). Auto-backups run quietly in the background; here the user
@@ -121,11 +128,12 @@ export function DataView(): JSX.Element {
           <div className="feature-toggles">
             {TOGGLEABLE_FEATURES.map((f) => {
               const on = isFeatureEnabled(db.settings.enabledFeatures, f.id)
+              const FIcon = FEATURE_ICON[f.icon] ?? Timer
               return (
                 <div className="feature-toggle" key={f.id}>
                   <div className="ft-text">
                     <div className="ft-name">
-                      {f.emoji} {f.label}
+                      <FIcon size={15} weight="fill" className="ft-icon" /> {f.label}
                     </div>
                     <div className="ft-blurb meta-dim">{f.blurb}</div>
                   </div>

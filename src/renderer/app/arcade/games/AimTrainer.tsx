@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { balance } from '@shared/config/balance'
+import { Timer } from '@phosphor-icons/react'
 
 /**
  * 🎯 Aim Trainer — click targets as fast as you can for `seconds`. One target
@@ -40,7 +41,7 @@ export function AimTrainer({ onFinish }: { onFinish: (score: number) => void }):
     <div className="game-shell">
       <div className="game-hud">
         <span>🎯 {score} hits</span>
-        <span>⏱ {Math.max(0, timeLeft)}s</span>
+        <span className="hud-timer"><Timer size={14} weight="bold" /> {Math.max(0, timeLeft)}s</span>
         <button onClick={endEarly}>End round</button>
       </div>
       <div className="aim-field">

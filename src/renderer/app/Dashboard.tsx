@@ -5,7 +5,7 @@ import {
   selectCurrentQuest,
   immediateSubTask
 } from '@shared/engine/selectCurrentQuest'
-import { GardenPeek } from './GardenView'
+import { RealmPeek } from './RealmView'
 import { PlayerBar } from '../components/PlayerBar'
 import { questXP, questCurrency } from '@shared/engine/rewards'
 import { Lightning, Check } from '@phosphor-icons/react'
@@ -54,7 +54,7 @@ export function Dashboard(): JSX.Element {
         )}
       </div>
 
-      <GardenPeek garden={db.garden} level={db.player.level} />
+      <RealmPeek quests={db.quests} />
     </div>
   )
 }

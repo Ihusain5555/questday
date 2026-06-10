@@ -15,6 +15,7 @@
     "pw:arcade": "node scripts/with-app.mjs node scripts/pw-arcade.mjs",
     "pw:eisenhower": "node scripts/pw-eisenhower.mjs",
     "pw:timeboxing": "node scripts/pw-timeboxing.mjs",
+    "pw:realm": "node scripts/pw-realm.mjs",
     "dist": "node scripts/with-app.mjs \"electron-vite build && electron-builder --win\"",
     "typecheck:node": "tsc -p tsconfig.node.json --noEmit",
     "typecheck:web": "tsc -p tsconfig.web.json --noEmit",

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { balance } from '@shared/config/balance'
+import { Timer } from '@phosphor-icons/react'
 
 const COLS = 12
 const ROWS = 14
@@ -241,7 +242,7 @@ export function BubblePop({ onFinish }: { onFinish: (score: number) => void }): 
     <div className="game-shell">
       <div className="game-hud">
         <span>🫧 {score} popped</span>
-        <span>⏱ {Math.max(0, timeLeft)}s</span>
+        <span className="hud-timer"><Timer size={14} weight="bold" /> {Math.max(0, timeLeft)}s</span>
         <span className="meta-dim">aim with mouse · click to shoot</span>
         <button onClick={endEarly}>End round</button>
       </div>

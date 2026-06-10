@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { balance } from '@shared/config/balance'
+import { Timer } from '@phosphor-icons/react'
 
 const COLS = 10
 const ROWS = 18
@@ -162,7 +163,7 @@ export function BlockDrop({ onFinish }: { onFinish: (score: number) => void }): 
     <div className="game-shell">
       <div className="game-hud">
         <span>🧱 {lines} lines</span>
-        <span>⏱ {Math.max(0, timeLeft)}s</span>
+        <span className="hud-timer"><Timer size={14} weight="bold" /> {Math.max(0, timeLeft)}s</span>
         <span className="meta-dim">←→↓ move · ↑ rotate · space drop</span>
         <button onClick={endEarly}>End round</button>
       </div>

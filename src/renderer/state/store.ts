@@ -28,6 +28,8 @@ import {
   itemEmoji
 } from '@shared/engine/garden'
 import { balance } from '@shared/config/balance'
+import { totalCompletions } from '@shared/engine/stats'
+import { newlyRevealed } from '@shared/engine/realm'
 
 /** Transient celebration payload (local to the window that completed a quest). */
 export interface Celebration {
@@ -39,6 +41,8 @@ export interface Celebration {
   mutation?: { name: string; emoji: string; mult: number } | null
   /** True when this completion earned an arcade ticket (within the daily cap). */
   ticket?: boolean
+  /** A realm region this completion newly discovered (the reward artifact), if any. */
+  regionRevealed?: { name: string } | null
 }
 
 /** Transient harvest payout flash (local to the harvesting window). */
@@ -313,6 +317,8 @@ export const useStore = create<AppStore>((set, get) => ({
     if (!db) return
     const quest = db.quests.find((q) => q.id === id && q.status === 'active')
     if (!quest) return
+    // Snapshot all-time completions BEFORE this one, to detect a newly-charted region.
+    const prevCompletions = totalCompletions(db.quests)
     const today = todayStr()
     const award = applyCompletion(quest, db.player, today)
     const completedAt = new Date().toISOString()
@@ -373,8 +379,21 @@ export const useStore = create<AppStore>((set, get) => ({
       ticket = true
     }
 
+    // A completed quest charts the next realm region — the reward artifact (a pure
+    // function of total completions, so Restore reverses it automatically).
+    const reveal = newlyRevealed(prevCompletions, totalCompletions(quests))[0] ?? null
+
     await get().save({ quests, player, garden, arcade })
-    set({ celebration: { award, questTitle: quest.title, grew, mutation, ticket } })
+    set({
+      celebration: {
+        award,
+        questTitle: quest.title,
+        grew,
+        mutation,
+        ticket,
+        regionRevealed: reveal ? { name: reveal.name } : null
+      }
+    })
   },
 
   /**

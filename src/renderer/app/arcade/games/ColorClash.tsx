@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { balance } from '@shared/config/balance'
 import { play } from '../sound'
+import { Timer } from '@phosphor-icons/react'
 
 /**
  * 🎨 Color Clash — the Stroop task as a game. A colour WORD is painted in a
@@ -141,7 +142,7 @@ export function ColorClash({ onFinish }: { onFinish: (score: number) => void }):
         <span>🎨 {score}</span>
         {combo >= 2 && <span className="cc-combo">🔥 {combo}</span>}
         {bestCombo >= 2 && <span className="meta-dim">best {bestCombo}</span>}
-        <span>⏱ {Math.max(0, timeLeft)}s</span>
+        <span className="hud-timer"><Timer size={14} weight="bold" /> {Math.max(0, timeLeft)}s</span>
         <button onClick={endEarly}>End round</button>
       </div>
       <div className={`cc-field ${flash ?? ''}`}>

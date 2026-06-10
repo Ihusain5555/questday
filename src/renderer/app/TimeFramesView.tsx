@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useStore } from '../state/store'
 import { minuteToHHMM, hhmmToMinute } from '@shared/format'
 import { activeTimeFrame } from '@shared/engine/selectCurrentQuest'
+import { CaretUp, CaretDown } from '@phosphor-icons/react'
 
 export function TimeFramesView(): JSX.Element {
   const { db, createTimeFrame, updateTimeFrame, deleteTimeFrame, moveTimeFrame } = useStore()
@@ -36,7 +37,7 @@ export function TimeFramesView(): JSX.Element {
           <div className="tf-row" key={f.id}>
             <div className="tf-reorder">
               <button className="icon-btn" disabled={i === 0} onClick={() => moveTimeFrame(f.id, -1)} title="Move up">
-                ▲
+                <CaretUp size={14} weight="bold" />
               </button>
               <button
                 className="icon-btn"
@@ -44,7 +45,7 @@ export function TimeFramesView(): JSX.Element {
                 onClick={() => moveTimeFrame(f.id, 1)}
                 title="Move down"
               >
-                ▼
+                <CaretDown size={14} weight="bold" />
               </button>
             </div>
             <input

@@ -3,14 +3,28 @@ import { useStore } from '../state/store'
 import { useNow } from '../hooks/useNow'
 import { selectCurrentQuest } from '@shared/engine/selectCurrentQuest'
 import { balance } from '@shared/config/balance'
-import { Play, Pause, ArrowCounterClockwise, Coffee, CheckCircle, Coins } from '@phosphor-icons/react'
+import {
+  Play,
+  Pause,
+  ArrowCounterClockwise,
+  Coffee,
+  CheckCircle,
+  Coins,
+  Timer,
+  ClockCountdown,
+  HourglassMedium,
+  Brain,
+  Waves,
+  BoundingBox,
+  type Icon
+} from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 // One timer engine; the preset just changes the cadence. `work: null` = Flowtime
 // (count UP, stop by hand; break is a fraction of however long you focused).
 type Preset = {
   name: string
-  emoji: string
+  icon: string
   blurb: string
   work: number | null
   break?: number
@@ -20,6 +34,15 @@ type Preset = {
 }
 const PRESETS = balance.focus.presets as Record<string, Preset>
 const PRESET_KEYS = Object.keys(PRESETS)
+
+/** Preset icon name (from balance) -> Phosphor component. Crisp, on-brand icons
+ *  replace the old emoji glyphs (same app-wide convention as the Eisenhower view). */
+const PRESET_ICON: Record<string, Icon> = {
+  ClockCountdown,
+  HourglassMedium,
+  Brain,
+  Waves
+}
 
 type Phase = 'idle' | 'work' | 'break'
 
@@ -45,6 +68,7 @@ export function FocusView(): JSX.Element {
   const presetKey = db?.settings.focusPreset ?? 'pomodoro'
   const preset = PRESETS[presetKey] ?? PRESETS.pomodoro
   const isFlow = preset.work === null
+  const PresetIcon = PRESET_ICON[preset.icon] ?? Timer
 
   const [phase, setPhase] = useState<Phase>('idle')
   const [running, setRunning] = useState(false)
@@ -229,9 +253,11 @@ export function FocusView(): JSX.Element {
   return (
     <div className="view focus-view">
       <div className="view-head">
-        <h2>⏱️ Focus</h2>
+        <h2>
+          <Timer size={20} weight="fill" className="focus-title-icon" /> Focus
+        </h2>
         <span className="focus-tally">
-          {preset.emoji} {cycle} session{cycle === 1 ? '' : 's'} today
+          <PresetIcon size={14} weight="fill" /> {cycle} session{cycle === 1 ? '' : 's'} today
         </span>
       </div>
 
@@ -239,6 +265,7 @@ export function FocusView(): JSX.Element {
       <div className="focus-presets">
         {PRESET_KEYS.map((k) => {
           const p = PRESETS[k]
+          const PIcon = PRESET_ICON[p.icon] ?? Timer
           return (
             <button
               key={k}
@@ -247,7 +274,9 @@ export function FocusView(): JSX.Element {
               disabled={phase !== 'idle' && k !== presetKey}
               title={p.blurb}
             >
-              <span className="fp-emoji">{p.emoji}</span>
+              <span className="fp-badge">
+                <PIcon size={18} weight="fill" />
+              </span>
               <span className="fp-name">{p.name}</span>
               <span className="fp-blurb">{p.blurb}</span>
             </button>
@@ -306,7 +335,7 @@ export function FocusView(): JSX.Element {
                   onClick={() => startTimebox(timeboxMinutes)}
                   title={`Hard-stop box sized from this quest's estimate (×${tbCfg.bufferMultiplier} buffer). When it ends: start another box, or move on — no penalty.`}
                 >
-                  📦 Timebox · {timeboxMinutes}m
+                  <BoundingBox size={16} weight="fill" /> Timebox · {timeboxMinutes}m
                 </button>
               )}
             </>

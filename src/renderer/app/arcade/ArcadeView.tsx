@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useStore } from '../../state/store'
 import { balance } from '@shared/config/balance'
-import { GameController, Ticket, Trophy, Play } from '@phosphor-icons/react'
+import { GameController, Ticket, Trophy, Play, SpeakerSimpleHigh, SpeakerSimpleSlash } from '@phosphor-icons/react'
 import { CoinIcon } from '../../components/RewardIcons'
 import { play as playSfx, isMuted, toggleMuted } from './sound'
 import { AimTrainer } from './games/AimTrainer'
@@ -69,7 +69,7 @@ export function ArcadeView(): JSX.Element {
       title={muted ? 'Sound off — click for sound' : 'Sound on — click to mute'}
       onClick={() => setMuted(toggleMuted())}
     >
-      {muted ? '🔇' : '🔊'}
+      {muted ? <SpeakerSimpleSlash size={18} weight="regular" /> : <SpeakerSimpleHigh size={18} weight="fill" />}
     </button>
   )
 

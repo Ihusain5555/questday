@@ -11,7 +11,9 @@
 export interface ToggleableFeature {
   /** Must match the tab id in App.tsx. */
   id: string
-  emoji: string
+  /** Phosphor icon name (mapped to a component in DataView) — matches the tab
+   *  icon in App.tsx so the toggle list and the tab read identically. */
+  icon: string
   label: string
   /** One-line "what is this?" — doubles as the explainer in settings. */
   blurb: string
@@ -20,13 +22,13 @@ export interface ToggleableFeature {
 export const TOGGLEABLE_FEATURES: ToggleableFeature[] = [
   {
     id: 'focus',
-    emoji: '⏱️',
+    icon: 'Timer',
     label: 'Focus timer',
     blurb: 'Pomodoro, 52/17, deep-work, or Flowtime focus sessions tied to your current quest.'
   },
   {
     id: 'matrix',
-    emoji: '🧭',
+    icon: 'Compass',
     label: 'Eisenhower matrix',
     blurb: 'Triage your quests in the urgent × important 2×2 — see where your effort should go.'
   }
