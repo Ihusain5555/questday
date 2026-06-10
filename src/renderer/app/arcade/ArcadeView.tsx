@@ -109,10 +109,10 @@ export function ArcadeView(): JSX.Element {
         </span>
       </div>
       <p className="tagline">
-        Every quest you finish drops an arcade ticket (up to {balance.arcade.ticketsPerDay}/day —
-        they never expire). Spend one on a quick brain workout: each game trains a real skill —
-        attention, memory, processing speed, focus, flexibility. You get better at what you
-        practice (no, it won&apos;t make you a genius — just sharper at the game).
+        You get {balance.arcade.ticketsFreePerDay} free brain-breaks a day, plus one for every
+        quest you finish — they never expire. Each game trains a real skill — attention, memory,
+        processing speed, focus, flexibility. You get better at what you practice (no, it
+        won&apos;t make you a genius — just sharper at the game).
       </p>
 
       {result && (
@@ -130,8 +130,8 @@ export function ArcadeView(): JSX.Element {
 
       {tickets === 0 && (
         <div className="placeholder arcade-empty">
-          <Ticket size={16} weight="fill" /> No tickets right now — your next quest completion earns
-          one. The arcade will be here waiting (tickets never expire).
+          <Ticket size={16} weight="fill" /> All out of brain-breaks for now — finish a quest to
+          earn another, and you&apos;ll get {balance.arcade.ticketsFreePerDay} free again tomorrow.
         </div>
       )}
 

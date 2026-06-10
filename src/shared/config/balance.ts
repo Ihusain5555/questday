@@ -320,9 +320,13 @@ export const balance = {
   // claim they make you "smarter" / raise IQ / prevent dementia. Tone rule: a
   // wrong answer never punishes — it just doesn't score.
   arcade: {
-    /** Tickets granted per quest completion, and the daily earn cap. */
+    // Brain-breaks are abundant (the games are beneficial, not a coin-farm):
+    // everyone gets a few FREE each day (topped up to the floor on the first open,
+    // never stacking), and every quest adds one more. `ticketsPerDay` is now just
+    // a generous soft cap on EARNED tickets per day — never a real wall.
+    ticketsFreePerDay: 3,
     ticketsPerCompletion: 1,
-    ticketsPerDay: 3,
+    ticketsPerDay: 20,
     games: {
       // Memory & working memory
       nback: { name: 'N-Back', emoji: '🔢', blurb: 'Match the cell from 2 steps back — a working-memory workout.' },

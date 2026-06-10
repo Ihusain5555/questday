@@ -490,8 +490,23 @@ export const useStore = create<AppStore>((set, get) => ({
     const db = get().db
     if (!db) return null
     const now = new Date()
+    const today = ymd(now)
+
+    // Daily free brain-breaks: on the first open of a new day (or first launch
+    // after this feature shipped), top arcade tickets UP TO the free floor —
+    // never stacking — so the beneficial arcade is always playable, even on a
+    // zero-quest day. Questing then adds more on top. Tone rule: only ever grants.
+    const needFree = db.arcade.freeGrantedOn !== today
+    const player = needFree
+      ? { ...db.player, arcadeTickets: Math.max(db.player.arcadeTickets, balance.arcade.ticketsFreePerDay) }
+      : db.player
+    const arcade = needFree ? { ...db.arcade, freeGrantedOn: today } : db.arcade
+
     const change = computeDayChange(db, now)
-    if (!change) return null
+    if (!change) {
+      if (needFree) await get().save({ player, arcade })
+      return null
+    }
 
     // Carry over non-overdue quests (stay active; bump display counter). Skip the
     // counter on first run since nothing was truly "carried" yet.
@@ -536,7 +551,7 @@ export const useStore = create<AppStore>((set, get) => ({
       }
     }
 
-    await get().save({ quests, garden, lastSeenDate: ymd(now) })
+    await get().save({ quests, garden, player, arcade, lastSeenDate: today })
     if (dewGrown.length > 0) {
       set({ dewNews: `🌅 Overnight dew: ${dewGrown.join(' and ')} grew while you were away.` })
     }

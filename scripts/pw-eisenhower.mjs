@@ -96,6 +96,10 @@ try {
     `${await main.locator('nav.tabs .tab').count()} top-level tabs (want 7)`)
   result('DASH_STATS_TEST', (await main.locator('.dash-stats').count()) === 1,
     'Stats folded into the Dashboard')
+  // Free daily brain-breaks: seed has 0 arcade tickets; the daily top-up grants 3.
+  result('FREE_TICKETS_TEST',
+    ((await main.locator('.player-bar .pstat').first().textContent()) ?? '').replace(/\s/g, '') === '3',
+    `PlayerBar tickets: "${((await main.locator('.player-bar .pstat').first().textContent()) ?? '').trim()}" (want 3 free)`)
   await main.screenshot({ path: path.join(shots, 'restructure-dashboard.png') })
 
   // --- Open the Matrix tool (Productivity → Matrix sub-tab) ---

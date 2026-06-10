@@ -16,7 +16,11 @@ turned the **Arcade into a brain-training set**: cut the 8 pure-reflex games, ke
 cognitive angle, and added 4 evidence-based games (🌀 Mental Spin = mental rotation/spatial, 🔀
 Track Switch = task-switching, ✋ Stop Tap = go/no-go inhibition, 🪜 Span Recall = Corsi/digit
 span) → 10 games, each blurb honestly naming the skill it trains (research-backed; no "gets you
-smarter" overclaiming). Built + installed as `QuestDay Setup 1.8.3.exe`.**
+smarter" overclaiming). v1.8.4 made arcade tickets GENEROUS (rationing a beneficial activity
+backfires — cf. the Duolingo Energy backlash): **3 FREE brain-breaks/day** topped up each morning
+(never stacking) + **1 per quest**, no hard cap (`balance.arcade.ticketsFreePerDay: 3`,
+`ticketsPerDay: 20` soft cap; the daily top-up lives in `store.ts` `runDayChange`, new
+`arcade.freeGrantedOn` date-stamp). Built + installed as `QuestDay Setup 1.8.4.exe`.**
 v1.5 shipped the full roadmap, themed worlds, harvest economy, the ticket-gated arcade, and
 recurring quests (all 2026-06-06); the arcade grew to 14 minigames; v1.6 (2026-06-08 →
 2026-06-09) added the productivity tools (⏱️ Focus, 🧭 Matrix, 📦 Timeboxing) + feature

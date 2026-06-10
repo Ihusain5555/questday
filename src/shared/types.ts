@@ -79,6 +79,8 @@ export interface ArcadeState {
   /** Daily ticket-earn tracking (the tickets themselves never expire). */
   ticketsEarnedOn: string | null
   ticketsEarnedCount: number
+  /** The day the free daily brain-breaks were last granted (top-up fires once/day). */
+  freeGrantedOn?: string | null
 }
 
 // --- Focus timer (Pomodoro family): execution-layer productivity ------------

@@ -54,7 +54,7 @@ export function PlayerBar({ player, activeCount, compact = false }: Props): JSX.
         </div>
       </div>
       <div className="player-stats">
-        <span className="pstat" title="Arcade tickets — earn one per quest, play in the Arcade">
+        <span className="pstat" title="Arcade tickets — a few free daily, plus one per quest; play in the Arcade">
           <Ticket size={18} weight="fill" color="var(--gold)" />
           {player.arcadeTickets}
         </span>

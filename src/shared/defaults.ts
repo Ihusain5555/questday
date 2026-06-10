@@ -34,7 +34,8 @@ export function createDefaultDatabase(): Database {
     arcade: {
       best: {},
       ticketsEarnedOn: null,
-      ticketsEarnedCount: 0
+      ticketsEarnedCount: 0,
+      freeGrantedOn: null
     },
     focus: {
       sessionsRewardedOn: null,
