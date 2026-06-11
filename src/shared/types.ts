@@ -6,7 +6,7 @@ export type Difficulty = 'Easy' | 'Medium' | 'Hard'
 export type Priority = 'Low' | 'Medium' | 'High' | 'Critical'
 /** How acceptable it is to miss a quest. Distinct from `priority` (see §3/§4). */
 export type Skippability = 'Must do' | 'Should do' | 'Nice to have'
-export type QuestStatus = 'active' | 'completed' | 'dropped' | 'rolled-over'
+export type QuestStatus = 'active' | 'completed' | 'dropped'
 
 export interface SubTask {
   id: string
@@ -81,19 +81,6 @@ export interface ArcadeState {
   ticketsEarnedCount: number
   /** The day the free daily brain-breaks were last granted (top-up fires once/day). */
   freeGrantedOn?: string | null
-}
-
-// --- Focus timer (Pomodoro family): execution-layer productivity ------------
-// Non-punitive: a completed focus session pays a SMALL, daily-capped coin bonus
-// (mirrors the Arcade earn-cap). Abandoning a session costs nothing; breaks are
-// part of the method. The timer runs transiently in the renderer (never a write
-// per tick) — only this earn-cap counter and the chosen preset persist.
-
-export interface FocusState {
-  /** YYYY-MM-DD the session-reward cap last reset on. */
-  sessionsRewardedOn: string | null
-  /** Focus sessions that paid a coin bonus today (capped — never punitive). */
-  sessionsRewardedCount: number
 }
 
 export type ActiveModeTier = 'awareness' | 'nudge' | 'softFriction' | 'hardBlock'
@@ -191,11 +178,19 @@ export interface Database {
   player: PlayerState
   garden: Garden
   arcade: ArcadeState
-  focus: FocusState
   settings: Settings
   /** Last local date (YYYY-MM-DD) the app processed a daily rollover. */
   lastSeenDate: string | null
 }
 
-/** A shallow patch applied to the persisted database. */
-export type DatabasePatch = Partial<Database>
+/**
+ * A patch applied to the persisted database. Top-level keys replace wholesale,
+ * EXCEPT `settings` and `player`, which DEEP-MERGE in the store (see saveDatabase):
+ * a writer may send only the fields it changed — e.g. the widget saving just its
+ * new bounds — without a stale full-object patch from another window clobbering a
+ * sibling field (lost-update guard).
+ */
+export type DatabasePatch = Partial<Omit<Database, 'settings' | 'player'>> & {
+  settings?: Partial<Settings>
+  player?: Partial<PlayerState>
+}

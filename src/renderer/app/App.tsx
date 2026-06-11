@@ -9,6 +9,8 @@ import { RealmView } from './RealmView'
 import { ArcadeView } from './arcade/ArcadeView'
 import { DataView } from './DataView'
 import { CompletionCelebration } from '../components/CompletionCelebration'
+import { ErrorBoundary } from '../components/ErrorBoundary'
+import { SaveErrorToast } from '../components/SaveErrorToast'
 import { RolloverBanner } from './RolloverBanner'
 import { PastDueReview } from './PastDueReview'
 import { ymd, encouragementMessage } from '@shared/engine/rollover'
@@ -113,13 +115,17 @@ export function App(): JSX.Element {
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.18 }}
           >
-            {tab === 'dashboard' && <Dashboard />}
-            {tab === 'quests' && <QuestsView />}
-            {tab === 'frames' && <TimeFramesView />}
-            {tab === 'productivity' && <ProductivityView />}
-            {tab === 'world' && <RealmView />}
-            {tab === 'arcade' && <ArcadeView />}
-            {tab === 'data' && <DataView />}
+            {/* Per-tab boundary (keyed by tab so it clears on navigation): one
+                view's render crash shows a recovery card, the rest stay usable. */}
+            <ErrorBoundary key={tab} label="this view">
+              {tab === 'dashboard' && <Dashboard />}
+              {tab === 'quests' && <QuestsView />}
+              {tab === 'frames' && <TimeFramesView />}
+              {tab === 'productivity' && <ProductivityView />}
+              {tab === 'world' && <RealmView />}
+              {tab === 'arcade' && <ArcadeView />}
+              {tab === 'data' && <DataView />}
+            </ErrorBoundary>
           </motion.div>
         </AnimatePresence>
       </main>
@@ -129,6 +135,7 @@ export function App(): JSX.Element {
       )}
 
       <CompletionCelebration />
+      <SaveErrorToast />
     </div>
     </MotionConfig>
   )

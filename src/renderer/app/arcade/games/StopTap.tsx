@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { balance } from '@shared/config/balance'
 import { play } from '../sound'
 import { Timer } from '@phosphor-icons/react'
 import { GameIcon } from '../gameIcons'
@@ -17,9 +18,10 @@ import { GameIcon } from '../gameIcons'
  * a touch faster as the score climbs (a gentle chase, never a wall).
  */
 
-const DURATION_S = 45 // timed round (per prompt — kept local, not in balance)
-const MIN_GAP_MS = 420 // floor for the gap as the cadence ramps up
-const MIN_WINDOW_MS = 380 // floor for the response window as it tightens
+// Tunables live in balance.ts (arcade.games.stoptap); aliased locally for brevity.
+const DURATION_S: number = balance.arcade.games.stoptap.seconds
+const MIN_GAP_MS: number = balance.arcade.games.stoptap.minGapMs // floor for the gap as the cadence ramps up
+const MIN_WINDOW_MS: number = balance.arcade.games.stoptap.minWindowMs // floor for the response window
 
 // Difficulty: cadence + how often a trial is the rare NO-GO stop signal.
 // `gap` is the blank before a stimulus, `window` how long it stays on screen,
@@ -99,22 +101,20 @@ export function StopTap({ onFinish }: { onFinish: (score: number) => void }): JS
     return () => clearTimeout(id)
   }, [phase, count])
 
-  // Round clock: tick down once a second; at zero, end the round (guarded once).
+  // Round clock: tick down once a second. The updater stays PURE — a separate
+  // effect watches for zero and ends the round (matches the other timed games;
+  // avoids dispatching a parent setState from inside a setState updater).
   useEffect(() => {
     if (phase !== 'playing') return
-    const id = setInterval(() => {
-      setTimeLeft((t) => {
-        const next = t - 1
-        if (next <= 0) {
-          clearInterval(id)
-          finish()
-        }
-        return next
-      })
-    }, 1000)
+    const id = setInterval(() => setTimeLeft((t) => Math.max(0, t - 1)), 1000)
     return () => clearInterval(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])
+
+  useEffect(() => {
+    if (phase === 'playing' && timeLeft <= 0) finish()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeLeft, phase])
 
   // The trial loop: blank gap -> show a stimulus for the window -> score the
   // withhold/miss -> schedule the next. Self-chaining timeouts (no fixed grid)

@@ -24,11 +24,12 @@ const STARTS = [
   { key: 'hard', name: 'Hard', ms: 300 }
 ] as const
 type Mode = (typeof STARTS)[number]['key']
-const START_MS = 420 // default first exposure (Medium)
-const MIN_MS = 90 // floor — can't get easier to see than this
-const MAX_MS = 650 // ceiling after misses
-const STEP_DOWN = 40 // shorten on a hit (harder)
-const STEP_UP = 55 // lengthen on a miss (easier)
+// Staircase tunables live in balance.ts (arcade.games.flashrecall).
+const START_MS: number = balance.arcade.games.flashrecall.startMs // default first exposure (Medium)
+const MIN_MS: number = balance.arcade.games.flashrecall.minMs // floor — can't get easier to see than this
+const MAX_MS: number = balance.arcade.games.flashrecall.maxMs // ceiling after misses
+const STEP_DOWN: number = balance.arcade.games.flashrecall.stepDownMs // shorten on a hit (harder)
+const STEP_UP: number = balance.arcade.games.flashrecall.stepUpMs // lengthen on a miss (easier)
 
 type Phase = 'ready' | 'fixation' | 'flash' | 'respond' | 'feedback'
 

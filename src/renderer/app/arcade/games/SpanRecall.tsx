@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { balance } from '@shared/config/balance'
 import { play } from '../sound'
 import { Timer } from '@phosphor-icons/react'
 import { GameIcon } from '../gameIcons'
@@ -17,11 +18,12 @@ import { GameIcon } from '../gameIcons'
  * cell lights then clears before the next (a readable beat) like N-Back.
  */
 
-const CELLS = 9 // 3x3 grid
-const DURATION_S = 75 // timed round
-const MAX_L = 9
-const LIT_MS = 600 // each cell stays lit this long
-const GAP_MS = 220 // blank gap between flashes
+const CELLS = 9 // 3x3 grid (structural)
+// Tunables live in balance.ts (arcade.games.spanrecall); aliased locally for brevity.
+const DURATION_S: number = balance.arcade.games.spanrecall.seconds
+const MAX_L: number = balance.arcade.games.spanrecall.maxLen
+const LIT_MS: number = balance.arcade.games.spanrecall.litMs // each cell stays lit this long
+const GAP_MS: number = balance.arcade.games.spanrecall.gapMs // blank gap between flashes
 
 type Order = 'forward' | 'backward'
 type Mode = 'easy' | 'medium' | 'hard'

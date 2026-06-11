@@ -8,7 +8,16 @@
 
 import { app, BrowserWindow } from 'electron'
 import { join } from 'path'
-import { existsSync, mkdirSync, renameSync, writeFileSync, readFileSync } from 'fs'
+import {
+  existsSync,
+  mkdirSync,
+  renameSync,
+  readFileSync,
+  openSync,
+  writeSync,
+  fsyncSync,
+  closeSync
+} from 'fs'
 import type { Database, DatabasePatch } from '@shared/types'
 import { createDefaultDatabase, DB_VERSION } from '@shared/defaults'
 import { writeAutoBackup } from '../backup/backup'
@@ -65,7 +74,10 @@ export function loadDatabase(): Database {
     // the unreadable file aside for manual recovery.
     console.error('[questday] failed to read db.json, seeding defaults:', err)
     try {
-      renameSync(path, path + `.corrupt`)
+      // Timestamp the set-aside copy so a second corruption can't overwrite the
+      // first (the first is the one most likely to hold recoverable data).
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+      renameSync(path, `${path}.${stamp}.corrupt`)
     } catch {
       /* best effort */
     }
@@ -91,7 +103,6 @@ function migrate(db: Database): Database {
       items: (db.garden?.items ?? []).map((i) => ({ ...i, theme: i.theme ?? 'garden' }))
     },
     arcade: { ...fresh.arcade, ...db.arcade },
-    focus: { ...fresh.focus, ...db.focus },
     settings: {
       ...fresh.settings,
       ...db.settings,
@@ -106,21 +117,94 @@ export function getDatabase(): Database {
   return cache ?? loadDatabase()
 }
 
-/** Atomic persist: write to a temp file then rename over the live file. */
+/**
+ * Atomic + durable persist: write the temp file, fsync it so the bytes actually
+ * reach the disk, THEN rename over the live file. The rename alone is atomic (the
+ * live file is never half-written), but without the fsync a crash/power-loss right
+ * after the rename could leave the new file present-but-empty — the fsync closes
+ * that window so a crash can never cost the user their latest change.
+ */
 function persist(db: Database): void {
   ensureDir()
   const path = dbPath()
   const tmp = path + '.tmp'
-  writeFileSync(tmp, JSON.stringify(db, null, 2), 'utf-8')
+  const fd = openSync(tmp, 'w')
+  try {
+    writeSync(fd, JSON.stringify(db, null, 2), null, 'utf-8')
+    fsyncSync(fd)
+  } finally {
+    closeSync(fd)
+  }
   renameSync(tmp, path)
 }
 
-/** Apply a shallow patch, persist atomically, and trigger a debounced backup. */
+/**
+ * Apply a patch onto the authoritative current state. Top-level keys replace
+ * wholesale, but `settings` and `player` DEEP-MERGE so a writer that sends only
+ * the fields it changed (e.g. the widget saving just its bounds) cannot clobber a
+ * sibling field a different window wrote moments earlier (lost-update guard).
+ */
+function applyPatch(current: Database, patch: DatabasePatch): Database {
+  // settings/player are deep-merged below; the rest replace wholesale. Pulling them
+  // out keeps the base object fully-typed (a partial spread would widen it).
+  const { settings: settingsPatch, player: playerPatch, ...rest } = patch
+  const next: Database = { ...current, ...rest, version: DB_VERSION }
+  if (settingsPatch) {
+    next.settings = {
+      ...current.settings,
+      ...settingsPatch,
+      // Nested maps within settings merge too (mirrors migrate()).
+      activeModeTiers: { ...current.settings.activeModeTiers, ...settingsPatch.activeModeTiers },
+      enabledFeatures: { ...current.settings.enabledFeatures, ...settingsPatch.enabledFeatures }
+    }
+  }
+  if (playerPatch) {
+    next.player = { ...current.player, ...playerPatch }
+  }
+  return next
+}
+
+/**
+ * Structural invariants that MUST hold before anything is written. A renderer bug
+ * that built a malformed patch (e.g. quests:undefined, player:null) must never be
+ * able to persist corruption to db.json or broadcast it live to every window — so
+ * we reject the save and leave the last-good state untouched. Returns a reason
+ * string when invalid, or null when the state is safe to write.
+ */
+function validate(db: Database): string | null {
+  if (!Array.isArray(db.quests)) return 'quests must be an array'
+  if (!Array.isArray(db.timeFrames)) return 'timeFrames must be an array'
+  if (!db.player || typeof db.player !== 'object') return 'player must be an object'
+  if (!db.settings || typeof db.settings !== 'object') return 'settings must be an object'
+  return null
+}
+
+/**
+ * Apply a patch, persist atomically, and trigger a debounced backup.
+ * Ordering is deliberate (data-safety): validate → write to disk → only THEN
+ * advance the in-memory cache. If the disk write fails (a transient Windows file
+ * lock from AV/OneDrive is common — this very project lives under OneDrive), the
+ * cache is left unchanged so memory and disk never diverge, and the error is
+ * surfaced to the caller instead of silently dropping a change.
+ */
 export function saveDatabase(patch: DatabasePatch): Database {
   const current = getDatabase()
-  const next: Database = { ...current, ...patch, version: DB_VERSION }
+  const next = applyPatch(current, patch)
+
+  const invalid = validate(next)
+  if (invalid) {
+    console.error('[questday] rejected invalid save patch:', invalid)
+    throw new Error(`Invalid save patch: ${invalid}`)
+  }
+
+  try {
+    persist(next)
+  } catch (err) {
+    console.error('[questday] failed to write db.json (state left unchanged):', err)
+    throw new Error('Could not save to disk')
+  }
+
   cache = next
-  persist(next)
   writeAutoBackup(next)
   broadcast(next)
   return next

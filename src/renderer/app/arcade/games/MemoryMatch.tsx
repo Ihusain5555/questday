@@ -51,6 +51,7 @@ export function MemoryMatch({ onFinish }: { onFinish: (score: number) => void })
   const [matched, setMatched] = useState<Set<number>>(new Set())
   const [timeLeft, setTimeLeft] = useState<number>(cfg.seconds + DIFFS.medium.timeDelta)
   const done = useRef(false)
+  const flipBackTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const pairCount = cur.pairs
   const pairs = matched.size / 2
@@ -77,6 +78,15 @@ export function MemoryMatch({ onFinish }: { onFinish: (score: number) => void })
     const id = setTimeout(() => setCount((c) => c - 1), 700)
     return () => clearTimeout(id)
   }, [phase, count])
+
+  // Cancel a pending mismatch flip-back if the round ends / the game unmounts
+  // mid-wait, so the orphaned timer can't fire setState on a dead component.
+  useEffect(
+    () => () => {
+      if (flipBackTimer.current) clearTimeout(flipBackTimer.current)
+    },
+    []
+  )
 
   useEffect(() => {
     if (phase !== 'playing') return
@@ -111,7 +121,8 @@ export function MemoryMatch({ onFinish }: { onFinish: (score: number) => void })
         // Tone rule: a wrong pair never punishes — no point lost, the cards just
         // flip back with a soft blip and you try again.
         play('bad')
-        setTimeout(() => setFlipped([]), 700)
+        if (flipBackTimer.current) clearTimeout(flipBackTimer.current)
+        flipBackTimer.current = setTimeout(() => setFlipped([]), 700)
       }
     }
   }

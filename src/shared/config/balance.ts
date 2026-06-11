@@ -20,9 +20,6 @@ export const balance = {
   /** priorityBonus: +10% (High), +20% (Critical); Low/Medium = 0. */
   priorityBonus: { Low: 0, Medium: 0, High: 0.1, Critical: 0.2 } as Record<Priority, number>,
 
-  /** currency = round(questXP / 2) */
-  currencyDivisor: 2,
-
   // --- Levels --------------------------------------------------------------
   /** xpForLevel(n) = baseCost * n  (rising cost per level). */
   level: { baseCost: 100 },
@@ -30,6 +27,20 @@ export const balance = {
   // --- Streak (§7) ---------------------------------------------------------
   /** +5% per consecutive day, capped at +25%. Never punitive. */
   streak: { bonusPerDay: 0.05, maxBonus: 0.25 },
+
+  // --- Active mode (§8) cadences -------------------------------------------
+  // How "present" the coach is. Kept here (not buried in the scheduler) so the
+  // interruption feel can be re-tuned in one place, like every other knob.
+  activeMode: {
+    /** Scheduler tick cadence (awareness/nudge checks), seconds. */
+    pollIntervalSec: 30,
+    /** Minimum minutes between off-task "back on track?" nudges. */
+    offTaskNudgeCooldownMin: 5,
+    /** Quiet window after "proceed" on a soft-friction prompt before it re-fires, seconds. */
+    proceedGraceSec: 30,
+    /** Short grace for the focus hand-off back to QuestDay after dismissing, seconds. */
+    dismissGraceSec: 3
+  },
 
   // --- Reward world: the garden ---------------------------------------------
   // Costs, unlock levels, growth stages, themes, plot upgrades, seasons, and
@@ -332,19 +343,19 @@ export const balance = {
       // (see theme.css --skill-*); the Arcade renders them as tinted badges
       // (app-wide icon convention — no emoji in UI chrome). Grouped by skill:
       // Memory & working memory — amethyst
-      nback: { name: 'N-Back', icon: 'Stack', color: 'var(--skill-memory)', blurb: 'Match the cell from 2 steps back — a working-memory workout.' },
-      spanrecall: { name: 'Span Recall', icon: 'Stairs', color: 'var(--skill-memory)', blurb: 'Repeat the growing sequence — stretch your memory span (Corsi).' },
+      nback: { name: 'N-Back', icon: 'Stack', color: 'var(--skill-memory)', blurb: 'Match the cell from 2 steps back — a working-memory workout.', trials: 24, stepMs: 2400, litMs: 1650, matchRate: 0.32 },
+      spanrecall: { name: 'Span Recall', icon: 'Stairs', color: 'var(--skill-memory)', blurb: 'Repeat the growing sequence — stretch your memory span (Corsi).', seconds: 75, maxLen: 9, litMs: 600, gapMs: 220 },
       memory: { name: 'Memory Match', icon: 'Cards', color: 'var(--skill-memory)', blurb: 'Pair the cards from memory — a light visual-memory warm-up.', seconds: 90 },
       // Processing speed & attention — gold
-      flashrecall: { name: 'Flash Recall', icon: 'Eye', color: 'var(--skill-speed)', blurb: 'Catch the flash, then place it — processing speed & attention (UFOV).', trials: 16 },
+      flashrecall: { name: 'Flash Recall', icon: 'Eye', color: 'var(--skill-speed)', blurb: 'Catch the flash, then place it — processing speed & attention (UFOV).', trials: 16, startMs: 420, minMs: 90, maxMs: 650, stepDownMs: 40, stepUpMs: 55 },
       aim: { name: 'Aim Trainer', icon: 'Crosshair', color: 'var(--skill-speed)', blurb: 'Hit the targets fast — sharpens visual attention & hand-eye speed.', seconds: 45 },
       reaction: { name: 'Reaction Time', icon: 'Lightning', color: 'var(--skill-speed)', blurb: 'Wait for green, then tap — measures your reaction speed.', trials: 5 },
       // Executive control: inhibition — emerald
       colorclash: { name: 'Color Clash', icon: 'Palette', color: 'var(--skill-focus)', blurb: 'Tap the ink colour, not the word — focus & inhibition (Stroop).', seconds: 45 },
-      stoptap: { name: 'Stop Tap', icon: 'HandPalm', color: 'var(--skill-focus)', blurb: 'Tap on GO, freeze on STOP — trains response inhibition (go/no-go).' },
+      stoptap: { name: 'Stop Tap', icon: 'HandPalm', color: 'var(--skill-focus)', blurb: 'Tap on GO, freeze on STOP — trains response inhibition (go/no-go).', seconds: 45, minGapMs: 420, minWindowMs: 380 },
       // Flexibility & spatial reasoning — sky
-      trackswitch: { name: 'Track Switch', icon: 'ArrowsLeftRight', color: 'var(--skill-flex)', blurb: 'Hop 1-A-2-B… — trains mental flexibility (task-switching).' },
-      mentalspin: { name: 'Mental Spin', icon: 'ArrowsClockwise', color: 'var(--skill-flex)', blurb: 'Same shape or mirror? Rotate it in your head — spatial reasoning.' }
+      trackswitch: { name: 'Track Switch', icon: 'ArrowsLeftRight', color: 'var(--skill-flex)', blurb: 'Hop 1-A-2-B… — trains mental flexibility (task-switching).', seconds: 50 },
+      mentalspin: { name: 'Mental Spin', icon: 'ArrowsClockwise', color: 'var(--skill-flex)', blurb: 'Same shape or mirror? Rotate it in your head — spatial reasoning.', seconds: 45 }
     }
   },
 
@@ -353,8 +364,8 @@ export const balance = {
   // shipping "Pomodoro" ships 52/17, ultradian deep-work, and Flowtime for free.
   // All durations in MINUTES. `work: null` = Flowtime (work until you choose to
   // stop; the break is a fraction of however long you actually focused).
-  // Tone rule: a finished session only ever GAINS coins (small + daily-capped);
-  // abandoning one costs nothing, and breaks are first-class, not "slacking".
+  // Tone rule: abandoning a session costs nothing, and breaks are first-class,
+  // not "slacking".
   focus: {
     // `icon` names a Phosphor icon (mapped to a component in FocusView, tinted in
     // a small badge) — crisp + on-brand, replacing the old emoji glyphs (app-wide
@@ -365,8 +376,6 @@ export const balance = {
       ultradian: { name: 'Deep work 90', icon: 'Brain', blurb: 'Ride your 90-min ultradian focus cycle.', work: 90, break: 20 },
       flowtime: { name: 'Flowtime', icon: 'Waves', blurb: 'No fixed timer — stop when focus fades.', work: null, breakRatio: 0.2 }
     },
-    /** A completed focus session pays a small chest, capped per day. */
-    reward: { coinsPerSession: 3, dailySessionCap: 8 },
     /**
      * Timebox (time-blocking slice C): a hard-stop box for the CURRENT quest,
      * sized from its estimate × a planning-fallacy buffer (research says ×1.5 —

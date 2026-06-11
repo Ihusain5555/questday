@@ -350,10 +350,3 @@ export function FocusView(): JSX.Element {
     </div>
   )
 }
-
-/** Local YYYY-MM-DD (matches the store's day-keying). */
-function todayStr(): string {
-  const d = new Date()
-  const pad = (n: number): string => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-}

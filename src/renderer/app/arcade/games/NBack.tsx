@@ -16,11 +16,12 @@ import { GameIcon } from '../gameIcons'
  * lights then CLEARS before the next (a readable beat) so the n-back is trackable.
  */
 
-const CELLS = 9 // 3x3 grid
-const TOTAL = 24 // sequence length
-const STEP_MS = 2400 // time per step (one cell)
-const LIT_MS = 1650 // how long the cell stays lit within a step (rest is blank)
-const MATCH_RATE = 0.32 // ~1/3 of eligible steps are forced matches
+const CELLS = 9 // 3x3 grid (structural)
+// Tunables live in balance.ts (arcade.games.nback); aliased locally for brevity.
+const TOTAL: number = balance.arcade.games.nback.trials // sequence length
+const STEP_MS: number = balance.arcade.games.nback.stepMs // time per step (one cell)
+const LIT_MS: number = balance.arcade.games.nback.litMs // how long the cell stays lit within a step
+const MATCH_RATE: number = balance.arcade.games.nback.matchRate // ~1/3 of eligible steps are forced matches
 
 function buildSequence(n: number): number[] {
   const seq: number[] = []

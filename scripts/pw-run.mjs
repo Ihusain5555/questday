@@ -1,10 +1,11 @@
-// Playwright driver — ⏱️ Focus timer (Pomodoro family). Exercises: the new
-// Focus tab, the 4 presets, current-quest binding, a fixed countdown ticking
-// down, the Flowtime "Take a break" path (instant session-end → reward), the
-// persisted coin payout + daily earn-cap counter, and preset persistence.
-// Stashes/restores the real db.json.
+// Playwright driver — ⏱️ Focus timer (Pomodoro family). Exercises: the Focus
+// tab, the 4 presets, current-quest binding, a fixed countdown ticking down, the
+// Flowtime "Take a break" instant session-end, the sessions-today tally, preset
+// persistence, and the feature toggle. (Coins were removed in v1.8.2 — no payout.)
+// Isolated --user-data-dir (own db.json + lock) — safe to run anytime.
 import { _electron as electron } from 'playwright-core'
-import { mkdirSync, writeFileSync, readFileSync, existsSync, copyFileSync, rmSync } from 'fs'
+import { mkdirSync, writeFileSync, readFileSync } from 'fs'
+import { tmpdir } from 'os'
 import path from 'path'
 
 const root = process.cwd()
@@ -27,8 +28,7 @@ const covers = (f) =>
 const activeFrame = frames.find(covers) ?? frames[0]
 const ymd = (x) => `${x.getFullYear()}-${pad(x.getMonth() + 1)}-${pad(x.getDate())}`
 
-// Seed: one active quest in the current frame (so the Focus view binds to it),
-// a known coin balance (100) so the +3 session reward is exact.
+// Seed: one active quest in the current frame (so the Focus view binds to it).
 const seed = {
   version: 1,
   quests: [
@@ -43,7 +43,6 @@ const seed = {
   player: { xp: 0, level: 3, currency: 100, streakCount: 0, lastCompletionDate: null, arcadeTickets: 0 },
   garden: { theme: 'garden', items: [], visitors: [], bestStreak: 0 },
   arcade: { best: {}, ticketsEarnedOn: null, ticketsEarnedCount: 0 },
-  focus: { sessionsRewardedOn: null, sessionsRewardedCount: 0 },
   settings: {
     activeModeEnabled: false,
     activeModeTiers: { awareness: true, nudge: false, softFriction: false, hardBlock: false },
@@ -54,25 +53,27 @@ const seed = {
   lastSeenDate: ymd(d)
 }
 
-const userData = path.join(process.env.APPDATA, 'questday')
-mkdirSync(userData, { recursive: true })
-const dbPath = path.join(userData, 'db.json')
-const stashPath = path.join(userData, 'db.json.pw-stash')
-if (existsSync(dbPath)) copyFileSync(dbPath, stashPath)
+// Isolated --user-data-dir — never touches the real save file.
+const isoDir = path.join(tmpdir(), 'questday-iso-focus')
+mkdirSync(isoDir, { recursive: true })
+const dbPath = path.join(isoDir, 'db.json')
 writeFileSync(dbPath, JSON.stringify(seed, null, 2))
 
 const readDb = () => JSON.parse(readFileSync(dbPath, 'utf-8'))
 const result = (name, pass, extra = '') =>
   console.log(`${name}: ${pass ? 'PASS' : 'FAIL'}${extra ? ` (${extra})` : ''}`)
 
+let app
 try {
-  const app = await electron.launch({ args: [root], cwd: root })
+  app = await electron.launch({ args: [root, `--user-data-dir=${isoDir}`], cwd: root })
   await (await app.firstWindow()).waitForLoadState('domcontentloaded')
   await new Promise((r) => setTimeout(r, 1800))
   const main = app.windows().find((w) => w.url().includes('index.html'))
 
-  // --- Open the Focus tab ---
-  await main.getByRole('button', { name: 'Focus' }).click()
+  // --- Open the Focus tool (Forge tab → Focus sub-tab, v1.8.1 nav) ---
+  await main.getByRole('button', { name: 'Forge', exact: true }).click()
+  await main.waitForTimeout(300)
+  await main.locator('.subtab', { hasText: 'Focus' }).click()
   await main.waitForTimeout(400)
 
   // --- 4 presets render (the whole Pomodoro family) ---
@@ -124,14 +125,7 @@ try {
   await main.getByRole('button', { name: 'Take a break' }).click()
   await main.waitForTimeout(600)
 
-  // --- Reward flash + EXACT persisted payout (+3 coins) + earn-cap counter ---
-  const reward = (await main.locator('.focus-reward').textContent()) ?? ''
-  result('FOCUS_REWARD_FLASH_TEST', reward.includes('+3'), `reward flash: "${reward.trim()}"`)
-  const db1 = readDb()
-  result('FOCUS_COINS_TEST', db1.player.currency === 103,
-    `currency after 1 session: ${db1.player.currency} (want 103 = 100 + 3)`)
-  result('FOCUS_CAP_COUNTER_TEST', db1.focus.sessionsRewardedCount === 1,
-    `sessionsRewardedCount: ${db1.focus.sessionsRewardedCount} (want 1)`)
+  // --- Completing a session counts toward today's tally (no coins since v1.8.2) ---
   result('FOCUS_TALLY_TEST',
     ((await main.locator('.focus-tally').textContent()) ?? '').includes('1 session'),
     `tally: "${((await main.locator('.focus-tally').textContent()) ?? '').trim()}"`)
@@ -148,39 +142,40 @@ try {
       (await main.getByRole('button', { name: 'Start focus' }).count()) === 1,
     'back to Ready/idle with Start focus available')
 
-  // --- Feature toggle (Data → Productivity features) hides/shows the tab ---
+  // --- Feature toggle (Data → Productivity features) hides/shows the Focus sub-tab ---
   await main.getByRole('button', { name: 'Data' }).click()
   await main.waitForTimeout(400)
   const focusSwitch = main.locator('.feature-toggle', { hasText: 'Focus timer' }).locator('input')
   result('FEATURE_TOGGLE_PRESENT_TEST', (await focusSwitch.count()) === 1,
     'Focus toggle present in Productivity section')
-  result('FOCUS_TAB_VISIBLE_TEST',
-    (await main.getByRole('button', { name: 'Focus', exact: true }).count()) === 1,
-    'Focus tab visible while enabled')
 
-  // Turn it off -> tab disappears + persists as false.
+  // Turn it off -> the Focus sub-tab disappears from Forge + persists as false.
   await focusSwitch.uncheck()
   await main.waitForTimeout(500)
-  result('FOCUS_TAB_HIDDEN_TEST',
-    (await main.getByRole('button', { name: 'Focus', exact: true }).count()) === 0,
-    'Focus tab hidden after toggle off')
   result('FEATURE_PERSIST_OFF_TEST', readDb().settings.enabledFeatures.focus === false,
     `persisted enabledFeatures.focus = ${readDb().settings.enabledFeatures.focus} (want false)`)
+  await main.getByRole('button', { name: 'Forge', exact: true }).click()
+  await main.waitForTimeout(300)
+  result('FOCUS_SUBTAB_HIDDEN_TEST',
+    (await main.locator('.subtab', { hasText: 'Focus' }).count()) === 0,
+    'Focus sub-tab hidden after toggle off')
   await main.screenshot({ path: path.join(shots, 'features-off.png') })
 
-  // Turn it back on -> tab returns.
+  // Turn it back on -> the sub-tab returns.
+  await main.getByRole('button', { name: 'Data' }).click()
+  await main.waitForTimeout(300)
   await focusSwitch.check()
   await main.waitForTimeout(500)
-  result('FOCUS_TAB_RESTORED_TEST',
-    (await main.getByRole('button', { name: 'Focus', exact: true }).count()) === 1,
-    'Focus tab returns after toggle on')
+  await main.getByRole('button', { name: 'Forge', exact: true }).click()
+  await main.waitForTimeout(300)
+  result('FOCUS_SUBTAB_RESTORED_TEST',
+    (await main.locator('.subtab', { hasText: 'Focus' }).count()) === 1,
+    'Focus sub-tab returns after toggle on')
 
   await app.close()
-} finally {
-  if (existsSync(stashPath)) {
-    copyFileSync(stashPath, dbPath)
-    rmSync(stashPath)
-    console.log('restored real db.json from stash')
-  }
+} catch (err) {
+  console.log('ERROR:', err?.message ?? err)
+  if (app) await app.close()
+  process.exitCode = 1
 }
-console.log('closed')
+console.log('closed (isolated dir:', isoDir + ')')

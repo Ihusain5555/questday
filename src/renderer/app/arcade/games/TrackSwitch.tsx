@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { balance } from '@shared/config/balance'
 import { play } from '../sound'
 import { Timer } from '@phosphor-icons/react'
 import { GameIcon } from '../gameIcons'
@@ -15,7 +16,7 @@ import { GameIcon } from '../gameIcons'
  * trail RESHUFFLES into a fresh layout so it never runs out within the round.
  */
 
-const DURATION_S = 50
+const DURATION_S: number = balance.arcade.games.trackswitch.seconds
 
 // The full interleaved target sequence: 1 A 2 B 3 C … up to 8 H (16 nodes).
 // Each mode slices the first N of these (see DIFFS), so the alternating

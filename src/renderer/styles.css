@@ -2702,6 +2702,59 @@ code {
   font-size: 14px;
 }
 
+/* ---- Crash-recovery card (ErrorBoundary fallback) ---- */
+.crash-card {
+  margin: 24px auto;
+  max-width: 420px;
+  text-align: center;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px 20px;
+}
+.crash-title {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--gold-bright);
+  margin-bottom: 6px;
+}
+.crash-sub {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+.crash-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+/* ---- Save-failure toast (rare transient file lock) ---- */
+.save-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 90%;
+  background: var(--panel-2);
+  border: 1px solid var(--gold-deep);
+  border-radius: 12px;
+  padding: 10px 14px;
+  color: var(--text);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.4);
+}
+.save-toast svg {
+  color: var(--gold);
+  flex: none;
+}
+.save-toast-text {
+  font-size: 13px;
+}
+
 /* ---- Past-due review modal ---- */
 .review-modal {
   max-width: 560px;

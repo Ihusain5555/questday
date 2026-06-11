@@ -20,11 +20,6 @@ export function questXP(quest: Pick<Quest, 'timeEstimateMinutes' | 'difficulty' 
   return Math.round(baseXP(quest) * (1 + priorityBonus))
 }
 
-/** currency = round(questXP / 2), earned alongside XP. */
-export function questCurrency(xp: number): number {
-  return Math.round(xp / balance.currencyDivisor)
-}
-
 /** Rising XP cost to clear level n: 100 * n by default. */
 export function xpForLevel(n: number): number {
   return balance.level.baseCost * n

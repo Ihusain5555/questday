@@ -53,13 +53,6 @@ export interface HarvestFlash {
   doubled: boolean
 }
 
-/** Local YYYY-MM-DD (used for streak day-counting). */
-function todayStr(): string {
-  const d = new Date()
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-}
-
 /** Fields the user supplies when creating/editing a quest. */
 export interface QuestInput {
   title: string
@@ -99,6 +92,10 @@ interface AppStore {
   /** Load state and subscribe to cross-window updates. Idempotent. */
   connect: () => Promise<void>
   save: (patch: DatabasePatch) => Promise<void>
+  /** Set when a save fails to persist (e.g. transient file lock); null when healthy.
+   *  The last-good state is kept, so the UI can prompt a retry without losing data. */
+  saveError: string | null
+  clearSaveError: () => void
 
   // ---- Quests ----
   createQuest: (input: QuestInput) => Promise<void>
@@ -163,6 +160,7 @@ export const useStore = create<AppStore>((set, get) => ({
   celebration: null,
   harvestFlash: null,
   dewNews: null,
+  saveError: null,
 
   refresh: async () => {
     const db = await window.questday.getState()
@@ -179,9 +177,17 @@ export const useStore = create<AppStore>((set, get) => ({
   },
 
   save: async (patch) => {
-    const db = await window.questday.saveState(patch)
-    set({ db })
+    try {
+      const db = await window.questday.saveState(patch)
+      set({ db, saveError: null })
+    } catch (err) {
+      // A failed/rejected save (disk lock, or a rejected invalid patch) must not
+      // become an invisible unhandled rejection. Keep the last-good state and flag it.
+      console.error('[questday] save failed; keeping last-good state:', err)
+      set({ saveError: 'Could not save your latest change. Please try again.' })
+    }
   },
+  clearSaveError: () => set({ saveError: null }),
 
   // ---- Quests --------------------------------------------------------------
   createQuest: async (input) => {
@@ -312,7 +318,7 @@ export const useStore = create<AppStore>((set, get) => ({
     if (!db) return
     const quest = db.quests.find((q) => q.id === id && q.status === 'active')
     if (!quest) return
-    const today = todayStr()
+    const today = ymd(new Date())
     const award = applyCompletion(quest, db.player, today)
     const completedAt = new Date().toISOString()
     const quests = db.quests.map((q) =>
@@ -337,6 +343,11 @@ export const useStore = create<AppStore>((set, get) => ({
     // The garden shares the celebration: one plant grows a stage (and may roll
     // a weather mutation — jackpot, positive-only), and a new best streak may
     // bring a visitor. (All of it only ever ADDS — tone rule.)
+    // NOTE (v1.8): growOnCompletion's stage bump is the PROTECTED inert state —
+    // kept so ↩ Restore's reversibility math stays valid (do not remove). The
+    // `grew`/`mutation` fields packed into the celebration below are computed but
+    // NOT currently rendered — the Realm-era CompletionCelebration ignores them.
+    // Left in place only in case the garden is un-retired; unconsumed until then.
     const growth = growOnCompletion(db.garden)
     let gardenNext = growth.garden
     let grew: Celebration['grew'] = null
@@ -418,27 +429,12 @@ export const useStore = create<AppStore>((set, get) => ({
     }
     if (xp < 0) xp = 0
 
-    // Coin claw-back with refund-first: top the balance up by undoing recent
-    // garden purchases before deducting, so the deduction can only take the
-    // undeserved coins.
-    let currency = db.player.currency
-    let garden = db.garden
-    if (currency < award.currency && garden.items.length > 0) {
-      const newestFirst = [...garden.items].sort((a, b) => b.plantedAt.localeCompare(a.plantedAt))
-      const refunded = new Set<string>()
-      for (const item of newestFirst) {
-        if (currency >= award.currency) break
-        // Purchases can sit in any world — refund newest-first across all themes.
-        const species = speciesByKey(item.theme, item.species)
-        if (!species) continue
-        currency += species.cost
-        refunded.add(item.id)
-      }
-      if (refunded.size > 0) {
-        garden = { ...garden, items: garden.items.filter((i) => !refunded.has(i.id)) }
-      }
-    }
-    currency = Math.max(0, currency - award.currency)
+    // Coins were removed (v1.8.2): completionAward.currency is always 0, so there
+    // is nothing to claw back — the XP/level rollback above IS the live reversal.
+    // Currency and the (inert) garden pass through unchanged. The currency field
+    // is retained only for save-compat.
+    const currency = db.player.currency
+    const garden = db.garden
 
     const quests = db.quests.map((q) =>
       q.id === id
@@ -448,9 +444,11 @@ export const useStore = create<AppStore>((set, get) => ({
             completedAt: null,
             completionAward: undefined,
             subTasks: q.subTasks.map((s) => ({ ...s, done: false })),
-            // A restored recurring completion also leaves the history (the
-            // win is being taken back by the user, not by the system).
-            completionDates: q.completionDates?.filter((d) => d !== todayStr())
+            // A restored recurring completion REMOVES today's date from the
+            // history so totalCompletions drops by exactly one. This is
+            // load-bearing for the normalizeChronicle() trim below — it's what
+            // keeps Restore an EXACT reversal of the realm reward.
+            completionDates: q.completionDates?.filter((d) => d !== ymd(new Date()))
           }
         : q
     )
@@ -462,7 +460,8 @@ export const useStore = create<AppStore>((set, get) => ({
       quests,
       player: { ...db.player, xp, level, currency },
       garden,
-      settings: { ...db.settings, realmChronicle }
+      // Only the changed field — settings deep-merges in the store.
+      settings: { realmChronicle }
     })
   },
 
@@ -475,7 +474,6 @@ export const useStore = create<AppStore>((set, get) => ({
     if (claimsAvailable(totalCompletions(db.quests), chronicle.length) < 1) return
     await get().save({
       settings: {
-        ...db.settings,
         realmChronicle: [...chronicle, { region: regionId, topic: topicId, entry: entryId }]
       }
     })
@@ -575,9 +573,9 @@ export const useStore = create<AppStore>((set, get) => ({
 
   // ---- Settings ------------------------------------------------------------
   updateSettings: async (patch) => {
-    const db = get().db
-    if (!db) return
-    await get().save({ settings: { ...db.settings, ...patch } })
+    // Send ONLY the changed fields; saveDatabase deep-merges settings, so this can't
+    // clobber a sibling (e.g. widgetBounds written by the main process) from a stale snapshot.
+    await get().save({ settings: patch })
   },
 
   // ---- Reward world (garden) -------------------------------------------------
@@ -589,7 +587,7 @@ export const useStore = create<AppStore>((set, get) => ({
     if (db.player.level < species.unlockLevel) return
     if (db.player.currency < species.cost) return
     // Rarer seeds rotate daily — only today's stock is purchasable.
-    if (!dailyStock(db.garden.theme, todayStr()).has(species.key)) return
+    if (!dailyStock(db.garden.theme, ymd(new Date())).has(species.key)) return
     if (!canPlantAt(db.garden, db.player.level, x, y)) return
     const garden = plantItem(db.garden, species, x, y, uid(), new Date().toISOString(), db.player.level)
     await get().save({
@@ -657,12 +655,17 @@ export const useStore = create<AppStore>((set, get) => ({
   finishArcadeRound: async (gameKey, score) => {
     const db = get().db
     if (!db) return { newBest: false }
+    const hadBest = db.arcade.best[gameKey] !== undefined
     const prevBest = db.arcade.best[gameKey] ?? 0
-    const newBest = score > prevBest
-    if (newBest) {
-      await get().save({ arcade: { ...db.arcade, best: { ...db.arcade.best, [gameKey]: score } } })
+    const improved = score > prevBest
+    // Record the first-ever round even if it scored 0, so a completed round stops
+    // reading as "no rounds yet". Once a best exists, only improvements update it.
+    if (!hadBest || improved) {
+      const best = hadBest ? Math.max(score, prevBest) : score
+      await get().save({ arcade: { ...db.arcade, best: { ...db.arcade.best, [gameKey]: best } } })
     }
-    return { newBest }
+    // "New best" celebration only fires on an actual improvement (a first 0 isn't one).
+    return { newBest: improved }
   },
 
 

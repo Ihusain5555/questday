@@ -6,13 +6,8 @@
 
 import { balance } from '../config/balance'
 import { isRecurring } from './recurrence'
+import { ymd } from './rollover'
 import type { PlayerState, Quest, TimeFrame } from '../types'
-
-/** Local YYYY-MM-DD for a Date (matches streak day-counting). */
-function ymdLocal(d: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-}
 
 /**
  * Total XP ever earned: every level cleared so far plus progress into the
@@ -42,7 +37,7 @@ export function completionDays(quest: Quest): string[] {
   if (isRecurring(quest)) return quest.completionDates ?? []
   if (quest.status !== 'completed' || !quest.completedAt) return []
   const t = new Date(quest.completedAt)
-  return Number.isNaN(t.getTime()) ? [] : [ymdLocal(t)]
+  return Number.isNaN(t.getTime()) ? [] : [ymd(t)]
 }
 
 /** Total completions ever (recurring history included). */
@@ -57,8 +52,10 @@ export function completionsPerDay(quests: Quest[], days: number, now: Date): Day
     for (const key of completionDays(q)) counts.set(key, (counts.get(key) ?? 0) + 1)
   const out: DayCount[] = []
   for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(now.getTime() - i * 86_400_000)
-    const key = ymdLocal(d)
+    // Step by local CALENDAR day (Date normalizes the day component), not a fixed
+    // 24h, so a DST-shift day (23h/25h) isn't duplicated or skipped in the chart.
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i)
+    const key = ymd(d)
     out.push({ date: key, label: DAY_LABELS[d.getDay()], count: counts.get(key) ?? 0 })
   }
   return out

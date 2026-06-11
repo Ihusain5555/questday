@@ -16,6 +16,7 @@ import { getDatabase } from '../db/store'
 import { selectCurrentQuest, activeTimeFrame } from '@shared/engine/selectCurrentQuest'
 import { minutesUntilFrameEnd } from '@shared/engine/activeMode'
 import { ymd } from '@shared/engine/rollover'
+import { balance } from '@shared/config/balance'
 
 export interface ActiveModeNotice {
   kind: 'awareness' | 'nudge'
@@ -28,6 +29,9 @@ let timer: NodeJS.Timeout | null = null
 let lastReminderAt = 0
 let snoozeUntil = 0
 const nudgedFrameKeys = new Set<string>()
+/** The day nudgedFrameKeys currently holds keys for — cleared when it changes so
+ *  the set can't grow without bound on a long-running (days/weeks) tray app. */
+let nudgeDay = ''
 let noticeSeq = 0
 
 export interface FrictionTrigger {
@@ -45,7 +49,7 @@ let wasDistracting = false
 let lastOffTaskNudgeAt = 0
 let frictionGraceUntil = 0
 let frictionShowing = false
-const OFF_TASK_NUDGE_COOLDOWN_MS = 5 * 60_000
+const OFF_TASK_NUDGE_COOLDOWN_MS = balance.activeMode.offTaskNudgeCooldownMin * 60_000
 let showFriction: ((data: FrictionTrigger) => void) | null = null
 
 // Hard-block state: the break pass window and the last app we minimized (so a
@@ -80,16 +84,16 @@ export function onFrictionResolved(proceeded: boolean, kind: 'soft' | 'block' = 
       if (lastBlockedApp) restoreApp(lastBlockedApp)
     } else {
       wasDistracting = false
-      frictionGraceUntil = now + 3_000
+      frictionGraceUntil = now + balance.activeMode.dismissGraceSec * 1000
     }
     return
   }
   if (proceeded) {
     wasDistracting = true
-    frictionGraceUntil = now + 30_000
+    frictionGraceUntil = now + balance.activeMode.proceedGraceSec * 1000
   } else {
     wasDistracting = false
-    frictionGraceUntil = now + 3_000
+    frictionGraceUntil = now + balance.activeMode.dismissGraceSec * 1000
   }
 }
 
@@ -206,6 +210,12 @@ function tick(): void {
   const s = db.settings
   if (!s.activeModeEnabled) return
   const now = new Date()
+  const today = ymd(now)
+  // New day: drop yesterday's nudge keys so the set stays bounded.
+  if (today !== nudgeDay) {
+    nudgedFrameKeys.clear()
+    nudgeDay = today
+  }
   if (now.getTime() < snoozeUntil) return
 
   const current = selectCurrentQuest(db.quests, db.timeFrames, now)
@@ -225,7 +235,7 @@ function tick(): void {
     if (frame) {
       const mins = minutesUntilFrameEnd(frame, now)
       if (mins <= Math.max(1, s.frameEndingLeadMin)) {
-        const key = `${frame.id}:${ymd(now)}`
+        const key = `${frame.id}:${today}`
         if (!nudgedFrameKeys.has(key)) {
           nudgedFrameKeys.add(key)
           fire(
@@ -241,7 +251,16 @@ function tick(): void {
 
 export function startActiveModeScheduler(): void {
   if (timer) return
-  timer = setInterval(tick, 30_000)
+  timer = setInterval(tick, balance.activeMode.pollIntervalSec * 1000)
+}
+
+/** Stop the periodic tick (called when Active mode is switched off, so a disabled
+ *  feature costs zero idle wake-ups on a long-running tray app). */
+export function stopActiveModeScheduler(): void {
+  if (timer) {
+    clearInterval(timer)
+    timer = null
+  }
 }
 
 /** Quiet all reminders/nudges for `minutes`. */

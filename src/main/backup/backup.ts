@@ -44,6 +44,21 @@ export function writeImmediateBackup(db: Database): void {
   flush(db)
 }
 
+/**
+ * Flush any pending debounced snapshot immediately and cancel the timer. Call on
+ * app quit so a change made within the last few seconds before closing still gets
+ * a backup (the change most likely to be lost is the most recent one — §10).
+ */
+export function flushAutoBackup(): void {
+  if (timer) {
+    clearTimeout(timer)
+    timer = null
+  }
+  const snapshot = pending
+  pending = null
+  if (snapshot) flush(snapshot)
+}
+
 function flush(db: Database): void {
   try {
     const dir = backupsDir()

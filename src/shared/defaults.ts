@@ -37,10 +37,6 @@ export function createDefaultDatabase(): Database {
       ticketsEarnedCount: 0,
       freeGrantedOn: null
     },
-    focus: {
-      sessionsRewardedOn: null,
-      sessionsRewardedCount: 0
-    },
     settings: {
       activeModeEnabled: false,
       activeModeTiers: {

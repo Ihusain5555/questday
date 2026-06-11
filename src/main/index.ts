@@ -3,7 +3,7 @@
 // full management window, the system tray, and wiring to the store.
 // ---------------------------------------------------------------------------
 
-import { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, screen, nativeTheme } from 'electron'
+import { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, nativeTheme } from 'electron'
 import { join } from 'path'
 import { existsSync } from 'fs'
 import { registerStoreIpc } from './ipc/store'
@@ -11,6 +11,7 @@ import { registerActiveModeIpc } from './ipc/activeMode'
 import { registerBackupIpc } from './ipc/backup'
 import {
   startActiveModeScheduler,
+  stopActiveModeScheduler,
   setShowFriction,
   onFrictionResolved,
   handleForeground
@@ -18,6 +19,7 @@ import {
 import type { FrictionTrigger } from './activeMode/scheduler'
 import { startDetector, stopDetector } from './activeMode/detector'
 import { getDatabase, saveDatabase, onDatabaseChanged } from './db/store'
+import { flushAutoBackup } from './backup/backup'
 
 let widgetWindow: BrowserWindow | null = null
 let mainWindow: BrowserWindow | null = null
@@ -27,6 +29,22 @@ let tray: Tray | null = null
 let isQuitting = false
 
 const preload = join(__dirname, '../preload/index.mjs')
+
+// Active-mode background work (the 30s scheduler tick + the 2s foreground
+// detector) is the only always-on cost; gate it on the master switch so a
+// disabled feature uses zero idle CPU. Idempotent — safe to call on every change.
+let activeModeRunning = false
+function syncActiveMode(enabled: boolean): void {
+  if (enabled === activeModeRunning) return
+  activeModeRunning = enabled
+  if (enabled) {
+    startActiveModeScheduler()
+    startDetector((app, title) => handleForeground(app, title))
+  } else {
+    stopActiveModeScheduler()
+    stopDetector()
+  }
+}
 
 // True when Windows started us at sign-in (the login item registers `--hidden`):
 // open just the widget + tray, not the management window.
@@ -82,6 +100,10 @@ function createWidgetWindow(): void {
     skipTaskbar: true,
     alwaysOnTop: true,
     backgroundColor: '#00000000',
+    // sandbox stays false: electron-vite emits the preload as an ES module
+    // (index.mjs), and Electron's sandbox requires a CommonJS preload — enabling
+    // it leaves window.questday undefined. contextIsolation (on) + nodeIntegration
+    // (off) + the navigation guards below are the active hardening instead.
     webPreferences: { preload, sandbox: false }
   })
   widgetWindow.setAlwaysOnTop(true, 'screen-saver')
@@ -90,7 +112,9 @@ function createWidgetWindow(): void {
   const persistBounds = () => {
     if (!widgetWindow) return
     const b = widgetWindow.getBounds()
-    saveDatabase({ settings: { ...getDatabase().settings, widgetBounds: b } })
+    // Send only the field we own — saveDatabase deep-merges settings, so a stale
+    // full-settings save from a renderer can't snap the widget back.
+    saveDatabase({ settings: { widgetBounds: b } })
   }
   widgetWindow.on('moved', persistBounds)
   widgetWindow.on('resized', persistBounds)
@@ -118,6 +142,10 @@ function createMainWindow(): void {
     // colour must match --titlebar in theme.css / the .titlebar rule in styles.css.
     titleBarStyle: 'hidden',
     titleBarOverlay: { color: '#10362a', symbolColor: '#dfeee6', height: 40 },
+    // sandbox stays false: electron-vite emits the preload as an ES module
+    // (index.mjs), and Electron's sandbox requires a CommonJS preload — enabling
+    // it leaves window.questday undefined. contextIsolation (on) + nodeIntegration
+    // (off) + the navigation guards below are the active hardening instead.
     webPreferences: { preload, sandbox: false }
   })
   loadRenderer(mainWindow, 'index.html')
@@ -150,6 +178,10 @@ function ensureFrictionWindow(): BrowserWindow {
     alwaysOnTop: true,
     center: true,
     backgroundColor: '#11131a',
+    // sandbox stays false: electron-vite emits the preload as an ES module
+    // (index.mjs), and Electron's sandbox requires a CommonJS preload — enabling
+    // it leaves window.questday undefined. contextIsolation (on) + nodeIntegration
+    // (off) + the navigation guards below are the active hardening instead.
     webPreferences: { preload, sandbox: false }
   })
   frictionWindow.setAlwaysOnTop(true, 'screen-saver')
@@ -210,7 +242,7 @@ function createTray(): void {
 function registerWindowIpc(): void {
   ipcMain.handle('window:openMain', () => createMainWindow())
   ipcMain.handle('widget:setExpanded', (_e, expanded: boolean) => {
-    saveDatabase({ settings: { ...getDatabase().settings, widgetExpanded: expanded } })
+    saveDatabase({ settings: { widgetExpanded: expanded } })
     if (widgetWindow) {
       const [w] = widgetWindow.getSize()
       widgetWindow.setSize(w, expanded ? 496 : 212, true)
@@ -247,13 +279,25 @@ if (!singleLock) {
   app.whenReady().then(() => {
     // Required on Windows for OS notifications to attribute to the app.
     app.setAppUserModelId('com.questday.app')
+
+    // Defense-in-depth (local-only app): deny all popups, and block any
+    // navigation away from the app's own origin. The app never opens windows or
+    // navigates externally, so "deny by default" can't break a legitimate flow.
+    app.on('web-contents-created', (_e, contents) => {
+      contents.setWindowOpenHandler(() => ({ action: 'deny' }))
+      contents.on('will-navigate', (e, url) => {
+        try {
+          if (new URL(url).origin !== new URL(contents.getURL()).origin) e.preventDefault()
+        } catch {
+          e.preventDefault()
+        }
+      })
+    })
     // Drop the default File/Edit/View/Window menu bar (we don't use it), and ask
     // the OS for dark window chrome so the title bar matches the app instead of
     // showing as a light/gray bar.
     Menu.setApplicationMenu(null)
     nativeTheme.themeSource = 'dark'
-    // Ensure the widget sits within the visible work area on first run.
-    screen.getPrimaryDisplay()
     registerStoreIpc()
     registerWindowIpc()
     registerActiveModeIpc()
@@ -264,13 +308,17 @@ if (!singleLock) {
     // Keep the OS login item in sync with the setting — now (covers fresh
     // installs and restored backups) and on every future change.
     applyLaunchOnLogin(getDatabase().settings.launchOnLogin)
-    onDatabaseChanged((db) => applyLaunchOnLogin(db.settings.launchOnLogin))
-    startActiveModeScheduler()
+    onDatabaseChanged((db) => {
+      applyLaunchOnLogin(db.settings.launchOnLogin)
+      // Start/stop the background timers as the master switch flips, so a disabled
+      // feature costs nothing on a tray app that runs for days.
+      syncActiveMode(db.settings.activeModeEnabled)
+    })
     ensureFrictionWindow()
     // Surface the soft-friction prompt in its own always-on-top window so it's
     // visible over any app, even when the main window is closed to the tray.
     setShowFriction((data) => showFriction(data))
-    startDetector((app, title) => handleForeground(app, title))
+    syncActiveMode(getDatabase().settings.activeModeEnabled)
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWidgetWindow()
@@ -285,5 +333,7 @@ if (!singleLock) {
   app.on('before-quit', () => {
     isQuitting = true
     stopDetector()
+    // Drain any debounced backup so the last few seconds of changes are captured.
+    flushAutoBackup()
   })
 }

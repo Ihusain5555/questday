@@ -15,7 +15,10 @@ const DISMISS_MS = 2400
  * celebratory — never punitive.
  */
 export function CompletionCelebration(): JSX.Element {
-  const { celebration, clearCelebration } = useStore()
+  // Subscribe to just these slices so a celebration toast doesn't re-render on
+  // every unrelated data change (and vice-versa).
+  const celebration = useStore((s) => s.celebration)
+  const clearCelebration = useStore((s) => s.clearCelebration)
 
   useEffect(() => {
     if (!celebration) return

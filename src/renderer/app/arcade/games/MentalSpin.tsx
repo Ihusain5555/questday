@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { balance } from '@shared/config/balance'
 import { play } from '../sound'
 import { Timer } from '@phosphor-icons/react'
 import { GameIcon } from '../gameIcons'
@@ -18,7 +19,7 @@ import { GameIcon } from '../gameIcons'
  * Feel: a "Ready" countdown so the clock never starts mid-glance.
  */
 
-const DURATION_S = 45
+const DURATION_S: number = balance.arcade.games.mentalspin.seconds
 
 // Asymmetric pentominoes (grid cells in a 4x4 box). Asymmetry is what makes a
 // mirror tell-apart-able from a plain rotation — a symmetric shape would be

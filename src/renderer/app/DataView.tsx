@@ -197,7 +197,7 @@ export function DataView(): JSX.Element {
       <div className="card danger-zone">
         <strong>Start fresh</strong>
         <p className="meta-dim" style={{ marginTop: 4 }}>
-          Reset everything on this PC — quests, progress, garden, and settings — back to a clean
+          Reset everything on this PC — quests, progress, your Realm, and settings — back to a clean
           slate. A final backup of your current data is saved first (and your automatic backups
           are kept), so even this is recoverable via Import.
         </p>
@@ -213,7 +213,7 @@ export function DataView(): JSX.Element {
           <div className="modal" onMouseDown={(e) => e.stopPropagation()} style={{ maxWidth: 440 }}>
             <h2>Reset everything?</h2>
             <p className="tagline">
-              This wipes your quests, XP, coins, garden, and settings on this PC and starts over.
+              This wipes your quests, XP, your Realm, and settings on this PC and starts over.
               A backup of your current data is saved first. To confirm, type <strong>RESET</strong>
               {' '}below.
             </p>

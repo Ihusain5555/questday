@@ -5,7 +5,8 @@
 // each other (one driver per feature — see CLAUDE.md "Working in parallel").
 // Stashes/restores the real db.json.
 import { _electron as electron } from 'playwright-core'
-import { mkdirSync, writeFileSync, existsSync, copyFileSync, rmSync } from 'fs'
+import { mkdirSync, writeFileSync } from 'fs'
+import { tmpdir } from 'os'
 import path from 'path'
 
 const root = process.cwd()
@@ -52,18 +53,17 @@ const seed = {
   lastSeenDate: ymd(d)
 }
 
-const userData = path.join(process.env.APPDATA, 'questday')
-mkdirSync(userData, { recursive: true })
-const dbPath = path.join(userData, 'db.json')
-const stashPath = path.join(userData, 'db.json.pw-stash')
-if (existsSync(dbPath)) copyFileSync(dbPath, stashPath)
-writeFileSync(dbPath, JSON.stringify(seed, null, 2))
+// Isolated --user-data-dir (own db.json + lock) — never touches the real save file.
+const isoDir = path.join(tmpdir(), 'questday-iso-arcade')
+mkdirSync(isoDir, { recursive: true })
+writeFileSync(path.join(isoDir, 'db.json'), JSON.stringify(seed, null, 2))
 
 const result = (name, pass, extra = '') =>
   console.log(`${name}: ${pass ? 'PASS' : 'FAIL'}${extra ? ` (${extra})` : ''}`)
 
+let app
 try {
-  const app = await electron.launch({ args: [root], cwd: root })
+  app = await electron.launch({ args: [root, `--user-data-dir=${isoDir}`], cwd: root })
   await (await app.firstWindow()).waitForLoadState('domcontentloaded')
   await new Promise((r) => setTimeout(r, 1800))
   const main = app.windows().find((w) => w.url().includes('index.html'))
@@ -219,11 +219,9 @@ try {
   result('SPANRECALL_PLAY_TEST', (await resultText()).includes('Span Recall'), `result: "${(await resultText()).trim()}"`)
 
   await app.close()
-} finally {
-  if (existsSync(stashPath)) {
-    copyFileSync(stashPath, dbPath)
-    rmSync(stashPath)
-    console.log('restored real db.json from stash')
-  }
+} catch (err) {
+  console.log('ERROR:', err?.message ?? err)
+  if (app) await app.close()
+  process.exitCode = 1
 }
-console.log('closed')
+console.log('closed (isolated dir:', isoDir + ')')
