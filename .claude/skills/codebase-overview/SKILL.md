@@ -94,6 +94,9 @@ ONLY writer of the data file. This is why edits in one window appear live in oth
   (angle) adapt mid-round; the Easy/Med/Hard mode only sets their start/ceiling — don't flatten them.
 - **`balance.arcade.games[k]` is a union type.** Only fields on EVERY entry
   (`name`/`icon`/`color`/`blurb`) are accessible via a dynamic key; `seconds`/`trials` are partial.
+  But per-game fields ARE safe via a **static** key (`balance.arcade.games.spanrecall.litMs`) — v1.9.0
+  moved per-game timing tunables there; alias them `: number` at the use site (`balance` is `as const`,
+  so the raw value is a narrow literal that breaks arithmetic/`setState`).
 - **The `react-hooks/exhaustive-deps` disables in the games are intentional**, not debt — the
   timer/phase effects must fire once per phase; adding the deps re-arms the timer mid-round.
 - **Output-filter hook hides PASS lines.** Bash/PowerShell test output collapses to "no failures
@@ -101,10 +104,33 @@ ONLY writer of the data file. This is why edits in one window appear live in oth
   hook filters the tool *result*, not the file); `cygpath -w /tmp/x.txt` gives the path for Read.
 - **Single-instance lock:** a running QuestDay (tray) makes `npm run dev`/`pw`/`dist` launches
   quit instantly. `Get-Process QuestDay,electron | Stop-Process` first; relaunch the installed app
-  after. The isolated `--user-data-dir` drivers (pw-eisenhower/realm/timeboxing) still need the
-  app quit because they share the OS single-instance lock.
+  after. **As of v1.9.0 ALL pw drivers use an isolated `--user-data-dir`** (pw-arcade + pw-run were
+  converted — they no longer stash/restore the real `db.json`), but they still need the app quit
+  because they share the OS single-instance lock. Drivers launch the BUILT `out/`, so run
+  `npm run build` after a source change before running them. New drivers: `pw:rewards`
+  (reward + ↩Restore exactness + save-path safety), `pw:rollover` (rollover/recurrence/history).
 - **Bash cwd persists between tool calls** — a prior `cd src/...` silently doubles a later relative
   path. Use absolute paths, or `git -C "$ROOT"` for git.
 - **Workflow scripts:** the validator rejects the literal string `Math.random`; and
   `Date.now()`/`Math.random()`/`new Date()` are unavailable inside a workflow script (vary by
   index instead).
+- **The save path DEEP-MERGES `settings`/`player` (v1.9.0 lost-update guard).** A renderer write
+  must send ONLY the changed fields for those two keys (e.g. `save({ settings: { launchOnLogin: true } })`),
+  NOT a stale whole-object spread — the deep-merge can't un-clobber a sibling that a stale spread
+  carries (e.g. `widgetBounds`). All OTHER top-level keys still replace wholesale. `saveDatabase`
+  also VALIDATES before persisting (rejects non-array `quests`/`timeFrames`, null `player`/`settings`)
+  and writes to disk BEFORE advancing the in-memory cache — so don't reorder those.
+- **`sandbox` stays `false` on every BrowserWindow — on purpose.** electron-vite emits the preload as
+  `index.mjs` (ESM); Electron's sandbox requires a CommonJS preload, so `sandbox:true` leaves
+  `window.questday` undefined (blank app). Don't flip it without converting the preload build first.
+  (contextIsolation on + nodeIntegration off + the will-navigate/window-open guards are the hardening.)
+- **OneDrive `npm install` no-ops the Electron binary DOWNLOAD too**, not just the extract — the cache
+  ends up with ZERO zip (worse than the shipping-and-gotchas skill states). Manually download
+  `https://github.com/electron/electron/releases/download/v<ver>/electron-v<ver>-win32-x64.zip`,
+  `Expand-Archive` into `node_modules/electron/dist`, write `path.txt` = `electron.exe`. (electron-builder's
+  own download for `npm run dist` works — `questday-release/` is outside OneDrive.)
+- **Active-mode timers are GATED (v1.9.0).** The 30s scheduler tick + the 2s PowerShell foreground
+  detector only run when `settings.activeModeEnabled` is on (started/stopped via `onDatabaseChanged`
+  in `index.ts`) — they're no longer always-on. `nudgedFrameKeys` is pruned on day-change.
+- **Focus / Matrix / Active mode are SUB-tabs under the "Forge" top-level tab (v1.8.1).** A pw driver
+  reaching Focus must click `Forge` then the `.subtab` "Focus" — there is no top-level "Focus" button.

@@ -22,6 +22,10 @@ npm run dist       # build the NSIS installer -> C:\Users\ihusa\questday-release
 ```
 
 No unit tests — **verification is driving the real app with Playwright** (per-feature drivers).
+As of v1.9.0 **all** drivers use an isolated `--user-data-dir` (never touch the real `db.json`);
+they launch the built `out/`, so `npm run build` after a source change first. Key ones:
+`pw:rewards` (reward + ↩Restore exactness + save-path safety), `pw:rollover` (rollover/recurrence),
+plus `pw:arcade`/`pw:run`/`pw:eisenhower`/`pw:realm`/`pw:timeboxing`.
 → See the **playwright-verification** skill for how to write/run drivers safely.
 
 ## Architecture (map)
@@ -56,9 +60,15 @@ Pure engines live in `src/shared/engine/` (current-quest scoring, rewards, **rea
   (`createDefaultDatabase`); the migration in `src/main/db/store.ts` stays tolerant of
   older/missing fields (`...fresh ... ...db`).
 - **Preload bridge** → `src/preload/index.ts` exposes `window.questday.*`. New IPC = add there +
-  handler in `src/main/ipc/` + register in `src/main/index.ts` `whenReady`.
-- **Persistence** is local JSON only (`%APPDATA%\questday\db.json`, atomic temp+rename) with
-  rotated auto-backups. No accounts, no cloud — keep it that way.
+  handler in `src/main/ipc/` + register in `src/main/index.ts` `whenReady`. The preload is ESM
+  (`index.mjs`), so every BrowserWindow's `sandbox` MUST stay `false` — sandbox needs a CommonJS
+  preload, else `window.questday` is `undefined` (blank app). (Electron is on the supported 42.x line.)
+- **Persistence** is local JSON only (`%APPDATA%\questday\db.json`, atomic temp+rename + fsync) with
+  rotated auto-backups. No accounts, no cloud — keep it that way. **Save semantics (v1.9.0):**
+  `saveDatabase` DEEP-MERGES `settings`/`player` and VALIDATES before persisting, so a renderer write
+  must send ONLY the fields it changed for those two keys (never a stale whole-object spread — it
+  re-clobbers siblings). It persists to disk BEFORE advancing the in-memory cache. All OTHER top-level
+  keys still replace wholesale.
 - **Icons vs emoji (post-v1.7):** UI chrome uses Phosphor icons; emoji reserved for content/
   decoration and render via the bundled Twemoji color webfont.
 - **Toggleable features:** new optional feature = one `features.ts` entry + one App.tsx tab +

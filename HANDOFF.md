@@ -4,28 +4,30 @@
 
 # ⏩ RESUME KIT (read this first)
 
-**Updated:** 2026-06-10 · **Installed & running:** **v1.8.6** (last product commit `4aa1347`) · **Branch:** `main`, clean
+**Updated:** 2026-06-11 · **Installed & running:** **v1.9.0** (= `main` @ `2509ef9`) · **Branch:** `main`, clean
 
 ## Git state
-- `main`, **clean** — everything committed, no stashes. The latest commit is this session's
-  **close-out** (HANDOFF / CLAUDE.md / codebase-overview skill + `SESSION-TRANSCRIPT.md`);
-  the last *product* commit is `4aa1347` (v1.8.6 — the installed build).
-- **This session = `e64379e..4aa1347`** — 11 commits, 58 files, **+4184 / −1776**.
+- `main`, **clean** — everything committed, **no stashes**. Only untracked file is `_vers.txt`
+  (a stray, NOT created this session — left alone).
+- **This session = `06278b3..2509ef9`** — 3 commits, 33 files, **+1316 / −1072** (excl. the
+  `package-lock.json` churn). Work was done on a `audit-fixes` branch, then fast-forward-merged to `main`.
 - Last 5 commits:
   ```
+  2509ef9  Release v1.9.0: data-safety + robustness hardening + Electron 42 upgrade
+  d7f2db9  Phase 5: upgrade Electron 33 (EOL) -> 42.4.0 + electron-builder 26.15.2
+  005ae92  Audit fixes (Phases 1-4): data-safety, robustness, tests, code health
+  06278b3  Docs: session close-out — resume-kit handoff, transcript, durable lessons
   4aa1347  Arcade: emoji -> Phosphor icon badges, colour-coded by skill (v1.8.6)
-  029045e  Arcade: uniform Easy/Medium/Hard difficulty on all 10 brain games (v1.8.5)
-  69c20b9  Arcade tickets: generous free daily floor + uncapped earning (v1.8.4)
-  d63cc93  Arcade: brain-training set only — cut 8 reflex games, add 4 (v1.8.3)
-  5d2a449  Remove coins entirely; show arcade tickets in their place (v1.8.2)
   ```
+- **`git diff 06278b3..HEAD --stat`** = the full session diff (33 files; per-file what/why below).
 
 ## Exact resume commands
 ```powershell
-npm install          # only if node_modules is missing — see the OneDrive/electron-extract gotcha in CLAUDE.md
+npm install          # under OneDrive this NO-OPS the Electron download+extract — manual fix in CLAUDE.md (download the zip yourself)
 npm run typecheck    # tsc (node + web). MUST be green before "done". (baseline below: PASS)
+npm run build        # electron-vite build -> out/  (needed before running the pw drivers — they launch the built app)
 npm run dev          # live dev — QUIT any running QuestDay first (single-instance lock) or use an isolated --user-data-dir
-npm run pw:arcade    # drive the Arcade (stashes/restores the real db.json). Others: pw:eisenhower, pw:realm, pw:timeboxing
+npm run pw:rewards   # reward + ↩Restore exactness + save-path safety. Also pw:rollover/arcade/run/eisenhower/realm/timeboxing — ALL now isolated --user-data-dir (none touch the real db.json)
 npm run dist         # build NSIS installer -> C:\Users\ihusa\questday-release\QuestDay Setup X.Y.Z.exe
 ```
 - **No env vars, no services, no cloud.** Data = local JSON at `%APPDATA%\questday\db.json` (real user data — drivers stash/restore or fully isolate it; never wipe it).
@@ -33,60 +35,108 @@ npm run dist         # build NSIS installer -> C:\Users\ihusa\questday-release\Q
   (`Start-Process "...\QuestDay Setup X.Y.Z.exe" -ArgumentList '/S' -Wait`) then relaunch
   `%LOCALAPPDATA%\Programs\QuestDay\QuestDay.exe`. Quit the running app first.
 
-## Baseline (last run THIS session — record, don't re-derive)
+## Baseline (last run THIS session, 2026-06-11 on Electron 42.4.0 — record, don't re-derive)
 | Check | Result |
 |---|---|
-| `npm run typecheck` | **PASS** (exit 0, 0 errors) |
-| `npm run build` | **PASS** (exit 0) |
-| `npm run pw:arcade` | **PASS** — 10/10 cards render + all 7 driven games launch & score (Track Switch = 12 nodes on Medium) |
-| `npm run pw:eisenhower` | **PASS** — ISOLATION, TABS_COUNT=7, DASH_STATS, FREE_TICKETS=3, 8× quadrant, 3× toggle |
-| Unit tests | none (verification = driving the real app) |
-| **Failing tests / open errors** | **none** |
+| `npm run typecheck` (node + web) | **PASS** — exit 0, 0 errors |
+| `npm run build` | **PASS** — exit 0 |
+| `npm run dist` | **PASS** — `QuestDay Setup 1.9.0.exe` built + silently installed (ProductVersion 1.9.0.0) |
+| **Full Playwright suite (7 drivers)** | **PASS — 72 checks, 0 FAIL, 0 ERROR.** pw-rewards 8 · pw-rollover 6 · pw-arcade 15 · pw-run 15 · pw-eisenhower 14 · pw-realm 8 · pw-timeboxing 6 |
+| Real `db.json` after the Electron upgrade | **intact** — 11 quests, 4 frames, player XP/level, 3 chronicle entries; dead `focus` migrated out; `currency` retained |
+| Unit tests | none by design (verification = driving the real app) |
+| **Failing tests / open errors** | **NONE** — nothing is currently failing |
 
-## What changed this session & why (per touched file)
-- **`src/shared/config/balance.ts`** — `realm` atlas (15 regions); arcade rewritten to the 10-game **brain set** with per-mode difficulty params; ticket economy (`ticketsFreePerDay:3`, `ticketsPerDay:20`); each game now carries `icon`+`color` (skill-domain) instead of `emoji`.
-- **`src/shared/types.ts`** — `ChronicleRecord`, `Settings.realmChronicle`/`realmLastTopic`, `ArcadeState.freeGrantedOn`.
-- **`src/shared/defaults.ts`** — seed the new realm/arcade fields (migration stays tolerant via `{...fresh ...db}`).
-- **`src/shared/engine/realm.ts`** *(new)* — pure: charted regions derived from completions + chronicle (gains-only, Restore-safe).
-- **`src/shared/config/chronicle.ts`** *(new)* — 66 fact-checked knowledge entries (via `scripts/gen-chronicle.mjs`).
-- **`src/shared/engine/rewards.ts`** — minor (no-coins path; `newPlayer` field-preserving spread).
-- **`src/renderer/state/store.ts`** — `completeQuest` (no coins; expedition + region celebration), `claimRegion`, `restoreQuest` chronicle trim, daily free-ticket top-up in `runDayChange`; dropped the focus-session coin bonus.
-- **`src/renderer/app/App.tsx`** — 10→**7 tabs**, **Forge** + **Realm** routes, fluid one-row tab layout.
-- **`src/renderer/app/ProductivityView.tsx`** *(new)* — **Forge** tab: Focus / Matrix / Active mode under a sub-nav.
-- **`src/renderer/app/RealmView.tsx`** *(new)* — realm map + `RealmPeek` + claim modal + Chronicle codex.
-- **`src/renderer/app/Dashboard.tsx`** — `RealmPeek` replaces `GardenPeek`; **Stats folded in** (`.dash-stats`).
-- **`src/renderer/app/arcade/gameIcons.tsx`** *(new)* — one icon registry → `GameIcon` / `GameBadge` / `MemoryFace`.
-- **`src/renderer/app/arcade/ArcadeView.tsx`** — tickets (no coins); cards/header/result render Phosphor badges; 10-game registry.
-- **`src/renderer/app/arcade/games/*`** — **4 new** (`MentalSpin`, `TrackSwitch`, `StopTap`, `SpanRecall`), **8 deleted** (Snake, BlockDrop, BubblePop, LaneDash, SpikeRush, FruitSlice, RoadHopper, MazeMuncher); the kept games (`AimTrainer`, `ReactionTime`, `MemoryMatch`, `ColorClash`, `FlashRecall`, `NBack`) gained the Easy/Med/Hard picker + HUD `GameIcon`; `MemoryMatch` faces → 12 gold Phosphor shapes.
-- **`src/renderer/components/PlayerBar.tsx`** — coins → arcade-ticket display.
-- **`src/renderer/components/CompletionCelebration.tsx`** — "discovered a region" line replaces the garden line.
-- **`src/renderer/app/features.ts`** — Forge/realm wiring for the toggle registry.
-- **`src/renderer/app/{FocusView,DataView,QuestsView,QuestForm,TimeFramesView}.tsx`** — emoji→Phosphor + Forge integration.
-- **`src/renderer/theme.css`** — `--skill-memory/-speed/-focus/-flex` arcade domain tokens.
-- **`src/renderer/styles.css`** — realm map, `.subtabs`/`.subtab` (Forge), `.dash-stats`, new game CSS, `.arcade-badge`(.lg), `.rm-*` modal, memory-card colours.
-- **`scripts/`** — `pw-realm.mjs` *(new)*, `gen-chronicle.mjs` *(new)*; `pw-arcade`/`pw-eisenhower`/`pw-timeboxing` updated; `cc-hooks/*` *(new tooling)*.
-- **`.claude/*`** — skills/agents/settings (Claude Code tooling; committed `e64379e`).
-- **`package.json`** — version → **1.8.6**.
+## What changed this session & why (per touched file — full audit → fixes, v1.9.0)
+**Phase 1 — data-layer hardening:**
+- **`src/shared/types.ts`** — `DatabasePatch` is now DEEP-partial (`settings`/`player` accept partials); removed dead `FocusState` + `Database.focus` + the never-assigned `'rolled-over'` status.
+- **`src/main/db/store.ts`** — `saveDatabase` now DEEP-MERGES `settings`/`player` (lost-update guard), VALIDATES structure before persisting (a bad patch can't corrupt the file), and writes-to-disk-BEFORE-advancing-cache w/ try-catch (OneDrive/AV lock can't desync). `persist()` fsyncs; corrupt files get a timestamped name. Dropped the dead `focus` migrate line.
+- **`src/main/index.ts`** — widget writes send only the changed settings field; added `will-navigate`/`setWindowOpenHandler` deny guards; gate the active-mode scheduler+detector on the master toggle (start/stop via `onDatabaseChanged`); `flushAutoBackup()` on quit; removed the `screen.getPrimaryDisplay()` no-op + import.
+- **`src/renderer/state/store.ts`** — `save()` fail-safe (try-catch → `saveError` flag, keeps last-good); all `settings` writes send partials; collapsed the dead coin claw-back in `restoreQuest`; FIXED the Restore trap comment (now matches code + warns it's load-bearing); `finishArcadeRound` records a first 0-score; `todayStr()`→shared `ymd()`; commented the unused garden celebration output.
 
-## Next steps (file-level targets)
-1. **Balance-tuning pass (still paused, user's call).** Tune `src/shared/config/balance.ts`: arcade ticket cadence feel, recurring-quest XP inflation. (Garden economy is mostly moot now — see below.)
-2. **(Open design)** Arcade badge colours — currently **colour-coded by skill domain** in `balance.arcade.games[*].color` (rendered by `gameIcons.tsx`). User may prefer uniform gold → ~2-line change.
-3. **(Verification gap)** Add a Memory Match flip+screenshot to `scripts/pw-arcade.mjs` — it wasn't visually screenshotted this session (renders via the proven `GameIcon`/`MemoryFace` path; low risk). Aim/Reaction/Memory are not play-driven by that script.
-4. **(Deferred)** Make the **Realm tab toggleable** — add it to `src/renderer/app/features.ts` (left out of the Realm MVP).
-5. **(Deferred cleanup)** `player.currency` is now a **dead field** (earned nowhere, shown nowhere) kept in saved data — decide remove vs leave. And the **garden is kept INERT** (GardenView/engine/`balance.garden` still present, never shown) — fully delete once the Realm is proven.
+**Phase 2 — safety-net drivers (new):**
+- **`scripts/pw-rewards.mjs`** *(new)* — reward + ↩Restore EXACTNESS (incl. level rollback) + Phase-1 save-path proof (deep-merge no-clobber + invalid-patch rejection).
+- **`scripts/pw-rollover.mjs`** *(new)* — daily rollover / recurrence renewal / completionDates history preservation.
+
+**Phase 3 — robustness:**
+- **`src/renderer/components/ErrorBoundary.tsx`** *(new)* — render-crash recovery card.
+- **`src/renderer/components/SaveErrorToast.tsx`** *(new)* — surfaces a failed save.
+- **`src/renderer/{main,widget,friction}.tsx`** — wrap each window root in `<ErrorBoundary>`.
+- **`src/renderer/app/App.tsx`** — per-tab `<ErrorBoundary key={tab}>` + mounts `<SaveErrorToast>`.
+- **`src/main/backup/backup.ts`** — `flushAutoBackup()` (drain debounced snapshot on quit).
+- **`src/main/activeMode/scheduler.ts`** — `stopActiveModeScheduler()`; prune the `nudgedFrameKeys` leak on day-change; cadences read from `balance.activeMode`.
+- **`src/renderer/styles.css`** — `.crash-card` + `.save-toast` (theme tokens).
+
+**Phase 4 — code health:**
+- **`src/shared/config/balance.ts`** — removed dead `currencyDivisor` + `focus.reward`; added `activeMode` cadences + per-game arcade tunables.
+- **`src/shared/defaults.ts`** — removed the dead `focus` seed.
+- **`src/shared/engine/rewards.ts`** — removed dead `questCurrency`.
+- **`src/shared/engine/stats.ts`** — use shared `ymd()`; FIXED the DST bug in `completionsPerDay` (calendar-day stepping, not fixed 24h).
+- **`src/renderer/app/DataView.tsx`** — reset-dialog copy: "coins/garden" → "your Realm".
+- **`src/renderer/app/FocusView.tsx`** — removed unused `todayStr`.
+- **`src/renderer/app/arcade/games/{FlashRecall,NBack,SpanRecall,StopTap,MentalSpin,TrackSwitch}.tsx`** — #27: read timing constants from `balance` (aliased `: number`). Plus `MemoryMatch` flip-back timer cleanup (#21) + `StopTap` pure-updater & watcher effect (#22).
+- **`src/renderer/components/CompletionCelebration.tsx`** — subscribe via selectors (#18).
+- **`scripts/pw-arcade.mjs`, `scripts/pw-run.mjs`** — converted to isolated `--user-data-dir` (no longer write the REAL db.json); pw-run de-obsoleted (dropped removed-coin assertions) + nav fixed for the Forge→Focus sub-tab.
+
+**Phase 5 — Electron upgrade:**
+- **`package.json`** — `electron` `^33.2.1`→`^42.4.0`, `electron-builder` `^26.8.1`→`^26.15.2`, version → **1.9.0**. **`package-lock.json`** — resolved deps.
+
+## Next steps (file-level targets — all DEFERRED by choice / as low-value)
+1. **#3 arcade boilerplate refactor (skipped by user).** Extract a shared `<DifficultyPicker modes value onPick>` + `useReadyCountdown` from the 10 games in `src/renderer/app/arcade/games/*.tsx`. NOTE the picker JSX VARIES: most `.map` over a `MODES` array, but `MemoryMatch` hardcodes 3 buttons — each game needs adapting. `pw-arcade` covers only 7/10 (Aim/Reaction/Memory not play-driven) — manually check those 3 after.
+2. **Build-tool modernization (non-security).** Bump `electron-vite` 2→5 + `framer-motion`→`motion@12` in `package.json` (pulls a breaking Vite 8). This is the ONLY way to clear the remaining `npm audit` item: esbuild ≤0.24.2 (dev-server only, never shipped). Pair with React 18→19 if desired.
+3. **(optional)** Move the remaining arcade difficulty TABLES (e.g. `FlashRecall` STARTS, `StopTap`/`TrackSwitch` MODES) into `balance.ts` — left local this session. SVG-geometry constants (MentalSpin CELL/BOX) intentionally stay local.
 
 ## Open / deferred (decisions parked)
-- Arcade badge colour-coding vs uniform gold (autonomous call; reversible).
-- Garden kept inert, not deleted (reversible; tone-rule: no data destroyed).
-- `player.currency` dead field retained for migration safety.
-- Realm tab not yet user-toggleable.
-- `pw:arcade` doesn't drive Aim/Reaction/Memory or screenshot Memory Match.
-- Balance-tuning pass paused (arcade "feels right" for now).
-- **No `TODO`/`FIXME` added.** The only lint suppressions are intentional `react-hooks/exhaustive-deps` disables on the game timer effects (each runs once on phase change — adding the deps would re-arm the timer; standard pattern, not debt).
+- **#3 game-hook refactor** — user chose to skip (maintainability-only, regression risk, 7/10 test coverage).
+- **electron-vite/Vite/framer-motion modernization** + the **esbuild dev-server advisory** — non-security, dev-only; needs a breaking Vite 8 jump. Deferred.
+- **Garden engine stays INERT** (unchanged) — its now-unused `grew`/`mutation` celebration output is COMMENTED as such, not removed (touches the hot completion path; the stage-bump is load-bearing for ↩Restore).
+- **`player.currency`** retained as a dead migration-safe field (unchanged this session).
+- **No `TODO`/`FIXME` added.** The only lint suppressions are the intentional `react-hooks/exhaustive-deps` disables on the game timer effects (fire once per phase — adding deps re-arms the timer; standard pattern, not debt).
 
 ---
 
 ## Detailed history
+
+## Session 2026-06-11 — full repo audit → fixes + Electron 42 upgrade (shipped v1.9.0)
+
+A full read-only audit (multi-agent: 56 agents, 38 confirmed findings after an adversarial
+false-positive pass), then user chose to "fix everything." Done in 5 phases, each Playwright-
+verified, then shipped. **Built + installed as `QuestDay Setup 1.9.0.exe` (on Electron 42.4.0).**
+
+- **Phase 1 — data-safety (the highest-value work):** the single JSON writer (`src/main/db/store.ts`)
+  was the weak point. Three real risks fixed: (a) cross-window **lost updates** — every save re-sent a
+  whole sub-tree built from a stale snapshot and shallow-overwrote it; now `settings`/`player`
+  DEEP-MERGE and writers send only changed fields, so two windows can't clobber each other; (b) the
+  save path wrote **any renderer patch unvalidated** — a UI bug could persist garbage + broadcast it;
+  now it validates structure before persisting; (c) `cache` advanced BEFORE the disk write with no
+  error handling — a OneDrive/AV file lock desynced memory vs disk; now persist-then-cache w/ try-catch
+  + a `saveError` toast. `DatabasePatch` became deep-partial to support this.
+- **Phase 2 — safety net:** the reward/↩Restore/rollover math (the only logic that SHRINKS saved
+  progress) had ZERO automated coverage. Added `pw-rewards.mjs` (complete→exact payout→Restore→exact
+  rollback, incl. a level-up/level-rollback case) and `pw-rollover.mjs` (carry-over / recurring renewal /
+  history preserved). These also pin the Phase-1 behaviour.
+- **Phase 3 — robustness:** React `ErrorBoundary` on all 3 windows + per-tab (a render crash now shows a
+  recovery card, not a blank window); `persist()` fsync; `flushAutoBackup()` on quit; timestamped
+  `.corrupt` files; gated the always-on 30s scheduler + 2s PowerShell detector behind the master toggle
+  (+ fixed an unbounded `nudgedFrameKeys` leak); `will-navigate`/`window.open` deny guards.
+  **sandbox stays `false`** — flipping it on broke the app (the ESM `index.mjs` preload requires a
+  CommonJS preload to be sandboxed → `window.questday` was undefined; caught by the pw smoke). Documented.
+- **Phase 4 — code health:** removed the v1.8.2 coins / v1.8 garden DEAD debris (`questCurrency`,
+  `FocusState`, `balance.focus.reward`, the unreachable coin claw-back branch, the `screen` no-op,
+  `'rolled-over'` status, stale reset-dialog copy); fixed a Restore **trap comment** (said the opposite
+  of the code); fixed a DST chart bug; consolidated the duplicated `ymd()`; arcade fixes
+  (MemoryMatch timer leak, StopTap setState-in-updater, 0-score recording); moved arcade + active-mode
+  **tunables into `balance.ts`**; targeted store selectors; and **isolated the two test drivers that
+  used to write the real `db.json`** (pw-arcade, pw-run) — a real data-loss footgun, now gone.
+- **Phase 5 — Electron 33 (EOL since 2025-04-29) → 42.4.0** + electron-builder 26.15.2. electron-vite
+  2.3.0 handled 42 fine (no bundler bump). **OneDrive gotcha is WORSE than the skill said: `npm install`
+  no-ops the binary DOWNLOAD too, not just the extract** — had to manually download the GitHub-release
+  zip, Expand-Archive into `node_modules/electron/dist`, write `path.txt`. (electron-builder's own
+  download for `dist` works — `questday-release/` is outside OneDrive.)
+- **DEFERRED by choice:** #3 (10-game boilerplate refactor — maintainability only); the build-tool
+  modernization (electron-vite 2→5 / Vite / framer-motion→motion) + the esbuild dev-server advisory
+  (all non-security, dev-only, need a breaking Vite 8 jump). See the resume-kit "Open / deferred".
+- **Verified:** typecheck + build + **72 Playwright checks / 7 drivers, 0 failures** on Electron 42;
+  real `db.json` migrated clean (dead `focus` dropped, everything else intact).
 
 **Status: v1.8.6 — the garden reward-world is REPLACED by the REALM MAP + EXPEDITION CHRONICLE.
 Each completed quest earns an "expedition" you spend to chart a region of YOUR choice; your scouts
