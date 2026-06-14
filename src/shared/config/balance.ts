@@ -323,6 +323,36 @@ export const balance = {
     ]
   },
 
+  // --- The Civilization ("Your Realm") — the reward world (v1.10, in progress) -
+  // Gains-only: completing quests GROWS a medieval-fantasy town through 7 stages
+  // (Camp -> Empire) and settles multiple towns on the Terra Questa world map.
+  // Stage + town unlocks are a PURE FUNCTION of all-time completions (see
+  // engine/civilization.ts) — nothing here is persisted, so ↩ Restore stays exact.
+  // `worldRegionId` pins a town to an existing realm region (balance.realm). New
+  // towns/biomes later = data-only appends. Thresholds are retunable, not final.
+  civilization: {
+    /** World stages in order. `at` = all-time completions to ENTER the stage. */
+    stages: [
+      { key: 'camp', name: 'Camp', at: 0 },
+      { key: 'settlement', name: 'Settlement', at: 5 },
+      { key: 'village', name: 'Village', at: 15 },
+      { key: 'town', name: 'Town', at: 40 },
+      { key: 'city', name: 'City', at: 100 },
+      { key: 'kingdom', name: 'Kingdom', at: 250 },
+      { key: 'empire', name: 'Empire', at: 600 }
+    ],
+    /** Launch towns + locked "coming soon" lands. `unlockAt` = completions to
+     *  settle a town; `comingSoon` lands render as misted silhouettes (no art yet). */
+    towns: [
+      { id: 'greenhaven', name: 'Greenhaven Heartland', biome: 'green', worldRegionId: 'embergreen', unlockAt: 0, comingSoon: false },
+      { id: 'goldport', name: 'Goldport Harbor', biome: 'coast', worldRegionId: 'tidesend', unlockAt: 15, comingSoon: false },
+      { id: 'frostpeak', name: 'Frostpeak', biome: 'snow', worldRegionId: 'crownspire', unlockAt: 100, comingSoon: true },
+      { id: 'sunreach', name: 'Sun Reach', biome: 'desert', worldRegionId: 'ashlands', unlockAt: 250, comingSoon: true }
+    ],
+    /** Each completion adds ONE structure to the active town, sized by difficulty. */
+    buildingScaleByDifficulty: { Easy: 'small', Medium: 'cottage', Hard: 'landmark' } as Record<Difficulty, string>
+  },
+
   // --- The Arcade — quick brain-training breaks ------------------------------
   // Ticket-gated minigames (completions earn tickets, capped/day, never expire),
   // each a short workout for a REAL cognitive skill — attention, working memory,

@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>QuestDay — Terra Questa (world map concept mockup)</title>
+<style>
+  /* ============================================================
+     QuestDay — TERRA QUESTA  (offline concept mockup)
+     A premium hand-illustrated parchment fantasy atlas.
+     All art is inline SVG + SVG filters + CSS. No CDNs, no fonts,
+     no images, no network. Opens by double-click, fully offline.
+     ============================================================ */
+
+  :root{
+    /* emerald mat */
+    --emerald:        #10362a;
+    --emerald-deep:   #0a241c;
+    --emerald-light:  #1c5440;
+    /* gold leaf */
+    --gold:           #f4d77a;
+    --gold-deep:      #c98a1e;
+    --gold-soft:      #fbeec0;
+    /* parchment */
+    --parchment:      #efe3c4;
+    --parchment-2:    #e7d8b0;
+    --parchment-edge: #d8c290;
+    /* ink — warm sepia, never pure black */
+    --ink:            #4a3a23;
+    --ink-deep:       #3a2c18;
+    --ink-soft:       #7a6442;
+    --ink-faint:      #a99468;
+    /* water */
+    --water:          #b9c6c0;
+
+    --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;
+    --sans:  system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    font-family:var(--sans);
+    color:var(--gold-soft);
+    /* deep emerald mat with depth */
+    background:
+      radial-gradient(1300px 800px at 50% -8%, #1c5440 0%, transparent 58%),
+      radial-gradient(900px 700px at 8% 108%, #0a241c 0%, transparent 55%),
+      radial-gradient(900px 700px at 95% 105%, #0a241c 0%, transparent 55%),
+      linear-gradient(160deg, #0d2c22 0%, #10362a 45%, #0a241c 100%);
+    background-attachment:fixed;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:26px 22px 40px;
+  }
+
+  /* faint canvas grain over the emerald chrome */
+  body::before{
+    content:"";
+    position:fixed; inset:0; pointer-events:none; z-index:0;
+    opacity:.06; mix-blend-mode:overlay;
+    background-image:
+      repeating-linear-gradient(48deg,  #fff 0 1px, transparent 1px 4px),
+      repeating-linear-gradient(-42deg, #000 0 1px, transparent 1px 5px);
+  }
+
+  /* ---- top caption in the mat ---- */
+  .caption{
+    position:relative; z-index:2;
+    max-width:1180px;
+    text-align:center;
+    font-family:var(--serif);
+    font-size:13.5px;
+    font-style:italic;
+    letter-spacing:.02em;
+    color:#cdb985;
+    opacity:.9;
+    margin:0 0 20px;
+    line-height:1.5;
+  }
+  .caption b{ color:var(--gold-soft); font-weight:600; font-style:normal; }
+
+  /* ---- the framed atlas plate ---- */
+  .plate{
+    position:relative; z-index:1;
+    width:min(1480px, 96vw);
+    aspect-ratio: 1480 / 980;
+    border-radius:6px;
+    /* the parchment sheet lifts off the mat */
+    filter: drop-shadow(0 26px 48px rgba(0,0,0,.55))
+            drop-shadow(0 4px 10px rgba(0,0,0,.4));
+  }
+  .plate svg{ display:block; width:100%; height:100%; border-radius:6px; }
+
+  /* region label hover lift */
+  .region{ cursor:default; transition: transform .25s ease, filter .25s ease; transform-box:fill-box; transform-origin:center; }
+  .region:hover{ filter: brightness(1.08); }
+  .region:hover .glow{ opacity:.9 !important; }
+  .region:hover .rlabel{ fill:#2e2410; }
+
+  /* subtle tooltip readout under the plate */
+  .readout{
+    position:relative; z-index:2;
+    margin-top:18px;
+    min-height:20px;
+    font-family:var(--serif);
+    font-size:14px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:#cdb987;
+    opacity:0;
+    transition:opacity .2s ease;
+  }
+  .readout.on{ opacity:.92; }
+</style>
+</head>
+<body>
+
+  <p class="caption">
+    <b>Concept mockup — the rebuilt world map.</b>
+    The real version generates richer geography with Azgaar and uses the same parchment&nbsp;+&nbsp;ink styling.
+  </p>
+
+  <div class="plate">
+    <!-- viewBox is the design grid; everything is drawn to this coordinate space -->
+    <svg viewBox="0 0 1480 980" role="img" aria-label="Terra Questa — an atlas of your realm" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <!-- ============ PAPER GRAIN ============ -->
+        <filter id="paperGrain" x="-5%" y="-5%" width="110%" height="110%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.012 0.016" numOctaves="4" seed="7" result="big"/>
+          <feColorMatrix in="big" type="matrix"
+            values="0 0 0 0 0.55  0 0 0 0 0.46  0 0 0 0 0.30  0 0 0 0.35 0" result="bigTint"/>
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="11" result="fine"/>
+          <feColorMatrix in="fine" type="matrix"
+            values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.05 0" result="fineDark"/>
+          <feMerge>
+            <feMergeNode in="bigTint"/>
+            <feMergeNode in="fineDark"/>
+          </feMerge>
+        </filter>
+
+        <!-- ============ HAND-DRAWN WOBBLE (for coastlines + ink) ============ -->
+        <filter id="wobble" x="-8%" y="-8%" width="116%" height="116%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.022" numOctaves="3" seed="4" result="n"/>
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+        <filter id="wobbleSoft" x="-8%" y="-8%" width="116%" height="116%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="9" result="n"/>
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="3.2" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+
+        <!-- coast lifts off the water -->
+        <filter id="coastShadow" x="-15%" y="-15%" width="130%" height="130%">
+          <feDropShadow dx="0" dy="2.2" stdDeviation="3.2" flood-color="#7d6a44" flood-opacity="0.45"/>
+        </filter>
+
+        <!-- soft ink shadow for terrain marks -->
+        <filter id="inkShadow" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0.6" dy="1.1" stdDeviation="0.7" flood-color="#5b4a2c" flood-opacity="0.4"/>
+        </filter>
+
+        <!-- gold underglow for charted labels -->
+        <filter id="goldGlow" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="3.4"/>
+        </filter>
+
+        <!-- mist for uncharted lands -->
+        <filter id="mist" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="3.6"/>
+        </filter>
+
+        <!-- ============ GRADIENTS ============ -->
+        <!-- parchment body -->
+        <radialGradient id="paper" cx="48%" cy="42%" r="78%">
+          <stop offset="0%"  stop-color="#f3e8ca"/>
+          <stop offset="52%" stop-color="#efe3c4"/>
+          <stop offset="82%" stop-color="#e7d8b0"/>
+          <stop offset="100%" stop-color="#d8c290"/>
+        </radialGradient>
+        <!-- water gradient -->
+        <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"  stop-color="#c6d1cb"/>
+          <stop offset="100%" stop-color="#aebdb5"/>
+        </linearGradient>
+        <!-- edge vignette of the sheet -->
+        <radialGradient id="vignette" cx="50%" cy="48%" r="68%">
+          <stop offset="0%"   stop-color="#000" stop-opacity="0"/>
+          <stop offset="74%"  stop-color="#000" stop-opacity="0"/>
+          <stop offset="100%" stop-color="#6a5328" stop-opacity="0.32"/>
+        </radialGradient>
+        <!-- gold rule gradient (leaf sheen) -->
+        <linearGradient id="goldLeaf" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%"  stop-color="#fbeec0"/>
+          <stop offset="28%" stop-color="#f4d77a"/>
+          <stop offset="58%" stop-color="#c98a1e"/>
+          <stop offset="82%" stop-color="#f4d77a"/>
+          <stop offset="100%" stop-color="#9c6c16"/>
+        </linearGradient>
+        <linearGradient id="goldLeafV" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"  stop-color="#fbeec0"/>
+          <stop offset="35%" stop-color="#f4d77a"/>
+          <stop offset="70%" stop-color="#c98a1e"/>
+          <stop offset="100%" stop-color="#9c6c16"/>
+        </linearGradient>
+        <!-- land tint, faintly greener than paper to read as terrain -->
+        <linearGradient id="landTint" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"  stop-color="#eee2bf"/>
+          <stop offset="100%" stop-color="#e3d2a4"/>
+        </linearGradient>
+        <radialGradient id="mountSnow" cx="50%" cy="20%" r="80%">
+          <stop offset="0%" stop-color="#fbf4e2"/>
+          <stop offset="100%" stop-color="#e7d8b0"/>
+        </radialGradient>
+
+        <!-- reusable hatch pattern for water -->
+        <pattern id="waterHatch" width="22" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(0)">
+          <path d="M0 16 Q5.5 12 11 16 T22 16" stroke="#8fa39a" stroke-width="0.7" fill="none" opacity="0.5"/>
+        </pattern>
+
+        <!-- ============ ICON SYMBOLS (hand-inked) ============ -->
+        <!-- castle / keep -->
+        <g id="ic-castle">
+          <g fill="none" stroke="#3a2c18" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">
+            <path d="M-9 5 L-9 -4 L-6 -4 L-6 -7 L-3 -7 L-3 -4 L3 -4 L3 -7 L6 -7 L6 -4 L9 -4 L9 5 Z" fill="#e8d6a8"/>
+            <path d="M-9 -4 v-2 h1.5 v2 M-5 -4 v-2 h1.5 v2 M-1 -4 v-2 h1.5 v2 M3.2 -4 v-2 h1.5 v2 M7 -4 v-2 h1.5 v2"/>
+            <path d="M-1.5 5 L-1.5 0 A1.5 1.5 0 0 1 1.5 0 L1.5 5" fill="#cdb377"/>
+            <path d="M0 -7 L0 -12 L5 -10.5 L0 -9.5" fill="#3a2c18" stroke="none"/>
+            <path d="M-6 -1 h2 M4 -1 h2"/>
+          </g>
+        </g>
+        <!-- tower -->
+        <g id="ic-tower">
+          <g fill="none" stroke="#3a2c18" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round">
+            <path d="M-3.5 6 L-3.5 -6 L3.5 -6 L3.5 6 Z" fill="#e8d6a8"/>
+            <path d="M-4.5 -6 L4.5 -6 L4.5 -8.5 L2.5 -8.5 L2.5 -7 L1 -7 L1 -8.5 L-1 -8.5 L-1 -7 L-2.5 -7 L-2.5 -8.5 L-4.5 -8.5 Z" fill="#cdb377"/>
+            <path d="M0 -1 a1.4 1.4 0 1 1 0.01 0" fill="#3a2c18" stroke="none"/>
+            <path d="M-3.5 3 h7"/>
+          </g>
+        </g>
+        <!-- town cluster -->
+        <g id="ic-town">
+          <g fill="none" stroke="#3a2c18" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round">
+            <path d="M-9 5 L-9 -1 L-5.5 -4 L-2 -1 L-2 5 Z" fill="#e8d6a8"/>
+            <path d="M-1 5 L-1 -3 L3 -6 L7 -3 L7 5 Z" fill="#ddc591"/>
+            <path d="M4.5 5 L4.5 0 L7.5 -2 L10.5 0 L10.5 5 Z" fill="#e8d6a8"/>
+            <path d="M-7 1 h1.4 M2 -1 h1.6 M2 2 h1.6"/>
+          </g>
+        </g>
+        <!-- village (huts) -->
+        <g id="ic-village">
+          <g fill="none" stroke="#3a2c18" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round">
+            <path d="M-7 4 L-7 0 L-4 -3 L-1 0 L-1 4 Z" fill="#e8d6a8"/>
+            <path d="M1 4 L1 0 L4 -3 L7 0 L7 4 Z" fill="#ddc591"/>
+            <path d="M-4 -3 L-4 -1 M4 -3 L4 -1"/>
+          </g>
+        </g>
+
+        <!-- single side-view mountain (snowless) -->
+        <g id="ic-mtn">
+          <g stroke="#3a2c18" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" fill="#e6d4a4">
+            <path d="M-13 6 L-3 -10 L4 0 L9 -6 L17 6 Z"/>
+          </g>
+          <g stroke="#5b4a2c" stroke-width="0.7" fill="none" opacity="0.65">
+            <path d="M-3 -10 L-6 6 M-3 -10 L0 6 M9 -6 L6 6 M9 -6 L11 6"/>
+          </g>
+        </g>
+        <!-- snow-capped mountain -->
+        <g id="ic-mtn-snow">
+          <g stroke="#3a2c18" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" fill="#e6d4a4">
+            <path d="M-13 6 L-2 -12 L5 0 L10 -7 L18 6 Z"/>
+          </g>
+          <path d="M-2 -12 L-6.2 -4.5 L-4 -5.2 L-2.6 -3 L-0.6 -5 L1.4 -3.2 L1.4 -5 L-2 -12 Z" fill="#fbf4e2" stroke="#3a2c18" stroke-width="0.8" stroke-linejoin="round"/>
+          <path d="M10 -7 L7.4 -2.7 L9 -3.4 L10.4 -1.8 L11.6 -3.4 L10 -7 Z" fill="#fbf4e2" stroke="#3a2c18" stroke-width="0.8" stroke-linejoin="round"/>
+          <g stroke="#5b4a2c" stroke-width="0.7" fill="none" opacity="0.6">
+            <path d="M-2 -2 L-5 6 M-2 -2 L1 6 M10 -1 L7.5 6 M10 -1 L12 6"/>
+          </g>
+        </g>
+        <!-- a single tree -->
+        <g id="ic-tree">
+          <g stroke="#3a2c18" stroke-width="1" stroke-linejoin="round" fill="#cdb86f">
+            <path d="M0 6 L0 2 M-4 3 Q-5 -3 0 -7 Q5 -3 4 3 Q2 1 0 3 Q-2 1 -4 3 Z"/>
+          </g>
+        </g>
+        <!-- lighthouse -->
+        <g id="ic-lighthouse">
+          <g fill="none" stroke="#3a2c18" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round">
+            <path d="M-3 9 L-2 -5 L2 -5 L3 9 Z" fill="#efe3c4"/>
+            <path d="M-2.4 1 L2.4 1 M-2.7 4.5 L2.7 4.5"/>
+            <path d="M-3 -5 L3 -5 L2.2 -8 L-2.2 -8 Z" fill="#cdb377"/>
+            <path d="M0 -8 L0 -11" />
+            <circle cx="0" cy="-6.5" r="0.9" fill="#3a2c18" stroke="none"/>
+            <path d="M3 -7 L7 -8.5 M-3 -7 L-7 -8.5" stroke-width="0.8" opacity="0.7"/>
+          </g>
+        </g>
+        <!-- anchor -->
+        <g id="ic-anchor">
+          <g fill="none" stroke="#3a2c18" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="0" cy="-7" r="2"/>
+            <path d="M0 -5 L0 7"/>
+            <path d="M-5 -2 L5 -2"/>
+            <path d="M-7 3 A7 7 0 0 0 0 8 A7 7 0 0 0 7 3"/>
+            <path d="M-7 3 L-7 0.5 M7 3 L7 0.5"/>
+          </g>
+        </g>
+      </defs>
+
+      <!-- ============================================================
+           1. EMERALD MAT + GOLD DOUBLE-RULE FRAME
+           ============================================================ -->
+      <rect x="0" y="0" width="1480" height="980" fill="#10362a"/>
+      <rect x="0" y="0" width="1480" height="980" fill="url(#vignette)" opacity="0.6"/>
+
+      <!-- ============================================================
+           2. PARCHMENT SHEET
+           ============================================================ -->
+      <g>
+        <rect x="44" y="44" width="1392" height="892" rx="4" fill="url(#paper)"/>
+        <!-- paper grain layer -->
+        <rect x="44" y="44" width="1392" height="892" rx="4" fill="#fff" filter="url(#paperGrain)" opacity="0.55" style="mix-blend-mode:multiply"/>
+        <!-- edge stain -->
+        <rect x="44" y="44" width="1392" height="892" rx="4" fill="url(#vignette)"/>
+        <!-- a couple of irregular age-spots -->
+        <g opacity="0.10" fill="#a8884a">
+          <ellipse cx="220" cy="180" rx="74" ry="48" filter="url(#mist)"/>
+          <ellipse cx="1260" cy="800" rx="96" ry="60" filter="url(#mist)"/>
+          <ellipse cx="1180" cy="150" rx="52" ry="64" filter="url(#mist)"/>
+          <ellipse cx="180" cy="760" rx="60" ry="42" filter="url(#mist)"/>
+        </g>
+      </g>
+
+      <!-- ============================================================
+           3. WATER FIELD (light, faint hatch) covering the sheet
+           land will be painted on top
+           ============================================================ -->
+      <g>
+        <rect x="58" y="58" width="1364" height="864" rx="3" fill="url(#sea)" opacity="0.42"/>
+        <rect x="58" y="58" width="1364" height="864" rx="3" fill="url(#waterHatch)" opacity="0.6"/>
+        <!-- a few longer ocean swell lines -->
+        <g stroke="#8fa39a" stroke-width="0.7" fill="none" opacity="0.4">
+          <path d="M90 880 Q140 872 190 880 T290 880"/>
+          <path d="M1120 120 Q1170 112 1220 120 T1320 120"/>
+          <path d="M1130 880 Q1180 872 1230 880 T1330 880"/>
+        </g>
+      </g>
+
+      <!-- ============================================================
+           4. LANDMASSES — hand-inked coastlines (wobbled)
+           Each land is: echo coast + drop-shadow + main coast + fill
+           ============================================================ -->
+
+      <!-- ===== MAIN CONTINENT ===== -->
+      <g filter="url(#wobble)">
+        <!-- faint offshore echo coastline -->
+        <path d="M310 250
+                 C 250 300, 235 380, 270 440
+                 C 300 495, 280 560, 320 615
+                 C 360 670, 460 700, 560 690
+                 C 660 680, 720 720, 820 700
+                 C 930 678, 1000 700, 1075 660
+                 C 1150 620, 1150 540, 1115 480
+                 C 1085 425, 1120 360, 1080 305
+                 C 1040 250, 940 240, 850 250
+                 C 760 260, 700 220, 600 228
+                 C 500 236, 380 200, 310 250 Z"
+              fill="none" stroke="#b7a06e" stroke-width="1" opacity="0.55"
+              transform="translate(-9,-9) scale(1.012)" transform-origin="690 460"/>
+
+        <!-- land fill + coast -->
+        <path id="mainland" d="M318 258
+                 C 258 308, 243 388, 278 448
+                 C 308 503, 288 568, 328 623
+                 C 368 678, 468 708, 568 698
+                 C 668 688, 728 728, 828 708
+                 C 938 686, 1008 708, 1083 668
+                 C 1158 628, 1158 548, 1123 488
+                 C 1093 433, 1128 368, 1088 313
+                 C 1048 258, 948 248, 858 258
+                 C 768 268, 708 228, 608 236
+                 C 508 244, 388 208, 318 258 Z"
+              fill="url(#landTint)" stroke="#4a3a23" stroke-width="2.4"
+              filter="url(#coastShadow)" stroke-linejoin="round"/>
+      </g>
+
+      <!-- ===== NORTHERN PENINSULA (Crownspire side) ===== -->
+      <g filter="url(#wobble)">
+        <path d="M905 262
+                 C 940 215, 1010 200, 1060 220
+                 C 1110 240, 1110 295, 1075 312
+                 C 1030 300, 985 300, 952 290
+                 C 922 282, 900 285, 905 262 Z"
+              fill="url(#landTint)" stroke="#4a3a23" stroke-width="2.2"
+              filter="url(#coastShadow)" stroke-linejoin="round"/>
+      </g>
+
+      <!-- ===== SOUTHERN MARSH LOBE (Sunken Marsh / Quiet Fens) ===== -->
+      <g filter="url(#wobbleSoft)">
+        <path d="M470 700
+                 C 460 745, 500 780, 560 778
+                 C 620 776, 660 748, 648 712
+                 C 612 724, 540 720, 470 700 Z"
+              fill="url(#landTint)" stroke="#4a3a23" stroke-width="2"
+              filter="url(#coastShadow)" stroke-linejoin="round" opacity="0.96"/>
+      </g>
+
+      <!-- ===== MIST ISLES (small island cluster, NE ocean) ===== -->
+      <g filter="url(#wobbleSoft)">
+        <path d="M1210 300 C 1188 312, 1190 340, 1214 346 C 1242 352, 1262 332, 1252 312 C 1244 296, 1228 292, 1210 300 Z"
+              fill="url(#landTint)" stroke="#4a3a23" stroke-width="1.9" filter="url(#coastShadow)"/>
+        <path d="M1276 356 C 1262 364, 1264 382, 1280 386 C 1298 390, 1310 376, 1302 362 C 1296 352, 1286 350, 1276 356 Z"
+              fill="url(#landTint)" stroke="#4a3a23" stroke-width="1.9" filter="url(#coastShadow)"/>
+        <path d="M1196 372 C 1186 378, 1188 392, 1200 394 C 1214 396, 1222 386, 1216 376 C 1212 368, 1204 368, 1196 372 Z"
+              fill="url(#landTint)" stroke="#4a3a23" stroke-width="1.8" filter="url(#coastShadow)"/>
+      </g>
+
+      <!-- ===== ASHLANDS ISLE (SW, faded/uncharted) ===== -->
+      <g filter="url(#wobbleSoft)" opacity="0.9">
+        <path d="M165 560 C 138 580, 140 632, 178 648 C 222 666, 268 640, 262 600 C 258 568, 220 540, 165 560 Z"
+              fill="#e6d6ac" stroke="#8a7548" stroke-width="1.9" stroke-dasharray="1 0" filter="url(#coastShadow)"/>
+      </g>
+
+      <!-- ===== BEYOND THE VEIL (far SE, very faded) ===== -->
+      <g filter="url(#wobbleSoft)" opacity="0.62">
+        <path d="M1230 720 C 1205 742, 1208 792, 1250 808 C 1300 826, 1346 798, 1338 752 C 1332 720, 1290 698, 1230 720 Z"
+              fill="#e3d5af" stroke="#a08a5c" stroke-width="1.6" stroke-dasharray="6 5" filter="url(#mist)"/>
+      </g>
+
+      <!-- second "echo" coast hatch just inside the main coast (cartographer's double-coast) -->
+      <g fill="none" stroke="#6f5c38" stroke-width="0.8" opacity="0.4" filter="url(#wobbleSoft)">
+        <path d="M330 270 C 276 318, 262 392, 294 448 C 322 500, 304 562, 342 614
+                 C 380 666, 472 694, 568 685 C 664 676, 724 714, 822 695
+                 C 928 674, 996 695, 1068 657 C 1138 619, 1138 548, 1106 492
+                 C 1078 440, 1112 372, 1074 320 C 1036 268, 942 260, 856 270
+                 C 770 280, 712 242, 614 250 C 516 258, 398 224, 330 270 Z"/>
+      </g>
+
+      <!-- ============================================================
+           5. RIVERS — thin wandering double-lines, mountains -> coast
+           ============================================================ -->
+      <g fill="none" stroke="#9fb0c4" stroke-linecap="round" filter="url(#wobbleSoft)" opacity="0.85">
+        <!-- river 1: from Crownspire Peaks down to south coast -->
+        <path d="M1000 360 C 960 410, 900 430, 860 480 C 818 532, 760 545, 700 590 C 650 628, 600 640, 560 678" stroke-width="3.2" opacity="0.5"/>
+        <path d="M1000 360 C 960 410, 900 430, 860 480 C 818 532, 760 545, 700 590 C 650 628, 600 640, 560 678" stroke-width="1.4"/>
+        <!-- river 2: shorter, central highlands to west coast -->
+        <path d="M640 380 C 600 420, 540 430, 480 470 C 430 502, 380 500, 330 540" stroke-width="2.8" opacity="0.5"/>
+        <path d="M640 380 C 600 420, 540 430, 480 470 C 430 502, 380 500, 330 540" stroke-width="1.3"/>
+        <!-- small lake at river junction -->
+        <ellipse cx="700" cy="592" rx="20" ry="11" fill="#aebfd0" stroke="#7d8ea2" stroke-width="1" opacity="0.85"/>
+      </g>
+
+      <!-- ============================================================
+           6. TERRAIN — mountains, forests, hills (hand-inked)
+           Scattered tastefully; lots of breathing room.
+           ============================================================ -->
+      <g filter="url(#inkShadow)">
+        <!-- Crownspire Peaks range (NE) -->
+        <use href="#ic-mtn-snow" x="1000" y="340" transform="scale(1.05)" transform-origin="1000 340"/>
+        <use href="#ic-mtn-snow" x="1038" y="352"/>
+        <use href="#ic-mtn" x="968" y="356"/>
+        <use href="#ic-mtn-snow" x="1018" y="372"/>
+        <use href="#ic-mtn" x="980" y="384"/>
+
+        <!-- central highlands (Greymoor / Pale Vale) -->
+        <use href="#ic-mtn" x="636" y="372"/>
+        <use href="#ic-mtn" x="672" y="386"/>
+        <use href="#ic-mtn" x="610" y="392"/>
+      </g>
+
+      <!-- hills (small bumps) — Goldfield March, Sunmeadow -->
+      <g fill="none" stroke="#5e4d2f" stroke-width="1.3" stroke-linecap="round" filter="url(#wobbleSoft)" opacity="0.78">
+        <path d="M470 318 q9 -11 18 0 M486 320 q9 -11 18 0"/>
+        <path d="M540 344 q9 -11 18 0 M556 346 q9 -11 18 0"/>
+        <path d="M790 372 q9 -11 18 0 M806 374 q9 -11 18 0"/>
+        <path d="M840 392 q9 -11 18 0"/>
+        <path d="M884 470 q9 -11 18 0 M900 472 q9 -11 18 0"/>
+      </g>
+
+      <!-- forests (clusters of little trees) -->
+      <g filter="url(#inkShadow)">
+        <!-- Rivenwood Reach (west-central) -->
+        <use href="#ic-tree" x="402" y="430"/><use href="#ic-tree" x="418" y="438"/>
+        <use href="#ic-tree" x="434" y="428"/><use href="#ic-tree" x="410" y="448"/>
+        <use href="#ic-tree" x="426" y="452"/><use href="#ic-tree" x="444" y="444"/>
+        <!-- Vale of Embergreen forest (NW) -->
+        <use href="#ic-tree" x="360" y="316"/><use href="#ic-tree" x="376" y="324"/>
+        <use href="#ic-tree" x="392" y="316"/><use href="#ic-tree" x="370" y="334"/>
+        <!-- Larkholt woods (south-central) -->
+        <use href="#ic-tree" x="600" y="556"/><use href="#ic-tree" x="616" y="564"/>
+        <use href="#ic-tree" x="632" y="556"/><use href="#ic-tree" x="608" y="574"/>
+        <use href="#ic-tree" x="624" y="578"/>
+        <!-- Hollow Reach woods (east) -->
+        <use href="#ic-tree" x="958" y="560"/><use href="#ic-tree" x="974" y="568"/>
+        <use href="#ic-tree" x="990" y="560"/><use href="#ic-tree" x="966" y="578"/>
+      </g>
+
+      <!-- ============================================================
+           7. REGION BOUNDARIES — very subtle dotted sepia
+           ============================================================ -->
+      <g fill="none" stroke="#8a7548" stroke-width="1.1" stroke-dasharray="2 5" stroke-linecap="round" opacity="0.42" filter="url(#wobbleSoft)">
+        <path d="M520 270 C 540 360, 500 440, 540 540"/>
+        <path d="M700 250 C 720 360, 700 470, 720 600"/>
+        <path d="M860 268 C 880 380, 860 500, 840 640"/>
+        <path d="M340 470 C 460 480, 600 470, 720 500"/>
+        <path d="M540 540 C 680 560, 820 540, 960 560"/>
+        <path d="M1020 320 C 1000 420, 1060 500, 1040 600"/>
+      </g>
+
+      <!-- a faint sea-serpent doodle in the SE ocean (charm) -->
+      <g fill="none" stroke="#6f5c38" stroke-width="1.4" stroke-linecap="round" opacity="0.34" filter="url(#wobbleSoft)">
+        <path d="M1120 470 q14 -16 28 0 q14 16 28 0 q14 -16 28 0"/>
+        <path d="M1120 470 q-8 -2 -12 -8 q6 1 10 4"/>
+        <circle cx="1204" cy="466" r="1.4" fill="#6f5c38" stroke="none"/>
+        <path d="M1204 470 q6 2 8 7 q-7 -1 -10 -4"/>
+      </g>
+      <!-- a small ship doodle in the NW ocean -->
+      <g fill="none" stroke="#6f5c38" stroke-width="1.3" stroke-linecap="round" opacity="0.4" filter="url(#wobbleSoft)">
+        <path d="M180 420 q24 12 48 0 l-6 10 q-18 6 -36 0 Z"/>
+        <path d="M204 420 L204 392 M204 396 L222 404 L204 410"/>
+      </g>
+
+      <!-- ============================================================
+           8. REGION LABELS + LANDMARK ICONS
+           charted = full ink + faint gold underglow under label
+           uncharted = lighter ink + dashed
+           ============================================================ -->
+
+      <!-- helper text styling done inline per label -->
+      <style>
+        .rlabel{ font-family: 'Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif;
+                 fill:#4a3a23; font-size:15px; letter-spacing:.16em; text-transform:uppercase; font-weight:600; }
+        .rlabel.sm{ font-size:13px; letter-spacing:.14em; }
+        .rlabel.it{ font-style:italic; text-transform:none; letter-spacing:.04em; font-size:15.5px; }
+        .uncharted .rlabel{ fill:#9d8757; font-weight:500; }
+        .glow{ fill:#f4d77a; opacity:.34; }
+      </style>
+
+      <!-- ===== CHARTED REGIONS ===== -->
+
+      <!-- Vale of Embergreen (NW forest) -->
+      <g class="region" data-name="Vale of Embergreen — charted">
+        <ellipse class="glow" cx="378" cy="296" rx="62" ry="13" filter="url(#goldGlow)"/>
+        <text class="rlabel sm" x="378" y="300" text-anchor="middle">Vale of Embergreen</text>
+      </g>
+
+      <!-- Goldfield March (N, hills) -->
+      <g class="region" data-name="Goldfield March — charted">
+        <use href="#ic-village" x="512" y="294" filter="url(#inkShadow)"/>
+        <ellipse class="glow" cx="512" cy="332" rx="56" ry="12" filter="url(#goldGlow)"/>
+        <text class="rlabel sm" x="512" y="336" text-anchor="middle">Goldfield March</text>
+      </g>
+
+      <!-- Sunmeadow Hold (N-central) -->
+      <g class="region" data-name="Sunmeadow Hold — charted">
+        <use href="#ic-castle" x="600" y="318" filter="url(#inkShadow)"/>
+        <ellipse class="glow" cx="600" cy="346" rx="54" ry="12" filter="url(#goldGlow)"/>
+        <text class="rlabel sm" x="600" y="350" text-anchor="middle">Sunmeadow Hold</text>
+      </g>
+
+      <!-- Larkholt (south-central, woods) -->
+      <g class="region" data-name="Larkholt — charted">
+        <use href="#ic-town" x="616" y="600" filter="url(#inkShadow)"/>
+        <ellipse class="glow" cx="616" cy="626" rx="40" ry="11" filter="url(#goldGlow)"/>
+        <text class="rlabel" x="616" y="630" text-anchor="middle">Larkholt</text>
+      </g>
+
+      <!-- Tide's End (west coast) -->
+      <g class="region" data-name="Tide's End — charted">
+        <use href="#ic-tower" x="332" y="572" filter="url(#inkShadow)"/>
+        <ellipse class="glow" cx="332" cy="596" rx="42" ry="11" filter="url(#goldGlow)"/>
+        <text class="rlabel sm" x="332" y="600" text-anchor="middle">Tide's End</text>
+      </g>
+
+      <!-- Crownspire Peaks (NE mountains) -->
+      <g class="region" data-name="Crownspire Peaks — charted">
+        <ellipse class="glow" cx="1004" cy="416" rx="62" ry="12" filter="url(#goldGlow)"/>
+        <text class="rlabel sm" x="1004" y="420" text-anchor="middle">Crownspire Peaks</text>
+      </g>
+
+      <!-- Rivenwood Reach (west-central woods) -->
+      <g class="region" data-name="Rivenwood Reach — charted">
+        <ellipse class="glow" cx="424" cy="478" rx="58" ry="12" filter="url(#goldGlow)"/>
+        <text class="rlabel sm" x="424" y="482" text-anchor="middle">Rivenwood Reach</text>
+      </g>
+
+      <!-- Pale Vale (central highlands) -->
+      <g class="region" data-name="Pale Vale — charted">
+        <ellipse class="glow" cx="648" cy="426" rx="40" ry="11" filter="url(#goldGlow)"/>
+        <text class="rlabel sm" x="648" y="430" text-anchor="middle">Pale Vale</text>
+      </g>
+
+      <!-- Greymoor (central, near mtns) -->
+      <g class="region" data-name="Greymoor — charted">
+        <use href="#ic-tower" x="752" y="452" filter="url(#inkShadow)"/>
+        <ellipse class="glow" cx="752" cy="476" rx="38" ry="11" filter="url(#goldGlow)"/>
+        <text class="rlabel sm" x="752" y="480" text-anchor="middle">Greymoor</text>
+      </g>
+
+      <!-- Hollow Reach (east woods) -->
+      <g class="region" data-name="Hollow Reach — charted">
+        <ellipse class="glow" cx="974" cy="600" rx="50" ry="12" filter="url(#goldGlow)"/>
+        <text class="rlabel sm" x="974" y="604" text-anchor="middle">Hollow Reach</text>
+      </g>
+
+      <!-- Mist Isles (NE island cluster) -->
+      <g class="region" data-name="Mist Isles — charted">
+        <ellipse class="glow" cx="1244" cy="420" rx="40" ry="11" filter="url(#goldGlow)"/>
+        <text class="rlabel sm it" x="1244" y="424" text-anchor="middle">Mist Isles</text>
+      </g>
+
+      <!-- Quiet Fens (south marsh) -->
+      <g class="region" data-name="Quiet Fens — charted">
+        <ellipse class="glow" cx="558" cy="748" rx="42" ry="11" filter="url(#goldGlow)"/>
+        <text class="rlabel sm it" x="558" y="752" text-anchor="middle">Quiet Fens</text>
+        <!-- marsh tufts -->
+        <g stroke="#5e4d2f" stroke-width="1" fill="none" opacity="0.6" filter="url(#wobbleSoft)">
+          <path d="M520 730 l0 -6 M524 730 l2 -6 M528 730 l-1 -6"/>
+          <path d="M590 736 l0 -6 M594 736 l2 -6 M598 736 l-1 -6"/>
+        </g>
+      </g>
+
+      <!-- ===== UNCHARTED REGIONS (faded / dashed / mistier) ===== -->
+
+      <!-- mist veils over uncharted zones -->
+      <g opacity="0.5">
+        <ellipse cx="210" cy="600" rx="86" ry="70" fill="#e8ddbf" filter="url(#mist)" opacity="0.7"/>
+        <ellipse cx="900" cy="690" rx="92" ry="64" fill="#e8ddbf" filter="url(#mist)" opacity="0.6"/>
+        <ellipse cx="1284" cy="764" rx="96" ry="72" fill="#e6dcc0" filter="url(#mist)" opacity="0.7"/>
+      </g>
+
+      <!-- The Ashlands (SW isle) — uncharted -->
+      <g class="region uncharted" data-name="The Ashlands — uncharted">
+        <g fill="none" stroke="#9d8757" stroke-width="1.2" stroke-dasharray="3 4" opacity="0.7" filter="url(#wobbleSoft)">
+          <path d="M195 590 l8 -10 l6 8 l7 -9 l9 12 Z"/>
+        </g>
+        <text class="rlabel sm" x="212" y="636" text-anchor="middle">The Ashlands</text>
+        <text class="rlabel sm" x="212" y="654" text-anchor="middle" style="font-size:10px; letter-spacing:.22em; fill:#b09a6a;">UNCHARTED</text>
+      </g>
+
+      <!-- Sunken Marsh (S, uncharted) -->
+      <g class="region uncharted" data-name="Sunken Marsh — uncharted">
+        <text class="rlabel sm it" x="900" y="690" text-anchor="middle" style="text-transform:none;">Sunken Marsh</text>
+        <text class="rlabel sm" x="900" y="708" text-anchor="middle" style="font-size:10px; letter-spacing:.22em; fill:#b09a6a;">UNCHARTED</text>
+      </g>
+
+      <!-- Beyond the Veil (far SE, uncharted) -->
+      <g class="region uncharted" data-name="Beyond the Veil — uncharted">
+        <text class="rlabel sm it" x="1284" y="762" text-anchor="middle" style="text-transform:none; fill:#a8946a;">Beyond the Veil</text>
+        <text class="rlabel sm" x="1284" y="780" text-anchor="middle" style="font-size:10px; letter-spacing:.22em; fill:#bfa978;">UNCHARTED</text>
+      </g>
+
+      <!-- ============================================================
+           9. FOUR SPECIAL SETTLEMENTS (gold-ringed)
+           ============================================================ -->
+
+      <!-- Greenhaven Heartland — the home (green inland town) -->
+      <g class="region" data-name="Greenhaven Heartland — your home">
+        <circle cx="560" cy="470" r="15" fill="#e8d6a8" stroke="url(#goldLeaf)" stroke-width="2.6"/>
+        <circle cx="560" cy="470" r="15" fill="none" stroke="#9c6c16" stroke-width="0.7"/>
+        <use href="#ic-town" x="560" y="470" transform="scale(0.78)" transform-origin="560 470"/>
+        <!-- little green sprig to read as "green/home" -->
+        <path d="M560 458 q4 -6 8 -3 q-3 5 -8 5 q-5 0 -8 -5 q4 -3 8 3 Z" fill="#6aa03f" stroke="#3f6a26" stroke-width="0.6" opacity="0.85"/>
+        <ellipse class="glow" cx="560" cy="498" rx="68" ry="13" filter="url(#goldGlow)" style="opacity:.46;"/>
+        <text class="rlabel" x="560" y="502" text-anchor="middle" style="fill:#3a2c18;">Greenhaven Heartland</text>
+      </g>
+
+      <!-- Goldport Harbor — coastal, harbor/anchor/pier + lighthouse -->
+      <g class="region" data-name="Goldport Harbor — coastal settlement">
+        <!-- pier -->
+        <g stroke="#4a3a23" stroke-width="2" stroke-linecap="round" filter="url(#wobbleSoft)">
+          <path d="M1086 654 l36 18"/>
+          <path d="M1094 658 l-2 8 M1104 663 l-2 8 M1114 668 l-2 8"/>
+        </g>
+        <use href="#ic-anchor" x="1058" y="630" transform="scale(0.9)" transform-origin="1058 630" filter="url(#inkShadow)"/>
+        <use href="#ic-lighthouse" x="1118" y="640" filter="url(#inkShadow)"/>
+        <circle cx="1086" cy="648" r="6" fill="url(#goldLeaf)" stroke="#9c6c16" stroke-width="0.8"/>
+        <ellipse class="glow" cx="1090" cy="688" rx="58" ry="12" filter="url(#goldGlow)" style="opacity:.46;"/>
+        <text class="rlabel sm" x="1090" y="692" text-anchor="middle" style="fill:#3a2c18;">Goldport Harbor</text>
+      </g>
+
+      <!-- Frostpeak — snowy mountains, faded "coming soon" -->
+      <g class="region" data-name="Frostpeak — coming soon">
+        <g opacity="0.62">
+          <use href="#ic-mtn-snow" x="1056" y="316" transform="scale(1.1)" transform-origin="1056 316"/>
+          <circle cx="1056" cy="306" r="7" fill="url(#goldLeafV)" stroke="#9c6c16" stroke-width="0.8" opacity="0.85"/>
+        </g>
+        <text class="rlabel sm" x="1056" y="280" text-anchor="middle" style="fill:#8a99a0;">Frostpeak</text>
+        <g transform="translate(1056 290)">
+          <rect x="-32" y="-2" width="64" height="14" rx="7" fill="#dfe6e2" stroke="#9aa9a2" stroke-width="0.8" opacity="0.85"/>
+          <text x="0" y="8" text-anchor="middle" style="font-family:var(--serif); font-size:8px; letter-spacing:.16em; fill:#6e7d76; text-transform:uppercase;">Coming Soon</text>
+        </g>
+      </g>
+
+      <!-- Sun Reach — desert dunes, faded "coming soon" -->
+      <g class="region" data-name="Sun Reach — coming soon">
+        <g opacity="0.6" filter="url(#wobbleSoft)">
+          <!-- dunes -->
+          <path d="M840 560 q26 -22 52 0 q26 22 52 0" fill="none" stroke="#b89a55" stroke-width="1.6"/>
+          <path d="M852 572 q24 -18 48 0 q24 18 48 0" fill="none" stroke="#c2a566" stroke-width="1.4"/>
+          <circle cx="892" cy="540" r="9" fill="none" stroke="#c98a1e" stroke-width="1.4"/>
+          <path d="M892 526 l0 -6 M892 560 l0 6 M906 540 l6 0 M872 540 l-6 0" stroke="#c98a1e" stroke-width="1.2"/>
+        </g>
+        <circle cx="892" cy="540" r="6" fill="url(#goldLeaf)" stroke="#9c6c16" stroke-width="0.8" opacity="0.85"/>
+        <text class="rlabel sm" x="892" y="600" text-anchor="middle" style="fill:#b08a4a;">Sun Reach</text>
+        <g transform="translate(892 610)">
+          <rect x="-32" y="-2" width="64" height="14" rx="7" fill="#f0e2bb" stroke="#cbb074" stroke-width="0.8" opacity="0.9"/>
+          <text x="0" y="8" text-anchor="middle" style="font-family:var(--serif); font-size:8px; letter-spacing:.16em; fill:#9a7c3e; text-transform:uppercase;">Coming Soon</text>
+        </g>
+      </g>
+
+      <!-- ============================================================
+           10. ORNAMENTAL FLOURISHES
+           ============================================================ -->
+
+      <!-- ===== TITLE CARTOUCHE (top-center) ===== -->
+      <g transform="translate(740 110)">
+        <!-- ornamental banner -->
+        <path d="M-230 -34 C -250 -34, -262 -16, -262 0 C -262 16, -250 34, -230 34
+                 L 230 34 C 250 34, 262 16, 262 0 C 262 -16, 250 -34, 230 -34 Z"
+              fill="#efe3c4" stroke="url(#goldLeaf)" stroke-width="2.4"/>
+        <path d="M-230 -34 C -250 -34, -262 -16, -262 0 C -262 16, -250 34, -230 34
+                 L 230 34 C 250 34, 262 16, 262 0 C 262 -16, 250 -34, 230 -34 Z"
+              fill="none" stroke="#9c6c16" stroke-width="0.7"/>
+        <!-- inner hairline -->
+        <path d="M-224 -27 L224 -27 M-224 27 L224 27" stroke="#c98a1e" stroke-width="0.8" opacity="0.6"/>
+        <!-- end flourishes -->
+        <g stroke="url(#goldLeaf)" stroke-width="2" fill="none" stroke-linecap="round">
+          <path d="M-262 0 q-14 0 -22 -8 M-262 0 q-14 0 -22 8"/>
+          <path d="M262 0 q14 0 22 -8 M262 0 q14 0 22 8"/>
+          <circle cx="-289" cy="0" r="3" fill="url(#goldLeaf)" stroke="none"/>
+          <circle cx="289" cy="0" r="3" fill="url(#goldLeaf)" stroke="none"/>
+        </g>
+        <text x="0" y="-2" text-anchor="middle"
+              style="font-family:var(--serif); font-size:38px; letter-spacing:.20em; fill:#3a2c18; font-weight:700;">TERRA QUESTA</text>
+        <text x="0" y="20" text-anchor="middle"
+              style="font-family:var(--serif); font-style:italic; font-size:13.5px; letter-spacing:.10em; fill:#7a6442;">An Atlas of Your Realm</text>
+      </g>
+
+      <!-- ===== COMPASS ROSE (bottom-left corner) ===== -->
+      <g transform="translate(168 800)">
+        <circle r="62" fill="none" stroke="#c98a1e" stroke-width="1" opacity="0.7"/>
+        <circle r="54" fill="none" stroke="#4a3a23" stroke-width="0.8" opacity="0.5" stroke-dasharray="2 4"/>
+        <!-- ticks -->
+        <g stroke="#4a3a23" stroke-width="0.8" opacity="0.6">
+          <!-- 16 ticks -->
+          <g id="tick"><path d="M0 -62 L0 -54"/></g>
+          <use href="#tick" transform="rotate(22.5)"/><use href="#tick" transform="rotate(45)"/>
+          <use href="#tick" transform="rotate(67.5)"/><use href="#tick" transform="rotate(90)"/>
+          <use href="#tick" transform="rotate(112.5)"/><use href="#tick" transform="rotate(135)"/>
+          <use href="#tick" transform="rotate(157.5)"/><use href="#tick" transform="rotate(180)"/>
+          <use href="#tick" transform="rotate(202.5)"/><use href="#tick" transform="rotate(225)"/>
+          <use href="#tick" transform="rotate(247.5)"/><use href="#tick" transform="rotate(270)"/>
+          <use href="#tick" transform="rotate(292.5)"/><use href="#tick" transform="rotate(315)"/>
+          <use href="#tick" transform="rotate(337.5)"/>
+        </g>
+        <!-- secondary (diagonal) star points -->
+        <g fill="#e8d6a8" stroke="#4a3a23" stroke-width="0.8">
+          <path d="M0 0 L26 -26 L8 -8 Z"/><path d="M0 0 L26 26 L8 8 Z"/>
+          <path d="M0 0 L-26 26 L-8 8 Z"/><path d="M0 0 L-26 -26 L-8 -8 Z"/>
+        </g>
+        <!-- primary 4-point star -->
+        <g stroke="#3a2c18" stroke-width="1">
+          <path d="M0 0 L10 -10 L0 -48 L-10 -10 Z" fill="#efe3c4"/>
+          <path d="M0 0 L10 10 L0 48 L-10 10 Z" fill="#cdb377"/>
+          <path d="M0 0 L-10 10 L-48 0 L-10 -10 Z" fill="#efe3c4"/>
+          <path d="M0 0 L10 10 L48 0 L10 -10 Z" fill="#cdb377"/>
+        </g>
+        <circle r="4" fill="url(#goldLeaf)" stroke="#9c6c16" stroke-width="0.8"/>
+        <!-- cardinal letters -->
+        <text x="0" y="-66" text-anchor="middle" style="font-family:var(--serif); font-size:13px; fill:#3a2c18; font-weight:700; letter-spacing:.05em;">N</text>
+        <text x="70" y="5" text-anchor="middle" style="font-family:var(--serif); font-size:11px; fill:#7a6442;">E</text>
+        <text x="0" y="78" text-anchor="middle" style="font-family:var(--serif); font-size:11px; fill:#7a6442;">S</text>
+        <text x="-70" y="5" text-anchor="middle" style="font-family:var(--serif); font-size:11px; fill:#7a6442;">W</text>
+      </g>
+
+      <!-- ===== SCALE BAR / RIBBON (bottom-center) ===== -->
+      <g transform="translate(620 892)">
+        <text x="80" y="-8" text-anchor="middle" style="font-family:var(--serif); font-size:10px; letter-spacing:.22em; fill:#7a6442; text-transform:uppercase;">Leagues</text>
+        <g stroke="#4a3a23" stroke-width="1.1">
+          <rect x="0"  y="0" width="40" height="7" fill="#4a3a23"/>
+          <rect x="40" y="0" width="40" height="7" fill="#efe3c4"/>
+          <rect x="80" y="0" width="40" height="7" fill="#4a3a23"/>
+          <rect x="120" y="0" width="40" height="7" fill="#efe3c4"/>
+        </g>
+        <g style="font-family:var(--serif); font-size:9px; fill:#7a6442;">
+          <text x="0" y="20" text-anchor="middle">0</text>
+          <text x="80" y="20" text-anchor="middle">50</text>
+          <text x="160" y="20" text-anchor="middle">100</text>
+        </g>
+      </g>
+
+      <!-- ===== LEGEND BOX (parchment inset, bottom-right) ===== -->
+      <g transform="translate(1142 766)">
+        <rect x="0" y="0" width="246" height="150" rx="5" fill="#f1e6c9" stroke="url(#goldLeaf)" stroke-width="2"/>
+        <rect x="0" y="0" width="246" height="150" rx="5" fill="#fff" filter="url(#paperGrain)" opacity="0.4" style="mix-blend-mode:multiply"/>
+        <rect x="4" y="4" width="238" height="142" rx="4" fill="none" stroke="#c98a1e" stroke-width="0.6" opacity="0.6"/>
+        <text x="123" y="24" text-anchor="middle" style="font-family:var(--serif); font-size:13px; letter-spacing:.18em; fill:#3a2c18; text-transform:uppercase; font-weight:700;">Legend</text>
+        <line x1="40" y1="32" x2="206" y2="32" stroke="#c98a1e" stroke-width="0.6" opacity="0.5"/>
+
+        <!-- charted -->
+        <ellipse cx="26" cy="52" rx="14" ry="6" fill="#f4d77a" opacity="0.5" filter="url(#goldGlow)"/>
+        <text x="26" y="55" text-anchor="middle" style="font-family:var(--serif); font-size:9px; fill:#4a3a23;">Aa</text>
+        <text x="48" y="56" style="font-family:var(--serif); font-size:11.5px; fill:#4a3a23; letter-spacing:.04em;">Charted region</text>
+
+        <!-- uncharted -->
+        <g transform="translate(26 76)" fill="none" stroke="#9d8757" stroke-width="1.1" stroke-dasharray="3 3">
+          <path d="M-10 6 l5 -8 l5 6 l5 -6 l5 8 Z"/>
+        </g>
+        <text x="48" y="80" style="font-family:var(--serif); font-size:11.5px; fill:#8a7548; letter-spacing:.04em;">Uncharted — explore to chart</text>
+
+        <!-- settlement -->
+        <circle cx="26" cy="100" r="8" fill="#e8d6a8" stroke="url(#goldLeaf)" stroke-width="1.8"/>
+        <use href="#ic-town" x="26" y="100" transform="scale(0.42)" transform-origin="26 100"/>
+        <text x="48" y="104" style="font-family:var(--serif); font-size:11.5px; fill:#4a3a23; letter-spacing:.04em;">Settlement (gold-ringed)</text>
+
+        <!-- coming soon -->
+        <g transform="translate(26 124)">
+          <rect x="-16" y="-6" width="32" height="12" rx="6" fill="#dfe6e2" stroke="#9aa9a2" stroke-width="0.8"/>
+          <text x="0" y="3" text-anchor="middle" style="font-family:var(--serif); font-size:6px; letter-spacing:.12em; fill:#6e7d76; text-transform:uppercase;">Soon</text>
+        </g>
+        <text x="48" y="128" style="font-family:var(--serif); font-size:11.5px; fill:#4a3a23; letter-spacing:.04em;">Coming soon</text>
+      </g>
+
+      <!-- ============================================================
+           GOLD DOUBLE-RULE FRAME (drawn LAST, on top of everything)
+           thin outer + thick inner + corner flourishes
+           ============================================================ -->
+      <!-- thin outer rule -->
+      <rect x="20" y="20" width="1440" height="940" rx="6" fill="none" stroke="url(#goldLeaf)" stroke-width="2.4"/>
+      <rect x="20" y="20" width="1440" height="940" rx="6" fill="none" stroke="#9c6c16" stroke-width="0.6" opacity="0.6"/>
+      <!-- thick inner rule -->
+      <rect x="36" y="36" width="1408" height="908" rx="4" fill="none" stroke="url(#goldLeafV)" stroke-width="6"/>
+      <rect x="36" y="36" width="1408" height="908" rx="4" fill="none" stroke="#9c6c16" stroke-width="0.8" opacity="0.5"/>
+      <rect x="42" y="42" width="1396" height="896" rx="3" fill="none" stroke="#fbeec0" stroke-width="0.8" opacity="0.6"/>
+
+      <!-- ornamental corner flourishes (4, mirrored) -->
+      <g fill="none" stroke="url(#goldLeaf)" stroke-width="2.2" stroke-linecap="round">
+        <!-- top-left -->
+        <g transform="translate(36 36)">
+          <path d="M2 46 C 2 18, 18 2, 46 2"/>
+          <path d="M10 34 C 12 22, 22 12, 34 10"/>
+          <path d="M2 46 q-10 -2 -14 -12 q10 1 16 6"/>
+          <circle cx="44" cy="4" r="2.6" fill="url(#goldLeaf)" stroke="none"/>
+        </g>
+        <!-- top-right -->
+        <g transform="translate(1444 36) scale(-1 1)">
+          <path d="M2 46 C 2 18, 18 2, 46 2"/>
+          <path d="M10 34 C 12 22, 22 12, 34 10"/>
+          <path d="M2 46 q-10 -2 -14 -12 q10 1 16 6"/>
+          <circle cx="44" cy="4" r="2.6" fill="url(#goldLeaf)" stroke="none"/>
+        </g>
+        <!-- bottom-left -->
+        <g transform="translate(36 944) scale(1 -1)">
+          <path d="M2 46 C 2 18, 18 2, 46 2"/>
+          <path d="M10 34 C 12 22, 22 12, 34 10"/>
+          <path d="M2 46 q-10 -2 -14 -12 q10 1 16 6"/>
+          <circle cx="44" cy="4" r="2.6" fill="url(#goldLeaf)" stroke="none"/>
+        </g>
+        <!-- bottom-right -->
+        <g transform="translate(1444 944) scale(-1 -1)">
+          <path d="M2 46 C 2 18, 18 2, 46 2"/>
+          <path d="M10 34 C 12 22, 22 12, 34 10"/>
+          <path d="M2 46 q-10 -2 -14 -12 q10 1 16 6"/>
+          <circle cx="44" cy="4" r="2.6" fill="url(#goldLeaf)" stroke="none"/>
+        </g>
+      </g>
+
+    </svg>
+  </div>
+
+  <div class="readout" id="readout">Hover a region of the realm</div>
+
+  <script>
+    // Light, tasteful interaction: hovering a region shows its name in the readout line.
+    (function(){
+      var readout = document.getElementById('readout');
+      var regions = document.querySelectorAll('.region');
+      regions.forEach(function(r){
+        r.addEventListener('mouseenter', function(){
+          var n = r.getAttribute('data-name') || '';
+          readout.textContent = n;
+          readout.classList.add('on');
+        });
+        r.addEventListener('mouseleave', function(){
+          readout.classList.remove('on');
+        });
+      });
+    })();
+  </script>
+
+</body>
+</html>

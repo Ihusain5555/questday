@@ -10,3 +10,14 @@ transcript.md
 *.pw-stash
 .pw-userdata/
 .env*
+# throwaway art-review tooling (never commit secrets or local screenshots)
+scripts/.gemini-key.txt
+.playwright-mcp/
+world-map-detailed-shot.png
+map-zoom-*.png
+map-for-review.png
+map-closeup.png
+opt*.png
+final*.png
+crop_*.png
+_crop_*.png

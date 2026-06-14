@@ -93,6 +93,19 @@ export interface ChronicleRecord {
   entry: string
 }
 
+// --- The Civilization ("Your Realm") reward world (v1.10) -------------------
+// The 7 world stages, in order. Which stage you're at is a PURE FUNCTION of
+// all-time completions (engine/civilization.ts) — never stored — so ↩ Restore
+// stays exact and no new save data can be corrupted.
+export type WorldStageKey =
+  | 'camp'
+  | 'settlement'
+  | 'village'
+  | 'town'
+  | 'city'
+  | 'kingdom'
+  | 'empire'
+
 export interface Settings {
   activeModeEnabled: boolean
   activeModeTiers: Record<ActiveModeTier, boolean>

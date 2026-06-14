@@ -7,6 +7,8 @@ import { realmProgress, claimableNow, chartedRegionIds } from '@shared/engine/re
 import { chronicleTopics, topicById, entryById, type ChronicleEntry } from '@shared/config/chronicle'
 import type { ChronicleRecord } from '@shared/types'
 import { MapTrifold, Flag, Planet, Leaf, Scroll, Feather, Sparkle, X, type Icon } from '@phosphor-icons/react'
+import { CivilizationPanel } from './CivilizationPanel'
+import { MapIconSymbols } from './storybookMapIcons'
 
 // The reward artifact: a fantasy realm charted YOUR way. Each completed quest
 // earns one expedition; you spend it by charting a region AND choosing what to
@@ -20,62 +22,22 @@ const LANDS = ['url(#realmLand)', 'url(#realmLandWarm)', 'url(#realmLandDeep)']
 /** Chronicle topic icon name -> Phosphor component. */
 const TOPIC_ICON: Record<string, Icon> = { Planet, Leaf, Scroll, Feather }
 
-/** A small gold/forest landmark drawn on a charted region (reused mockup art). */
+/** Maps a region's landmark kind to a cozy storybook icon (drawn as <use> of a symbol). */
+const KIND_ICON: Record<string, string> = {
+  keep: 'castle',
+  town: 'town',
+  tower: 'tower',
+  mountains: 'mountains',
+  village: 'town',
+  forest: 'forest'
+}
+
+/** A cozy storybook landmark icon on a charted region (CC0-style stand-in art). */
 function Landmark({ kind, x, y }: { kind: string; x: number; y: number }): JSX.Element | null {
-  switch (kind) {
-    case 'keep':
-      return (
-        <g transform={`translate(${x},${y})`} filter="url(#realmGoldGlow)" fill="#f4d77a">
-          <rect x={-13} y={-2} width={26} height={16} rx={1.5} opacity={0.95} />
-          <rect x={-13} y={-12} width={5} height={12} />
-          <rect x={-3} y={-15} width={6} height={15} />
-          <rect x={8} y={-12} width={5} height={12} />
-          <path d="M-3 -15 l3 -6 l3 6 z" />
-        </g>
-      )
-    case 'town':
-      return (
-        <g transform={`translate(${x},${y})`} filter="url(#realmGoldGlow)" fill="#f4d77a">
-          <rect x={-11} y={-2} width={22} height={13} rx={1.5} opacity={0.92} />
-          <rect x={-11} y={-9} width={4} height={9} />
-          <rect x={-1} y={-11} width={4} height={11} />
-          <rect x={7} y={-9} width={4} height={9} />
-        </g>
-      )
-    case 'tower':
-      return (
-        <g transform={`translate(${x},${y})`} filter="url(#realmGoldGlow)" fill="#f4d77a">
-          <rect x={-3} y={-14} width={6} height={16} />
-          <path d="M-4 -14 l4 -7 l4 7 z" />
-        </g>
-      )
-    case 'mountains':
-      return (
-        <g transform={`translate(${x},${y})`}>
-          <g fill="#11402e" stroke="#0b1a14" strokeWidth={0.8}>
-            <path d="M-26 14 l13 -23 l13 23 z" />
-            <path d="M-12 14 l12 -18 l12 18 z" />
-            <path d="M2 14 l11 -15 l11 15 z" />
-          </g>
-          <g fill="#f4d77a" opacity={0.85}>
-            <path d="M-15 -6 l4 -6 l4 6 z" />
-            <path d="M1 -3 l3 -5 l3 5 z" />
-          </g>
-        </g>
-      )
-    case 'village':
-      return <circle cx={x} cy={y} r={3.6} fill="#f4d77a" filter="url(#realmGoldGlow)" />
-    case 'forest':
-      return (
-        <g transform={`translate(${x},${y})`} fill="#0f4d36" stroke="#0b3a28" strokeWidth={0.8}>
-          <path d="M-13 8 l7 -16 l7 16 z" />
-          <path d="M-3 10 l7 -18 l7 18 z" />
-          <path d="M7 8 l7 -16 l7 16 z" />
-        </g>
-      )
-    default:
-      return null
-  }
+  const icon = KIND_ICON[kind]
+  if (!icon) return null
+  const s = 40
+  return <use href={`#sbm-${icon}`} x={x - s / 2} y={y - s * 0.82} width={s} height={s} />
 }
 
 /** The realm map SVG — charted regions glow (tap to re-read their discovery);
@@ -103,31 +65,33 @@ function RealmMap({
       aria-label={`A map of ${ATLAS.name}: ${lit.length} of ${indexed.length} regions charted; the rest are unexplored.`}
     >
       <defs>
-        <radialGradient id="realmSea" cx="50%" cy="38%" r="80%">
-          <stop offset="0%" stopColor="#0f2b21" />
-          <stop offset="60%" stopColor="#0b201a" />
-          <stop offset="100%" stopColor="#081711" />
+        {/* Warm storybook parchment palette (re-skin of Terra Questa, 2026-06-13) */}
+        <radialGradient id="realmSea" cx="50%" cy="40%" r="82%">
+          <stop offset="0%" stopColor="#f7efd6" />
+          <stop offset="62%" stopColor="#efe3c4" />
+          <stop offset="100%" stopColor="#e3d4ac" />
         </radialGradient>
         <linearGradient id="realmLand" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#2c8a63" />
-          <stop offset="55%" stopColor="#1f7a55" />
-          <stop offset="100%" stopColor="#155e41" />
+          <stop offset="0%" stopColor="#ecdcb0" />
+          <stop offset="55%" stopColor="#e0cf9c" />
+          <stop offset="100%" stopColor="#d2bd83" />
         </linearGradient>
         <linearGradient id="realmLandDeep" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#247a57" />
-          <stop offset="100%" stopColor="#114c36" />
+          <stop offset="0%" stopColor="#e6d4a4" />
+          <stop offset="100%" stopColor="#cbb578" />
         </linearGradient>
         <linearGradient id="realmLandWarm" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#338e66" />
-          <stop offset="100%" stopColor="#19684a" />
+          <stop offset="0%" stopColor="#efdfae" />
+          <stop offset="100%" stopColor="#d8c188" />
         </linearGradient>
         <linearGradient id="realmGold" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#f4d77a" />
-          <stop offset="100%" stopColor="#b78c34" />
+          <stop offset="0%" stopColor="#fbeec0" />
+          <stop offset="45%" stopColor="#f4d77a" />
+          <stop offset="100%" stopColor="#c98a1e" />
         </linearGradient>
-        <radialGradient id="realmVign" cx="50%" cy="50%" r="75%">
-          <stop offset="60%" stopColor="rgba(0,0,0,0)" />
-          <stop offset="100%" stopColor="rgba(0,0,0,0.45)" />
+        <radialGradient id="realmVign" cx="50%" cy="50%" r="78%">
+          <stop offset="62%" stopColor="rgba(0,0,0,0)" />
+          <stop offset="100%" stopColor="rgba(80,58,24,0.26)" />
         </radialGradient>
         <filter id="realmGoldGlow" x="-25%" y="-25%" width="150%" height="150%">
           <feGaussianBlur stdDeviation="3.2" result="b" />
@@ -137,16 +101,25 @@ function RealmMap({
           </feMerge>
         </filter>
         <filter id="realmSoftGlow" x="-40%" y="-40%" width="180%" height="180%">
-          <feGaussianBlur stdDeviation="5" result="b" />
+          <feGaussianBlur stdDeviation="4" result="b" />
           <feMerge>
             <feMergeNode in="b" />
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
+        <filter id="realmGrain">
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch" result="n" />
+          <feColorMatrix
+            in="n"
+            type="matrix"
+            values="0 0 0 0 0.29  0 0 0 0 0.22  0 0 0 0 0.10  0 0 0 0.05 0"
+          />
+        </filter>
+        <MapIconSymbols />
       </defs>
 
       <rect x={0} y={0} width={VB.w} height={VB.h} fill="url(#realmSea)" />
-      <g opacity={0.06} stroke="#3ddc97" strokeWidth={0.6} fill="none">
+      <g opacity={0.32} stroke="#a9b8b0" strokeWidth={1.1} fill="none" strokeLinecap="round">
         <path d="M40 60 q30 -8 60 0 t60 0" />
         <path d="M560 80 q26 -7 52 0 t52 0" />
         <path d="M60 430 q26 -7 52 0 t52 0" />
@@ -160,8 +133,17 @@ function RealmMap({
           onClick={canClaim ? () => onClaim?.(r.id) : undefined}
         >
           <title>{canClaim ? `Chart ${r.name}` : `${r.name} — unexplored`}</title>
-          <path className="realm-fog" d={r.path} />
-          <text className="realm-label-fog" x={r.label.x} y={r.label.y}>
+          <path
+            className="realm-fog"
+            d={r.path}
+            style={{ fill: '#e7d8b0', stroke: '#a9967a', strokeWidth: 1, strokeDasharray: '5 4', opacity: 0.6 }}
+          />
+          <text
+            className="realm-label-fog"
+            x={r.label.x}
+            y={r.label.y}
+            style={{ fill: '#9c8a64', fontStyle: 'italic' }}
+          >
             {r.name}
           </text>
         </g>
@@ -176,10 +158,15 @@ function RealmMap({
         >
           {onRead && <title>{`${r.name} — re-read your discovery`}</title>}
           <g filter="url(#realmSoftGlow)">
-            <path d={r.path} fill={LANDS[i % LANDS.length]} stroke="url(#realmGold)" strokeWidth={2} />
+            <path d={r.path} fill={LANDS[i % LANDS.length]} stroke="url(#realmGold)" strokeWidth={2.5} />
           </g>
           <Landmark kind={r.landmark.kind} x={r.landmark.x} y={r.landmark.y} />
-          <text className="realm-label" x={r.label.x} y={r.label.y}>
+          <text
+            className="realm-label"
+            x={r.label.x}
+            y={r.label.y}
+            style={{ fill: '#3a2c18', paintOrder: 'stroke', stroke: '#f7efd8', strokeWidth: 3, strokeLinejoin: 'round' }}
+          >
             {r.name}
           </text>
         </g>
@@ -205,12 +192,16 @@ function RealmMap({
       </g>
 
       <g transform="translate(40,42)">
-        <rect x={-6} y={-22} width={206} height={34} rx={6} fill="rgba(11,26,20,0.55)" stroke="rgba(201,162,74,0.35)" />
-        <text x={98} y={0} textAnchor="middle" fill="#f4d77a" style={{ fontFamily: 'Georgia, serif', fontSize: 15, letterSpacing: '2px' }}>
+        <rect x={-6} y={-22} width={206} height={34} rx={6} fill="#efe3c4" stroke="url(#realmGold)" strokeWidth={1.6} />
+        <text x={98} y={0} textAnchor="middle" fill="#3a2c18" style={{ fontFamily: 'Georgia, serif', fontSize: 15, letterSpacing: '2px' }}>
           {ATLAS.name.toUpperCase()}
         </text>
       </g>
 
+      {/* paper grain + gold-leaf frame */}
+      <rect x={0} y={0} width={VB.w} height={VB.h} fill="#fff" filter="url(#realmGrain)" opacity={0.4} pointerEvents="none" />
+      <rect x={6} y={6} width={VB.w - 12} height={VB.h - 12} rx={6} fill="none" stroke="url(#realmGold)" strokeWidth={6} pointerEvents="none" />
+      <rect x={12} y={12} width={VB.w - 24} height={VB.h - 24} rx={4} fill="none" stroke="#9c6a14" strokeWidth={1} opacity={0.55} pointerEvents="none" />
       <rect x={0} y={0} width={VB.w} height={VB.h} fill="url(#realmVign)" pointerEvents="none" />
     </svg>
   )
@@ -292,6 +283,8 @@ export function RealmView(): JSX.Element {
         Each quest you finish earns an expedition. Chart any region you like and choose what your
         scouts bring back — your realm and your Chronicle only ever grow.
       </p>
+
+      <CivilizationPanel quests={db.quests} />
 
       <div className="realm-frame">
         <div className="realm-topbar">

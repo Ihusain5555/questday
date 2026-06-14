@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Terra Questa — Option 3: Inked Watercolor (mockup)</title>
+<style>
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:#1e3a36;color:#3e3326;font-family:"Iowan Old Style","Palatino Linotype","Georgia","Times New Roman",serif;display:flex;flex-direction:column;align-items:center;padding:24px 16px 60px;min-height:100vh}
+  .hint{color:#cfe7da;font-family:"Segoe UI",system-ui,sans-serif;font-size:13px;margin-bottom:14px;text-align:center;max-width:900px;line-height:1.5}
+  .hint b{color:#f4d77a}
+  .map-wrap{width:100%;max-width:1240px;border-radius:10px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+  svg{display:block;width:100%;height:auto}
+  .region{cursor:pointer}.lift{transition:transform .18s ease;transform-origin:center;transform-box:fill-box}.region:hover .lift{transform:translateY(-3px) scale(1.05)}
+  .blabel{font-size:15px;fill:#43381f;font-variant:small-caps;letter-spacing:.4px;font-weight:bold}
+  .freelabel{font-size:13px;fill:#5a4a30;font-style:italic}
+  .sealabel{font-size:14px;fill:#3f7e84;font-style:italic;letter-spacing:2px;opacity:.7}
+</style>
+</head>
+<body>
+  <div class="hint"><b>Option 3 — Inked Watercolor.</b> Lighter pen lines over richer, wetter color washes; hatching used only sparingly for volume. Keeps the ornate compass, swallowtail banners, and a softer rust mountain-ring border. The most painted and colorful of the three. <i>(Direction-setter mockup — pick a direction and I'll polish it.)</i></div>
+  <div class="map-wrap">
+  <svg viewBox="0 0 1200 820" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Terra Questa antique map option 3">
+    <defs>
+      <radialGradient id="parch" cx="50%" cy="42%" r="78%"><stop offset="0%" stop-color="#f6eed4"/><stop offset="64%" stop-color="#ecdfba"/><stop offset="100%" stop-color="#ddca9c"/></radialGradient>
+      <radialGradient id="sea" cx="50%" cy="46%" r="74%"><stop offset="0%" stop-color="#bfe0e0"/><stop offset="55%" stop-color="#90c0c4"/><stop offset="100%" stop-color="#6ba0a6"/></radialGradient>
+      <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fbeec0"/><stop offset="50%" stop-color="#e6be63"/><stop offset="100%" stop-color="#b98a2e"/></linearGradient>
+      <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 0.30  0 0 0 0 0.24 0 0 0 0 0.13  0 0 0 0.045 0"/></filter>
+      <filter id="rough" x="-20%" y="-20%" width="140%" height="140%"><feTurbulence type="turbulence" baseFrequency="0.018" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.2"/></filter>
+      <!-- watercolor wash: blur + ragged wet edge -->
+      <filter id="wc" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="4" result="b"/><feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="5" result="n"/><feDisplacementMap in="b" in2="n" scale="16"/></filter>
+      <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="#6b5236" stroke-width="0.7" opacity="0.3"/></pattern>
+      <pattern id="ringH" width="86" height="44" patternUnits="userSpaceOnUse"><path d="M0 0 L20 38 L40 6 L60 42 L86 10 L86 0 Z" fill="#c08056" stroke="#a06642" stroke-width="0.9" opacity="0.85"/><path d="M0 0 L20 38 L40 6 L60 42 L86 10" fill="none" stroke="#a06642" stroke-width="0.7"/></pattern>
+      <radialGradient id="wForest"><stop offset="0%" stop-color="#7aa552"/><stop offset="100%" stop-color="#7aa552" stop-opacity="0"/></radialGradient>
+      <radialGradient id="wGold"><stop offset="0%" stop-color="#e9cf6e"/><stop offset="100%" stop-color="#e9cf6e" stop-opacity="0"/></radialGradient>
+      <radialGradient id="wMoor"><stop offset="0%" stop-color="#b59ec0"/><stop offset="100%" stop-color="#b59ec0" stop-opacity="0"/></radialGradient>
+      <radialGradient id="wFen"><stop offset="0%" stop-color="#86c4a8"/><stop offset="100%" stop-color="#86c4a8" stop-opacity="0"/></radialGradient>
+      <symbol id="conifer" viewBox="0 0 24 30"><path d="M12 30 v-6" stroke="#6a5a36" stroke-width="1.6"/><path d="M3 24 L12 3 L21 24 Z" fill="#74a84e" stroke="#4f7e3a" stroke-width="0.8"/><path d="M5 16 L12 4 L19 16 Z" fill="#86b85c" stroke="#4f7e3a" stroke-width="0.6"/></symbol>
+      <symbol id="decid" viewBox="0 0 24 30"><path d="M12 30 v-7" stroke="#6a5a36" stroke-width="1.6"/><circle cx="12" cy="13" r="9" fill="#83b257" stroke="#4f7e3a" stroke-width="0.8"/></symbol>
+      <symbol id="b-keep" viewBox="0 0 100 100"><g fill="none" stroke="#5a4a2e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="18" y="50" width="14" height="32" fill="#f0e3bc"/><rect x="68" y="50" width="14" height="32" fill="#f0e3bc"/><rect x="34" y="40" width="32" height="42" fill="#f7d98a"/><path d="M34 40 h5 v-5 h6 v5 h5 v-5 h6 v5 h5 v-5 h4 v5" fill="#f7d98a"/><rect x="44" y="60" width="12" height="22" rx="6" fill="#cf9a3a"/><path d="M50 35 V20 M50 20 q11 -3 11 4 q-11 -1 -11 3" fill="#cf9a3a" stroke-width="1.6"/></g></symbol>
+      <symbol id="b-windmill" viewBox="0 0 100 100"><g fill="none" stroke="#5a4a2e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M38 82 L44 46 H56 L62 82 Z" fill="#f0e3bc"/><path d="M50 46 L34 30 M50 46 L66 62 M50 46 L34 62 M50 46 L66 30" stroke-width="2.6"/><rect x="46" y="64" width="9" height="18" rx="3" fill="#cf9a3a"/></g></symbol>
+      <symbol id="b-castle" viewBox="0 0 100 100"><g fill="none" stroke="#5a4a2e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M24 82 V52 H32 V44 H38 V52 H62 V44 H68 V52 H76 V82 Z" fill="#f7d98a"/><rect x="42" y="64" width="16" height="18" rx="8" fill="#cf9a3a"/><path d="M35 44 V30 M35 30 q9 -3 9 4 q-9 -1 -9 3" fill="#76a455" stroke-width="1.6"/><path d="M65 44 V30 M65 30 q9 -3 9 4 q-9 -1 -9 3" fill="#76a455" stroke-width="1.6"/></g></symbol>
+      <symbol id="b-chapel" viewBox="0 0 100 100"><g fill="none" stroke="#5a4a2e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M32 82 V52 H52 V82 Z" fill="#f0e3bc"/><path d="M32 52 L42 32 L52 52 Z" fill="#cf7f50"/><path d="M42 22 V32 M39 26 h6"/><rect x="38" y="62" width="8" height="20" rx="4" fill="#cf9a3a"/><path d="M58 82 V60 L70 48 L82 60 V82 Z" fill="#ecdcb0"/></g></symbol>
+      <symbol id="b-tower" viewBox="0 0 100 100"><g fill="none" stroke="#5a4a2e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M40 82 V36 a10 10 0 0 1 20 0 V82 Z" fill="#f7d98a"/><path d="M36 36 L50 14 L64 36 Z" fill="#cf7f50"/><circle cx="50" cy="48" r="5" fill="#cf9a3a"/></g></symbol>
+      <symbol id="b-ruin" viewBox="0 0 100 100"><g fill="none" stroke="#5a4a2e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M34 82 V42 L42 42 L42 34 L50 42 L58 32 L58 42 L66 42 V82 Z" fill="#ddd2bb"/><rect x="44" y="66" width="11" height="16" rx="3" fill="#8a8170"/></g></symbol>
+      <symbol id="b-light" viewBox="0 0 100 100"><g fill="none" stroke="#5a4a2e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M40 82 L44 44 H56 L60 82 Z" fill="#f0e3bc"/><rect x="42" y="54" width="16" height="12" fill="#cf7f50"/><circle cx="50" cy="34" r="6" fill="#f7d98a"/><path d="M44 28 l-8 -4 M56 28 l8 -4" stroke="#f7d98a" stroke-width="2"/></g></symbol>
+    </defs>
+
+    <rect x="0" y="0" width="1200" height="820" fill="url(#sea)"/>
+    <!-- watercolor sea depth variation -->
+    <g opacity="0.4"><ellipse cx="160" cy="430" rx="130" ry="180" fill="#6ba0a6" filter="url(#wc)"/><ellipse cx="1060" cy="430" rx="130" ry="220" fill="#6ba0a6" filter="url(#wc)"/></g>
+    <g stroke="#dcf0f0" stroke-width="1.3" stroke-linecap="round" opacity="0.6" fill="none"><path d="M150 150 h10 M120 300 h10 M300 120 h10 M1020 160 h10 M1080 300 h9 M1050 540 h10 M150 560 h10 M120 680 h10 M980 700 h10 M520 120 h10 M1060 440 h10 M90 420 h10"/></g>
+
+    <g filter="url(#rough)">
+      <path id="continent" d="M250 300 C 210 250 250 200 330 190 C 410 178 470 150 560 158 C 660 166 700 140 790 162 C 880 184 940 180 980 250 C 1010 300 980 360 940 400 C 980 450 960 520 900 560 C 850 595 820 640 740 650 C 660 660 600 700 520 690 C 440 680 380 700 320 660 C 250 612 230 560 240 500 C 200 470 210 400 250 360 C 232 338 236 318 250 300 Z" fill="url(#parch)" stroke="#9c7e4a" stroke-width="1.8"/>
+      <path d="M958 330 C 985 312 1020 320 1030 350 C 1040 380 1018 405 988 400 C 960 396 944 360 958 330 Z" fill="url(#parch)" stroke="#9c7e4a" stroke-width="1.5"/>
+      <path d="M165 645 C 150 622 185 600 220 612 C 258 624 262 668 232 686 C 200 704 178 678 165 645 Z" fill="url(#parch)" stroke="#9c7e4a" stroke-width="1.5" opacity="0.95"/>
+      <path d="M1010 620 C 1000 598 1035 585 1066 600 C 1096 615 1090 656 1058 666 C 1028 675 1016 648 1010 620 Z" fill="url(#parch)" stroke="#9c7e4a" stroke-width="1.5" opacity="0.9"/>
+    </g>
+    <rect x="0" y="0" width="1200" height="820" fill="#fff" filter="url(#grain)" opacity="0.35" style="mix-blend-mode:overlay"/>
+
+    <g filter="url(#rough)" fill="none" stroke="#7fb0b4" stroke-linecap="round" opacity="0.5">
+      <use href="#continent" transform="translate(610 425) scale(1.03) translate(-610 -425)" stroke-width="1"/>
+      <use href="#continent" transform="translate(610 425) scale(1.06) translate(-610 -425)" stroke-width="0.8" opacity="0.6"/>
+    </g>
+
+    <clipPath id="land"><use href="#continent"/></clipPath>
+    <g clip-path="url(#land)">
+      <!-- rich watercolor region washes (the star of this option) -->
+      <g opacity="0.6"><ellipse cx="330" cy="278" rx="118" ry="92" fill="url(#wForest)" filter="url(#wc)"/><ellipse cx="600" cy="430" rx="150" ry="112" fill="url(#wGold)" filter="url(#wc)"/><ellipse cx="620" cy="232" rx="160" ry="86" fill="url(#wGold)" filter="url(#wc)"/><ellipse cx="858" cy="472" rx="126" ry="96" fill="url(#wMoor)" filter="url(#wc)"/><ellipse cx="470" cy="642" rx="140" ry="92" fill="url(#wFen)" filter="url(#wc)"/></g>
+      <g><use href="#conifer" x="298" y="232" width="26" height="32"/><use href="#decid" x="330" y="240" width="26" height="32"/><use href="#conifer" x="274" y="252" width="24" height="30"/><use href="#decid" x="356" y="256" width="24" height="30"/><use href="#conifer" x="320" y="270" width="26" height="32"/><use href="#decid" x="286" y="288" width="26" height="32"/><use href="#conifer" x="344" y="296" width="24" height="30"/></g>
+      <g opacity="0.9"><use href="#decid" x="690" y="392" width="22" height="28"/><use href="#conifer" x="716" y="400" width="20" height="26"/></g>
+      <g filter="url(#rough)" fill="none" stroke="#5f9aa0" stroke-linecap="round" opacity="0.9">
+        <path d="M898 322 C 860 360 840 392 800 430 C 760 468 700 492 648 508" stroke-width="2.4"/>
+        <path d="M516 502 C 460 526 400 556 340 586 C 308 602 280 616 252 632" stroke-width="3"/>
+        <path d="M330 304 C 366 352 430 410 500 466 C 516 478 528 486 540 492" stroke-width="2"/>
+      </g>
+      <ellipse cx="516" cy="500" rx="40" ry="22" fill="#8fc0c4" stroke="#5f9aa0" stroke-width="1.2" filter="url(#rough)"/>
+    </g>
+
+    <!-- mountains: soft watercolor body + minimal hatch -->
+    <g filter="url(#rough)" stroke="#6b5236" stroke-width="1" stroke-linejoin="round">
+      <path d="M788 360 L838 282 L876 360 Z" fill="#c8b48a"/><path d="M834 360 L900 258 L956 360 Z" fill="#b89e74"/><path d="M916 360 L956 300 L996 360 Z" fill="#c8b48a"/>
+      <path d="M900 258 L884 286 L916 286 Z" fill="#f4efe1" stroke="none"/><path d="M838 282 L826 304 L852 304 Z" fill="#f4efe1" stroke="none"/>
+      <path d="M900 260 L956 358 L902 360 Z" fill="url(#hatch)" opacity="0.5"/>
+    </g>
+
+    <g class="region"><g class="lift"><use href="#b-keep" x="560" y="388" width="80" height="80"/></g></g>
+    <g class="region"><g class="lift"><use href="#b-windmill" x="522" y="188" width="66" height="66"/></g></g>
+    <g class="region"><g class="lift"><use href="#b-castle" x="738" y="208" width="70" height="70"/></g></g>
+    <g class="region"><g class="lift"><use href="#b-chapel" x="608" y="568" width="64" height="64"/></g></g>
+    <g class="region"><g class="lift"><use href="#b-tower" x="270" y="412" width="60" height="60"/></g></g>
+    <g class="region"><g class="lift"><use href="#b-ruin" x="808" y="414" width="60" height="60"/></g></g>
+    <g class="region"><g class="lift"><use href="#b-light" x="242" y="522" width="58" height="58"/></g></g>
+    <g class="region"><g class="lift" fill="none" stroke="#5e9f6a" stroke-width="2" stroke-linecap="round"><path d="M458 660 v-14 M466 662 v-18 M474 660 v-12 M482 662 v-16"/></g></g>
+
+    <g class="lift" transform="translate(150 150)"><g stroke="#5a4a2e" stroke-width="1.1" stroke-linejoin="round"><path d="M-20 8 H20 L13 19 H-13 Z" fill="#cf7f50"/><path d="M0 8 V-24 M-9 8 V-16 M9 8 V-16" stroke-width="1.3"/><path d="M0 -22 q13 4 13 12 q-7 -2 -13 0 Z" fill="#f6ead0"/><path d="M0 -18 q-11 3 -11 11 q6 -2 11 0 Z" fill="#f0e3bc"/></g></g>
+    <g class="lift" transform="translate(1040 200) scale(0.85)"><g stroke="#5a4a2e" stroke-width="1.1" stroke-linejoin="round"><path d="M-20 8 H20 L13 19 H-13 Z" fill="#cf7f50"/><path d="M0 8 V-24 M9 8 V-16" stroke-width="1.3"/><path d="M0 -22 q-13 4 -13 12 q7 -2 13 0 Z" fill="#f6ead0"/></g></g>
+    <g class="lift" transform="translate(420 740) scale(0.75)"><g stroke="#5a4a2e" stroke-width="1.1" stroke-linejoin="round"><path d="M-20 8 H20 L13 19 H-13 Z" fill="#cf7f50"/><path d="M0 8 V-22 M-9 8 V-14" stroke-width="1.3"/><path d="M0 -20 q12 4 12 11 q-7 -2 -12 0 Z" fill="#f6ead0"/></g></g>
+    <g transform="translate(1010 490)" fill="none" stroke="#4f7e3a" opacity="0.85"><path d="M-4 26 q10 -20 24 -6 q12 14 26 -4 q12 -16 24 2 q9 12 5 24" stroke="#74a84e" stroke-width="6" stroke-linecap="round"/><path d="M80 46 q10 -7 4 -20 q-9 -5 -14 2 q4 9 10 18 Z" fill="#86b85c" stroke="#4f7e3a" stroke-width="1.3"/><circle cx="76" cy="34" r="1.8" fill="#3e3326"/></g>
+    <g transform="translate(150 560)" opacity="0.85"><path d="M-30 6 q18 -22 54 -12 q16 5 22 0 q-2 11 -14 12 q-28 11 -62 4 q-5 -4 0 -8 Z" fill="#7fb1b4" stroke="#5e9298" stroke-width="1.3"/><path d="M26 -4 q9 4 11 10" fill="none" stroke="#5e9298" stroke-width="1.3"/></g>
+
+    <!-- softer rust ring border -->
+    <g opacity="0.9"><rect x="0" y="0" width="1200" height="46" fill="url(#ringH)"/><g transform="translate(0,820) scale(1,-1)"><rect x="0" y="0" width="1200" height="46" fill="url(#ringH)"/></g><g transform="rotate(90 0 0) translate(0 -46)"><rect x="0" y="0" width="820" height="46" fill="url(#ringH)"/></g><g transform="translate(1200 0) rotate(90)"><rect x="0" y="0" width="820" height="46" fill="url(#ringH)"/></g></g>
+    <rect x="54" y="54" width="1092" height="712" rx="8" fill="none" stroke="url(#gold)" stroke-width="5"/>
+
+    <g transform="translate(600 126)"><circle r="36" fill="#f6eed4" stroke="#b98a2e" stroke-width="1.3" opacity="0.9"/><circle r="27" fill="none" stroke="#cf9a3a" stroke-width="1.1"/><path d="M0 -36 L6 0 L0 36 L-6 0 Z" fill="#f6eed4" stroke="#b98a2e" stroke-width="0.9"/><path d="M-36 0 L0 -6 L36 0 L0 6 Z" fill="#f6eed4" stroke="#b98a2e" stroke-width="0.9"/><path d="M0 -36 L4 0 L0 36 Z" fill="#c0532b"/><path d="M-36 0 L0 4 L36 0 Z" fill="#cf9a3a"/><path d="M0 0 L17 -17 L6 -6 Z M0 0 L17 17 L6 6 Z M0 0 L-17 17 L-6 6 Z M0 0 L-17 -17 L-6 -6 Z" fill="#cf9a3a" stroke="#b98a2e" stroke-width="0.5"/><circle r="4.5" fill="#c0532b" stroke="#b98a2e" stroke-width="1"/></g>
+
+    <g transform="translate(600 500)"><path d="M-86 -13 L86 -13 L96 0 L86 13 L-86 13 L-96 0 Z" fill="#f5ebcb" stroke="#b98a2e" stroke-width="1.1"/><text class="blabel" x="0" y="5" text-anchor="middle">GREENHAVEN HEARTLAND</text></g>
+    <g transform="translate(326 372)"><path d="M-70 -12 L70 -12 L80 0 L70 12 L-70 12 L-80 0 Z" fill="#f5ebcb" stroke="#b98a2e" stroke-width="1"/><text class="blabel" x="0" y="4" text-anchor="middle">VALE OF EMBERGREEN</text></g>
+    <g transform="translate(556 168)"><path d="M-56 -12 L56 -12 L66 0 L56 12 L-56 12 L-66 0 Z" fill="#f5ebcb" stroke="#b98a2e" stroke-width="1"/><text class="blabel" x="0" y="4" text-anchor="middle">GOLDFIELD MARCH</text></g>
+    <g transform="translate(772 200)"><path d="M-56 -12 L56 -12 L66 0 L56 12 L-56 12 L-66 0 Z" fill="#f5ebcb" stroke="#b98a2e" stroke-width="1"/><text class="blabel" x="0" y="4" text-anchor="middle">SUNMEADOW HOLD</text></g>
+    <g transform="translate(892 378)"><path d="M-54 -12 L54 -12 L64 0 L54 12 L-54 12 L-64 0 Z" fill="#f5ebcb" stroke="#b98a2e" stroke-width="1"/><text class="blabel" x="0" y="4" text-anchor="middle">CROWNSPIRE PEAKS</text></g>
+    <g transform="translate(640 636)"><path d="M-38 -11 L38 -11 L47 0 L38 11 L-38 11 L-47 0 Z" fill="#f5ebcb" stroke="#b98a2e" stroke-width="0.9"/><text class="blabel" x="0" y="4" text-anchor="middle">LARKHOLT</text></g>
+    <g transform="translate(270 596)"><path d="M-46 -11 L46 -11 L55 0 L46 11 L-46 11 L-55 0 Z" fill="#f5ebcb" stroke="#b98a2e" stroke-width="0.9"/><text class="blabel" x="0" y="4" text-anchor="middle">GOLDPORT HARBOR</text></g>
+    <text class="freelabel" x="300" y="494" text-anchor="middle">Tide&#8217;s End</text>
+    <text class="freelabel" x="838" y="492" text-anchor="middle">Greymoor</text>
+    <text class="freelabel" x="470" y="706" text-anchor="middle">Quiet Fens</text>
+    <text class="freelabel" x="992" y="392" text-anchor="middle">Mist Isles</text>
+    <text class="sealabel" x="430" y="430" text-anchor="middle">THE  INNER  SEA</text>
+
+    <g transform="translate(600 56)"><path d="M-148 -22 L148 -22 L166 0 L148 22 L-148 22 L-166 0 Z" fill="#f6eed4" stroke="#b98a2e" stroke-width="1.4"/><path d="M-148 -22 L-136 0 L-148 22 M148 -22 L136 0 L148 22" fill="none" stroke="#b98a2e" stroke-width="0.9"/><text x="0" y="2" text-anchor="middle" font-size="26" letter-spacing="3" font-weight="bold" fill="#43381f">TERRA QUESTA</text><text x="0" y="16" text-anchor="middle" font-size="10" font-style="italic" fill="#9c5b3f">An Atlas of Your Realm</text></g>
+  </svg>
+  </div>
+</body>
+</html>

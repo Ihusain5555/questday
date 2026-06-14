@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>QuestDay Art System — how it works</title>
+<style>
+  /* OFFLINE / self-contained — no fonts, images, or network. */
+  :root{
+    --emerald-deep:#10362a; --emerald:#1f8a60; --emerald-bright:#2fb380;
+    --gold:#f5b938; --gold-soft:#ffcf5c; --cream:#f4ecd8; --parch:#efe3c4;
+    --leverage:#2fb380; --build:#f5b938;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    color:#eaf3ee; line-height:1.5;
+    background:radial-gradient(125% 95% at 50% -10%, #1a4d3a 0%, #123b2c 46%, #0a241c 100%) fixed;
+    min-height:100vh; padding:40px 24px 70px;
+  }
+  .wrap{max-width:1180px;margin:0 auto}
+  header{text-align:center;margin-bottom:8px}
+  h1{font-size:30px;margin:0 0 6px;color:#fff}
+  h1 .a{color:var(--gold)}
+  .sub{color:#bfe0cf;max-width:780px;margin:0 auto;font-size:15px}
+
+  /* big flow strip */
+  .flow{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:stretch;margin:26px auto 8px;max-width:980px}
+  .fcard{flex:1 1 200px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:14px 16px}
+  .fcard b{display:block;color:var(--gold);font-size:12px;letter-spacing:.6px;text-transform:uppercase;margin-bottom:4px}
+  .fcard span{font-size:13.5px;color:rgba(255,255,255,.85)}
+  .fcard.moat{border-color:rgba(245,185,56,.7);background:rgba(245,185,56,.09)}
+  .farrow{align-self:center;color:var(--gold);font-size:22px}
+
+  .spine{margin:24px auto 6px;max-width:980px;background:linear-gradient(90deg,rgba(47,179,128,.18),rgba(47,179,128,.05));border:1px dashed rgba(47,179,128,.6);border-radius:12px;padding:12px 18px;text-align:center;font-size:14px;color:#d6f1e4}
+  .spine b{color:var(--emerald-bright)}
+
+  h2.section{font-size:14px;letter-spacing:1px;text-transform:uppercase;color:#9fc2b1;margin:34px 0 14px;text-align:center}
+
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:820px){.grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:560px){.grid{grid-template-columns:1fr}}
+  .stage{position:relative;background:linear-gradient(180deg,#16382b,#0f2c22);border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:16px 16px 14px;box-shadow:0 12px 28px rgba(0,0,0,.3)}
+  .stage .num{position:absolute;top:12px;right:14px;font-size:30px;font-weight:800;color:rgba(255,255,255,.07)}
+  .stage h3{margin:0 0 8px;font-size:16px;color:#fff;padding-right:30px}
+  .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 9px;border-radius:999px;margin-bottom:9px}
+  .tag.lev{background:rgba(47,179,128,.18);color:var(--emerald-bright);border:1px solid rgba(47,179,128,.5)}
+  .tag.bld{background:rgba(245,185,56,.15);color:var(--gold);border:1px solid rgba(245,185,56,.5)}
+  .tag.both{background:rgba(160,200,255,.12);color:#bcd6ff;border:1px solid rgba(160,200,255,.4)}
+  .stage p{margin:0 0 9px;font-size:13px;color:rgba(255,255,255,.8)}
+  .src{font-size:12.5px;color:#cfe7da}
+  .chip{display:inline-block;font-size:11px;padding:2px 8px;border-radius:6px;margin:3px 4px 0 0;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.12)}
+  .chip.cc0{border-color:rgba(47,179,128,.55);color:#bff0db}
+  .chip.byc{border-color:rgba(245,185,56,.55);color:#ffe49a}
+  .chip.zero{border-color:rgba(160,200,255,.5);color:#cfe0ff}
+  .moatcard{border:1.5px solid rgba(245,185,56,.7);box-shadow:0 0 0 1px rgba(245,185,56,.2),0 12px 28px rgba(0,0,0,.35)}
+
+  .legend{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;margin:30px auto 0;max-width:900px;font-size:13px}
+  .legend .li{display:flex;align-items:center;gap:7px;color:#d6e8de}
+  .dot{width:13px;height:13px;border-radius:4px;display:inline-block}
+  .dot.lev{background:var(--leverage)} .dot.bld{background:var(--build)} .dot.both{background:#9cc0ff}
+
+  footer{margin-top:34px;padding:20px 22px;border-radius:14px;background:rgba(0,0,0,.26);border:1px solid rgba(255,255,255,.08);font-size:14px;color:#d6e8de;max-width:980px;margin-left:auto;margin-right:auto}
+  footer h3{margin:0 0 10px;color:var(--gold);font-size:15px}
+  footer ul{margin:0;padding-left:20px} footer li{margin-bottom:6px}
+  .safe{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+  .safe span{font-size:12px;padding:5px 10px;border-radius:8px}
+  .safe .ok{background:rgba(47,179,128,.16);border:1px solid rgba(47,179,128,.5);color:#bff0db}
+  .safe .cond{background:rgba(245,185,56,.14);border:1px solid rgba(245,185,56,.5);color:#ffe49a}
+  .safe .no{background:rgba(220,90,70,.16);border:1px solid rgba(220,90,70,.5);color:#ffc9bf}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>QuestDay Art System — <span class="a">how it works</span></h1>
+    <p class="sub">The big idea: your art isn't one job, it's a 9-stage pipeline. You <b>lean on free CC0 art</b> for almost everything and <b>build only one thin custom layer</b> — the Grade — that makes it all look like one premium world.</p>
+  </header>
+
+  <div class="flow">
+    <div class="fcard"><b>1 · Source</b><span>Grab free CC0 art (Kenney &amp; friends) — buildings, map, textures, audio, particles.</span></div>
+    <div class="farrow">&#10142;</div>
+    <div class="fcard moat"><b>2 · Grade &#9733;</b><span>One treatment stamps everything: recolor, light, shadow → emerald-gold-parchment.</span></div>
+    <div class="farrow">&#10142;</div>
+    <div class="fcard"><b>3 · Render</b><span>Plain SVG map + Canvas town draw the finished, cohesive world. No engine.</span></div>
+  </div>
+
+  <div class="spine">The <b>spine</b>: anchor on ONE CC0 ecosystem — <b>Kenney.nl</b> alone covers art, UI, particles &amp; audio under one identical CC0 license, so "make mismatched free stuff match" is half-solved before you start.</div>
+
+  <h2 class="section">The 9 stages — what's leveraged vs built</h2>
+  <div class="grid">
+    <div class="stage"><div class="num">1</div><h3>Source art</h3><span class="tag lev">Leverage</span><p>World map, iso buildings, biomes, decoration.</p><div class="src">Kenney · Screaming Brain · Feudal Wars · KayKit</div><div><span class="chip cc0">CC0</span></div></div>
+
+    <div class="stage"><div class="num">2</div><h3>Icons</h3><span class="tag lev">Leverage</span><p>Building / resource / quest symbols, map markers.</p><div class="src">game-icons.net (4,180) + Phosphor (have)</div><div><span class="chip byc">CC-BY · credit</span><span class="chip zero">MIT</span></div></div>
+
+    <div class="stage"><div class="num">3</div><h3>Textures</h3><span class="tag lev">Leverage</span><p>Parchment, paper grain, grass/water/ground, fog.</p><div class="src">ambientCG · Poly Haven · 3dtextures</div><div><span class="chip cc0">CC0</span></div></div>
+
+    <div class="stage"><div class="num">4</div><h3>Audio</h3><span class="tag lev">Leverage</span><p>Ambient town loop, UI &amp; celebration SFX, bonfire crackle.</p><div class="src">Kenney Audio · Freesound (CC0 filter)</div><div><span class="chip cc0">CC0</span></div></div>
+
+    <div class="stage"><div class="num">5</div><h3>VFX / particles</h3><span class="tag both">Leverage + Build</span><p>Confetti, gold-bloom, chimney smoke, dust.</p><div class="src">Kenney Particle Pack + tiny in-house emitter</div><div><span class="chip cc0">CC0</span><span class="chip zero">zero-dep</span></div></div>
+
+    <div class="stage"><div class="num">6</div><h3>Animation</h3><span class="tag bld">Build</span><p>"Building rises," swaying banner, water shimmer.</p><div class="src">CSS / Web Animations + Penner easing</div><div><span class="chip zero">zero-dep</span></div></div>
+
+    <div class="stage"><div class="num">7</div><h3>Fonts</h3><span class="tag lev">Leverage</span><p>Map labels, region names, banner text.</p><div class="src">Cinzel · IM Fell · MedievalSharp</div><div><span class="chip cc0">SIL OFL</span></div></div>
+
+    <div class="stage"><div class="num">8</div><h3>Rendering</h3><span class="tag bld">Build</span><p>Drawing map + town on screen — no game engine needed.</p><div class="src">Plain SVG (map) + Canvas (town)</div><div><span class="chip zero">zero-dep</span></div></div>
+
+    <div class="stage moatcard"><div class="num">9</div><h3>The Grade &#9733;</h3><span class="tag bld">Build · your moat</span><p>The one treatment that unifies stages 1–8 into a premium look.</p><div class="src">ImageMagick (build-time) + runtime CSS filter</div><div><span class="chip zero">zero-dep ship</span></div></div>
+  </div>
+
+  <div class="legend">
+    <div class="li"><span class="dot lev"></span> Leverage — use free CC0/permissive art</div>
+    <div class="li"><span class="dot bld"></span> Build — small zero-dependency custom code</div>
+    <div class="li"><span class="dot both"></span> Both — free art + a little glue code</div>
+  </div>
+
+  <footer>
+    <h3>Licensing — what's safe to ship in your installer</h3>
+    <div class="safe">
+      <span class="ok">✅ CC0 — bundle freely, no credit (Kenney, Screaming Brain, ambientCG, Poly Haven, Freesound-CC0)</span>
+      <span class="cond">◐ CC-BY — ship-safe WITH a one-line credit (game-icons.net, Twemoji)</span>
+      <span class="no">⛔ AVOID — CraftPix, Unity/Unreal store packs, Inkarnate, Wonderdraft assets, Habitica art, raw AI as your signature</span>
+    </div>
+    <ul style="margin-top:14px">
+      <li><b>One acceptance rule going forward:</b> bundle a pack only if its page explicitly says CC0 (or CC-BY with a credit), and save the license text next to the files.</li>
+      <li><b>Zero new dependencies:</b> every "Build" stage runs offline at build time or uses browser-native features — nothing new ships in the installer.</li>
+      <li><b>The only open question is the LOOK</b> (see the look-directions mockup): does recolored CC0 read premium, or do we pre-render free 3D kits / commission a few hero pieces?</li>
+    </ul>
+  </footer>
+</div>
+</body>
+</html>

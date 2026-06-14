@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Terra Questa — Organic Storybook (mockup)</title>
+<style>
+  /* OFFLINE / self-contained — no fonts, images, or network. Double-click to view. */
+  *{box-sizing:border-box} html,body{margin:0}
+  body{
+    background:#163b2b; color:#3a2c18;
+    font-family:"Georgia","Iowan Old Style","Times New Roman",serif;
+    display:flex; flex-direction:column; align-items:center; padding:26px 16px 60px; min-height:100vh;
+  }
+  .hint{color:#cfe7da;font-family:"Segoe UI",system-ui,sans-serif;font-size:13px;margin-bottom:14px;text-align:center;max-width:920px;line-height:1.5}
+  .hint b{color:#f4d77a}
+  .map-wrap{width:100%;max-width:1240px;border-radius:14px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+  svg{display:block;width:100%;height:auto}
+  .region{cursor:pointer}
+  .region .lift{transition:transform .18s ease;transform-origin:center;transform-box:fill-box;filter:url(#roughIcon)}
+  .region:hover .lift{transform:translateY(-4px) scale(1.06);filter:drop-shadow(0 6px 6px rgba(74,58,35,.4))}
+  .region:hover .glow{opacity:.85}
+  .label{font-size:17px;fill:#4a3a23;font-style:italic;paint-order:stroke;stroke:#f7efd8;stroke-width:3.4px;stroke-linejoin:round}
+  .label.small{font-size:14px}
+  .settlement-label{font-size:19px;fill:#3a2c18;font-weight:bold;letter-spacing:.4px}
+  .uncharted .label{fill:#8a7a5c;font-style:italic}
+  @keyframes drift { from{transform:translateX(0)} to{transform:translateX(-70px)} }
+  @keyframes bob { 0%,100%{transform:translateY(0) rotate(-1.2deg)} 50%{transform:translateY(-3px) rotate(1.2deg)} }
+  @keyframes sway { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
+  .swell-anim{animation:drift 13s linear infinite}
+  .ship-anim{animation:bob 6s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+  .serpent-anim{animation:sway 8s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+</style>
+</head>
+<body>
+  <div class="hint">
+    <b>Terra Questa — organic storybook map.</b> Every settlement has its own building (keep · windmill · castle · chapel ·
+    watchtower · ruin · lighthouse), a river flowing to a sea-mouth at Goldport, irregular hand-painted region washes,
+    a wobbly hand-inked coastline, and a calm muted palette. <i>(Placeholder vector look-dev — painted finish is the later upgrade.)</i>
+  </div>
+  <div class="map-wrap">
+  <svg viewBox="0 0 1200 820" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Terra Questa organic world map v3">
+    <defs>
+      <radialGradient id="mat" cx="50%" cy="40%" r="84%">
+        <stop offset="0%" stop-color="#3c6e52"/><stop offset="62%" stop-color="#336046"/><stop offset="100%" stop-color="#2a543e"/>
+      </radialGradient>
+      <radialGradient id="parch" cx="50%" cy="42%" r="75%">
+        <stop offset="0%" stop-color="#f7efd6"/><stop offset="62%" stop-color="#efe3c4"/><stop offset="100%" stop-color="#e3d4ac"/>
+      </radialGradient>
+      <linearGradient id="goldframe" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#fbeec0"/><stop offset="42%" stop-color="#f4d77a"/><stop offset="70%" stop-color="#c98a1e"/><stop offset="100%" stop-color="#9c6a14"/>
+      </linearGradient>
+      <linearGradient id="land" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#f3e8c8"/><stop offset="100%" stop-color="#e6d6a8"/>
+      </linearGradient>
+      <radialGradient id="sea" cx="50%" cy="46%" r="72%">
+        <stop offset="0%" stop-color="#c9d4cb"/><stop offset="55%" stop-color="#b4c5ba"/><stop offset="100%" stop-color="#9fb4a8"/>
+      </radialGradient>
+      <radialGradient id="washgold" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#eccd7e" stop-opacity="0.62"/><stop offset="70%" stop-color="#e6c879" stop-opacity="0.16"/><stop offset="100%" stop-color="#e6c879" stop-opacity="0"/></radialGradient>
+      <radialGradient id="washhome" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#7ec596" stop-opacity="0.6"/><stop offset="68%" stop-color="#7ec596" stop-opacity="0.2"/><stop offset="100%" stop-color="#7ec596" stop-opacity="0"/></radialGradient>
+      <!-- biome flat tints (used on irregular blurred blobs, not ovals) -->
+      <linearGradient id="flat-forest"><stop stop-color="#93a05a"/></linearGradient>
+
+      <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch" result="n"/>
+        <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.29  0 0 0 0 0.22  0 0 0 0 0.10  0 0 0 0.05 0"/></filter>
+      <filter id="softsh" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#7a6442" flood-opacity="0.4"/></filter>
+      <filter id="coastsh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#8aa093" flood-opacity="0.5"/></filter>
+      <filter id="rough" x="-25%" y="-25%" width="150%" height="150%"><feTurbulence type="turbulence" baseFrequency="0.022" numOctaves="2" seed="11" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.8" xChannelSelector="R" yChannelSelector="G"/></filter>
+      <filter id="roughBig" x="-25%" y="-25%" width="150%" height="150%"><feTurbulence type="turbulence" baseFrequency="0.016" numOctaves="3" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="6" xChannelSelector="R" yChannelSelector="G"/></filter>
+      <filter id="roughLeaf" x="-25%" y="-25%" width="150%" height="150%"><feTurbulence type="turbulence" baseFrequency="0.05" numOctaves="2" seed="23" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.1" xChannelSelector="R" yChannelSelector="G"/></filter>
+      <!-- stronger wobble for roads so they stop reading as straight CAD dashes -->
+      <filter id="roughRoad" x="-35%" y="-35%" width="170%" height="170%"><feTurbulence type="turbulence" baseFrequency="0.035" numOctaves="3" seed="14" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="8.5" xChannelSelector="R" yChannelSelector="G"/></filter>
+      <!-- gentle hand-ink wobble for the otherwise-sterile building icons -->
+      <filter id="roughIcon" x="-25%" y="-25%" width="150%" height="150%"><feTurbulence type="turbulence" baseFrequency="0.028" numOctaves="2" seed="6" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.5" xChannelSelector="R" yChannelSelector="G"/></filter>
+      <!-- WATERCOLOR wash: lightly blur, ragged-displace the edge, AND multiply in a paper-bleed mottle so it reads as wet pigment, not a smooth airbrush -->
+      <filter id="wash" x="-70%" y="-70%" width="240%" height="240%">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="3.4" result="b"/>
+        <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="3" seed="9" result="n"/>
+        <feDisplacementMap in="b" in2="n" scale="24" xChannelSelector="R" yChannelSelector="G" result="d"/>
+        <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.7 -0.18" result="mottle"/>
+        <feComposite in="mottle" in2="d" operator="in" result="texIn"/>
+        <feMerge><feMergeNode in="d"/><feMergeNode in="texIn"/></feMerge>
+      </filter>
+
+      <!-- lumpy, asymmetric blob for hand-washed region highlights (rotated per use so none match) -->
+      <path id="splotch" d="M-44 -2 C -54 -26 -34 -46 -8 -40 C -2 -54 22 -52 28 -34 C 50 -42 64 -18 50 4 C 64 18 54 42 30 40 C 24 56 -6 56 -12 38 C -34 50 -56 28 -46 10 C -56 2 -52 2 -44 -2 Z"/>
+
+      <!-- ===== tree silhouettes (distinct shapes + hues to break repetition) ===== -->
+      <symbol id="pine-a" viewBox="0 0 44 56"><g stroke="#2f5630" stroke-width="2" stroke-linejoin="round"><path d="M19 56 h6 v-12 h-6 Z" fill="#7a5a2e" stroke-width="1.6"/><path d="M8 46 L22 12 L36 46 Z" fill="#5a8a4e"/><path d="M10 34 L22 6 L34 34 Z" fill="#638f50"/><path d="M12 24 L22 2 L32 24 Z" fill="#5a8a4e"/></g></symbol>
+      <symbol id="pine-b" viewBox="0 0 44 56"><g stroke="#274a29" stroke-width="2" stroke-linejoin="round"><path d="M19 56 h6 v-12 h-6 Z" fill="#6e5028" stroke-width="1.6"/><path d="M9 47 L22 14 L35 47 Z" fill="#46763f"/><path d="M11 35 L22 8 L33 35 Z" fill="#4f8047"/><path d="M13 25 L22 4 L31 25 Z" fill="#46763f"/></g></symbol>
+      <symbol id="pine-c" viewBox="0 0 44 56"><g stroke="#2b4f2c" stroke-width="2" stroke-linejoin="round"><path d="M19 56 h6 v-11 h-6 Z" fill="#74542a" stroke-width="1.6"/><path d="M10 44 L22 18 L34 44 Z" fill="#557f48"/><path d="M12 30 L22 9 L32 30 Z" fill="#608a4f"/></g></symbol>
+      <symbol id="oak-a" viewBox="0 0 48 54"><g stroke="#2f5630" stroke-width="2" stroke-linejoin="round"><path d="M21 54 h6 v-14 h-6 Z" fill="#7a5a2e" stroke-width="1.6"/><path d="M24 6 q15 -2 16 13 q9 7 -1 16 q1 11 -14 9 q-15 3 -15 -9 q-10 -8 0 -16 q0 -15 14 -13 Z" fill="#6fa356"/><path d="M16 26 q5 4 10 0 M28 30 q5 4 10 0" fill="none" stroke="#507e3f" stroke-width="1.4"/></g></symbol>
+      <symbol id="oak-b" viewBox="0 0 48 54"><g stroke="#2b4f2c" stroke-width="2" stroke-linejoin="round"><path d="M21 54 h6 v-14 h-6 Z" fill="#6e5028" stroke-width="1.6"/><path d="M24 7 q17 -4 17 14 q7 9 -3 16 q0 12 -16 9 q-16 2 -14 -11 q-9 -7 1 -15 q-1 -15 15 -13 Z" fill="#86a653"/><path d="M16 28 q5 4 10 0 M28 32 q5 4 10 0" fill="none" stroke="#647f3c" stroke-width="1.4"/></g></symbol>
+      <symbol id="oak-round" viewBox="0 0 48 54"><g stroke="#2f5630" stroke-width="2" stroke-linejoin="round"><path d="M22 54 h5 v-15 h-5 Z" fill="#7a5a2e" stroke-width="1.6"/><circle cx="24" cy="22" r="17" fill="#5f9a4e"/><path d="M14 20 q6 5 12 0 M24 28 q6 5 12 0" fill="none" stroke="#4a7e3c" stroke-width="1.3"/></g></symbol>
+      <symbol id="poplar" viewBox="0 0 36 58"><g stroke="#2b4f2c" stroke-width="2" stroke-linejoin="round"><path d="M16 58 h4 v-14 h-4 Z" fill="#6e5028" stroke-width="1.4"/><path d="M18 4 q13 14 7 30 q-3 12 -7 12 q-4 0 -7 -12 q-6 -16 7 -30 Z" fill="#74a04a"/></g></symbol>
+      <symbol id="birch" viewBox="0 0 40 56"><g stroke="#2f5630" stroke-width="2" stroke-linejoin="round"><path d="M18 56 h4 v-16 h-4 Z" fill="#d8cdb4" stroke="#8a7a5c" stroke-width="1.3"/><path d="M20 8 q14 6 12 20 q-2 14 -12 14 q-10 0 -12 -14 q-2 -14 12 -20 Z" fill="#9bb85e"/></g></symbol>
+      <symbol id="bush" viewBox="0 0 40 30"><g stroke="#2f5630" stroke-width="2" stroke-linejoin="round"><path d="M6 28 q-3 -12 9 -12 q4 -10 14 -4 q12 -2 9 10 q4 8 -6 8 Z" fill="#6f9a4e"/></g></symbol>
+
+      <!-- ===== distinct settlement buildings (retinted: no cyan-teal roofs) ===== -->
+      <!-- home: walled keep with twin towers + crest banner -->
+      <symbol id="b-keep" viewBox="0 0 100 100"><g fill="none" stroke="#4a3a23" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="16" y="48" width="16" height="36" fill="#ecdcb0"/><path d="M16 48 h16 v-5 h-5 v-4 h-6 v4 h-5 Z" fill="#ecdcb0"/>
+        <rect x="68" y="48" width="16" height="36" fill="#ecdcb0"/><path d="M68 48 h16 v-5 h-5 v-4 h-6 v4 h-5 Z" fill="#ecdcb0"/>
+        <rect x="34" y="38" width="32" height="46" fill="#f4d77a"/>
+        <path d="M34 38 h5 v-5 h6 v5 h5 v-5 h6 v5 h5 v-5 h4 v5" fill="#f4d77a"/>
+        <rect x="44" y="60" width="12" height="24" rx="6" fill="#bf7a4e"/>
+        <circle cx="50" cy="50" r="3" fill="#bf7a4e" stroke="none"/>
+        <path d="M50 33 V16"/><path d="M50 16 q13 -3 13 5 q-13 -1 -13 3" fill="#c98a1e" stroke-width="2"/>
+      </g></symbol>
+      <!-- Goldfield March: windmill + grain -->
+      <symbol id="b-windmill" viewBox="0 0 100 100"><g fill="none" stroke="#4a3a23" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M36 84 L42 44 H58 L64 84 Z" fill="#ecdcb0"/><path d="M42 44 H58"/>
+        <path d="M50 44 L34 28 M50 44 L66 60 M50 44 L34 60 M50 44 L66 28" stroke-width="3.4"/>
+        <path d="M50 44 L34 28 L30 32 L46 48 Z M50 44 L66 60 L70 56 L54 40 Z M50 44 L34 60 L30 56 L46 40 Z M50 44 L66 28 L70 32 L54 48 Z" fill="#e7d6a8"/>
+        <rect x="46" y="66" width="9" height="18" rx="3" fill="#bf7a4e"/>
+        <path d="M70 84 q6 -10 12 0 Z" fill="#d9b85e" stroke-width="2"/>
+      </g></symbol>
+      <!-- Sunmeadow Hold: castle (sage banners) -->
+      <symbol id="b-castle" viewBox="0 0 100 100"><g fill="none" stroke="#4a3a23" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M24 84 V52 H32 V44 H38 V52 H46 V40 H54 V52 H62 V44 H68 V52 H76 V84 Z" fill="#e7d8b0"/><rect x="22" y="56" width="56" height="28" fill="#f4d77a"/><path d="M24 84 V52 H32 V44 H38 V52 H46 V40 H54 V52 H62 V44 H68 V52 H76 V84" fill="none"/><rect x="42" y="66" width="16" height="18" rx="8" fill="#bf7a4e"/><circle cx="31" cy="60" r="2.4" fill="#4a3a23" stroke="none"/><circle cx="69" cy="60" r="2.4" fill="#4a3a23" stroke="none"/><path d="M35 44 V30"/><path d="M35 30 q9 -3 9 4 q-9 -1 -9 3" fill="#6f9060" stroke-width="2"/><path d="M65 44 V30"/><path d="M65 30 q9 -3 9 4 q-9 -1 -9 3" fill="#6f9060" stroke-width="2"/><path d="M50 40 V24"/><path d="M50 24 q11 -3 11 5 q-11 -1 -11 3" fill="#c98a1e" stroke-width="2"/></g></symbol>
+      <!-- Larkholt: chapel with spire + cottage -->
+      <symbol id="b-chapel" viewBox="0 0 100 100"><g fill="none" stroke="#4a3a23" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M30 84 V52 H50 V84 Z" fill="#efe3c4"/><path d="M30 52 L40 30 L50 52 Z" fill="#bf7a4e"/>
+        <path d="M40 18 V30"/><path d="M37 22 h6"/>
+        <rect x="36" y="62" width="8" height="22" rx="4" fill="#c98a1e"/>
+        <path d="M56 84 V60 L68 48 L80 60 V84 Z" fill="#e7d8b0"/><path d="M56 60 L68 48 L80 60" fill="none"/>
+        <rect x="64" y="68" width="9" height="16" rx="3" fill="#bf7a4e"/>
+      </g></symbol>
+      <!-- Tide's End: slender coastal watchtower (terracotta cone) -->
+      <symbol id="b-towerTall" viewBox="0 0 100 100"><g fill="none" stroke="#4a3a23" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M40 84 V34 a10 10 0 0 1 20 0 V84 Z" fill="#efe3c4"/>
+        <path d="M36 34 L50 12 L64 34 Z" fill="#bf7a4e"/><path d="M50 12 V6"/><path d="M50 6 q8 -2 8 4 q-8 -1 -8 2" fill="#c98a1e" stroke-width="2"/>
+        <circle cx="50" cy="46" r="5" fill="#c98a1e"/><path d="M44 64 h12"/><path d="M40 84 h20" stroke-width="3.4"/>
+      </g></symbol>
+      <!-- Greymoor: stout ruined grey tower -->
+      <symbol id="b-towerRuin" viewBox="0 0 100 100"><g fill="none" stroke="#4a3a23" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M34 84 V40 L42 40 L42 32 L50 40 L58 30 L58 40 L66 40 V84 Z" fill="#cfc6b4"/>
+        <path d="M34 60 H66" stroke="#8a7f6c" stroke-width="1.6"/><path d="M48 60 L52 72" stroke="#8a7f6c" stroke-width="1.6"/>
+        <rect x="44" y="66" width="11" height="18" rx="3" fill="#7d756a"/>
+        <circle cx="42" cy="52" r="2" fill="#4a3a23" stroke="none"/>
+      </g></symbol>
+      <symbol id="icon-lighthouse" viewBox="0 0 100 100"><g fill="none" stroke="#4a3a23" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M40 84 L44 44 H56 L60 84 Z" fill="#efe3c4"/><path d="M44 44 H56" /><path d="M43 56 L57 56" /><path d="M42 70 L58 70" /><rect x="42" y="56" width="16" height="14" fill="#bf7a4e" stroke="none"/><path d="M40 84 L44 44 H56 L60 84 Z" fill="none"/><rect x="41" y="36" width="18" height="9" rx="2" fill="#fbeec0"/><circle cx="50" cy="30" r="6" fill="#f4d77a"/><path d="M44 24 L66 14 M44 30 H70 M44 36 L66 46" stroke="#f4d77a" stroke-width="2.4"/><path d="M44 30 L48 26 L52 30 L56 26 L60 30" stroke="#4a3a23" stroke-width="2" fill="none"/></g></symbol>
+      <symbol id="icon-marsh" viewBox="0 0 100 100"><g fill="none" stroke="#4a3a23" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M16 74 q12 -6 24 0 q12 6 24 0 q10 -5 20 0" stroke="#7fae99" stroke-width="3.2"/><path d="M16 82 q12 -6 24 0 q12 6 24 0 q10 -5 20 0" stroke="#7fae99" stroke-width="3.2"/><path d="M36 74 V44" stroke="#5e8f5a"/><rect x="32" y="30" width="8" height="14" rx="4" fill="#c98a1e"/><path d="M52 74 V40" stroke="#5e8f5a"/><rect x="48" y="24" width="8" height="16" rx="4" fill="#c98a1e"/><path d="M68 74 V48" stroke="#5e8f5a"/><rect x="64" y="36" width="8" height="12" rx="4" fill="#c98a1e"/><path d="M44 74 V52 M60 74 V56" stroke="#5e8f5a" stroke-width="2.4"/></g></symbol>
+      <symbol id="icon-mist" viewBox="0 0 100 100"><g fill="none" stroke="#4a3a23" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 38 q-6 -8 4 -10 q2 -9 12 -5 q8 -8 16 0 q12 -3 10 8 q9 1 4 9" fill="#efe3c4" stroke="#c98a1e"/><path d="M24 50 q14 -6 28 0 q14 6 28 0" stroke="#9fb3a8" stroke-width="3.4"/><path d="M20 62 q14 -6 28 0 q14 6 28 0" stroke="#9fb3a8" stroke-width="3.4"/><path d="M26 74 q14 -6 28 0 q12 5 24 0" stroke="#9fb3a8" stroke-width="3.4"/></g></symbol>
+      <symbol id="icon-compass" viewBox="0 0 100 100"><g fill="none" stroke="#4a3a23" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="50" cy="50" r="34" fill="#fbeec0"/><circle cx="50" cy="50" r="34" fill="none" stroke-width="3.2"/><circle cx="50" cy="50" r="27" fill="none" stroke="#c98a1e" stroke-width="2"/><path d="M50 22 L57 50 L50 78 L43 50 Z" fill="#e7d8b0"/><path d="M50 22 L43 50 L50 78" fill="#6f9060" stroke="none"/><path d="M50 22 L57 50 L50 78 L43 50 Z" fill="none"/><path d="M22 50 L50 43 L78 50 L50 57 Z" fill="#f4d77a"/><path d="M22 50 L50 43 L78 50 L50 57 Z" fill="none"/><circle cx="50" cy="50" r="3.4" fill="#c98a1e" stroke="none"/><path d="M50 12 L52 16 L48 16 Z" fill="#c98a1e" stroke-width="1.6"/></g></symbol>
+      <symbol id="icon-anchor" viewBox="0 0 100 100"><g fill="none" stroke="#4a3a23" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="50" cy="22" r="7" fill="#fbeec0"/><path d="M50 29 V74" /><path d="M34 44 H66" /><path d="M24 56 a26 26 0 0 0 52 0" fill="none" stroke="#c98a1e"/><path d="M24 56 l-6 -3 M24 56 l1 -7" stroke="#c98a1e"/><path d="M76 56 l6 -3 M76 56 l-1 -7" stroke="#c98a1e"/><circle cx="50" cy="22" r="2.4" fill="#4a3a23" stroke="none"/></g></symbol>
+      <symbol id="icon-ship" viewBox="0 0 100 100"><g fill="none" stroke="#4a3a23" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 64 H78 L70 80 H30 Z" fill="#bf7a4e"/><path d="M22 64 H78 L70 80 H30 Z" fill="none"/><path d="M50 60 V20" /><path d="M50 22 q20 4 18 22 q-9 -4 -18 -2 Z" fill="#efe3c4"/><path d="M50 26 q-15 4 -14 18 q7 -3 14 -2 Z" fill="#f4d77a"/><path d="M50 60 V20" /><path d="M50 14 V20" /><path d="M50 14 q7 -2 7 3 q-7 -1 -7 2" fill="#6f9060" stroke-width="2"/></g></symbol>
+    </defs>
+
+    <!-- emerald mat (lighter, mossier) -->
+    <rect x="0" y="0" width="1200" height="820" fill="url(#mat)"/>
+    <rect x="0" y="0" width="1200" height="820" fill="#000" opacity="0.05" style="mix-blend-mode:multiply"/>
+
+    <!-- parchment sheet — extends slightly OUTSIDE the gold frame so a warm mat band separates the dark green from the map -->
+    <g filter="url(#softsh)"><rect x="30" y="30" width="1140" height="760" rx="12" fill="url(#parch)"/></g>
+    <rect x="30" y="30" width="1140" height="760" rx="12" fill="#fff" filter="url(#grain)" opacity="0.5"/>
+    <ellipse cx="110" cy="110" rx="80" ry="55" fill="#c9a86a" opacity="0.12"/>
+    <ellipse cx="1090" cy="720" rx="95" ry="60" fill="#c9a86a" opacity="0.12"/>
+    <ellipse cx="1080" cy="120" rx="70" ry="48" fill="#b89a5c" opacity="0.10"/>
+
+    <!-- ====================== OCEAN ====================== -->
+    <rect x="48" y="48" width="1104" height="724" rx="8" fill="url(#sea)" opacity="0.82"/>
+    <g class="swell-anim" filter="url(#rough)" stroke="#7e978b" fill="none" stroke-linecap="round" opacity="0.5">
+      <path d="M120 150 q15 -9 30 0 t26 1" stroke-width="1.7"/><path d="M170 196 q12 -8 24 0 t22 1" stroke-width="1.4"/>
+      <path d="M96 320 q14 -9 28 0 t24 1" stroke-width="1.6"/><path d="M138 392 q13 -8 26 0" stroke-width="1.3"/>
+      <path d="M104 470 q16 -10 32 0 t26 1" stroke-width="1.7"/><path d="M150 700 q15 -9 30 0 t24 1" stroke-width="1.5"/>
+      <path d="M210 738 q12 -8 24 0" stroke-width="1.3"/><path d="M560 120 q14 -9 28 0 t22 1" stroke-width="1.5"/>
+      <path d="M470 96 q12 -8 24 0" stroke-width="1.3"/><path d="M690 748 q15 -9 30 0 t24 1" stroke-width="1.5"/>
+      <path d="M770 712 q12 -8 24 0" stroke-width="1.3"/><path d="M1000 150 q15 -9 30 0 t24 1" stroke-width="1.6"/>
+      <path d="M1052 210 q12 -8 24 0" stroke-width="1.3"/><path d="M1042 360 q14 -9 28 0 t22 1" stroke-width="1.5"/>
+      <path d="M1078 430 q12 -8 24 0" stroke-width="1.4"/><path d="M1020 540 q15 -9 30 0 t24 1" stroke-width="1.6"/>
+      <path d="M980 690 q14 -9 28 0 t22 1" stroke-width="1.5"/><path d="M1058 700 q12 -8 24 0" stroke-width="1.3"/>
+      <path d="M360 760 q14 -9 28 0" stroke-width="1.3"/><path d="M860 150 q12 -8 24 0" stroke-width="1.3"/>
+      <path d="M1086 600 q12 -8 24 0" stroke-width="1.3"/><path d="M1030 320 q12 -8 24 0" stroke-width="1.3"/>
+    </g>
+
+    <!-- ====================== LANDMASSES ====================== -->
+    <g filter="url(#coastsh)">
+      <path id="continent" d="M250 300
+        C 210 250 250 200 330 190 C 410 178 470 150 560 158 C 660 166 700 140 790 162
+        C 880 184 940 180 980 250 C 1010 300 980 360 940 400 C 980 450 960 520 900 560
+        C 850 595 820 640 740 650 C 660 660 600 700 520 690 C 440 680 380 700 320 660
+        C 250 612 230 560 240 500 C 200 470 210 400 250 360 C 232 338 236 318 250 300 Z"
+        fill="url(#land)" stroke="#9c7e4a" stroke-width="2.5"/>
+      <path id="ne-isle" d="M958 330 C 985 312 1020 320 1030 350 C 1040 380 1018 405 988 400 C 960 396 944 360 958 330 Z" fill="url(#land)" stroke="#9c7e4a" stroke-width="2.2"/>
+      <path d="M165 645 C 150 622 185 600 220 612 C 258 624 262 668 232 686 C 200 704 178 678 165 645 Z" fill="url(#land)" stroke="#9c7e4a" stroke-width="2.2" opacity="0.92"/>
+      <path d="M1010 620 C 1000 598 1035 585 1066 600 C 1096 615 1090 656 1058 666 C 1028 675 1016 648 1010 620 Z" fill="url(#land)" stroke="#9c7e4a" stroke-width="2.2" opacity="0.85"/>
+      <path d="M236 396 q-22 6 -26 30 q18 8 30 -6 q6 -16 -4 -24 Z" fill="url(#land)" stroke="#9c7e4a" stroke-width="2.2"/>
+      <path d="M812 642 q14 18 38 14 q-2 -22 -22 -28 q-14 -2 -16 14 Z" fill="url(#land)" stroke="#9c7e4a" stroke-width="2.2"/>
+      <!-- offshore islets (unique blobby outlines, not mirrored triangles) -->
+      <path d="M430 134 q-10 -3 -14 5 q-2 8 8 9 q11 1 12 -7 q-1 -6 -6 -7 Z" fill="url(#land)" stroke="#9c7e4a" stroke-width="1.6"/>
+      <path d="M150 466 q-9 1 -9 9 q1 8 11 6 q9 -2 6 -10 q-2 -6 -8 -5 Z" fill="url(#land)" stroke="#9c7e4a" stroke-width="1.6"/>
+      <path d="M1066 470 q-8 -4 -13 3 q-3 8 6 10 q10 2 13 -5 q0 -6 -6 -8 Z" fill="url(#land)" stroke="#9c7e4a" stroke-width="1.6"/>
+      <!-- micro-crags poking out to break the smooth silhouette -->
+      <path d="M596 692 q6 18 24 12 q2 -18 -12 -24 q-12 -2 -12 12 Z" fill="url(#land)" stroke="#9c7e4a" stroke-width="2"/>
+      <path d="M958 432 q18 -2 22 -16 q-16 -8 -26 4 q-4 9 4 12 Z" fill="url(#land)" stroke="#9c7e4a" stroke-width="2"/>
+      <path d="M374 680 q-4 18 12 22 q10 -6 4 -20 q-6 -8 -16 -2 Z" fill="url(#land)" stroke="#9c7e4a" stroke-width="2"/>
+      <path d="M250 360 q-18 6 -16 22 q16 4 24 -8 q4 -10 -8 -14 Z" fill="url(#land)" stroke="#9c7e4a" stroke-width="2"/>
+    </g>
+
+    <!-- weathered coast: roughened foam + BROKEN, varied-gap surf strokes (not parallel offsets) -->
+    <g filter="url(#roughBig)">
+      <use href="#continent" fill="none" stroke="#f3efe0" stroke-width="6" opacity="0.7"/>
+      <!-- wobbly hand-inked coastline overlaid on the smooth fill so the coast READS irregular (clip stays smooth = no leak) -->
+      <use href="#continent" fill="none" stroke="#9c7e4a" stroke-width="2.6" opacity="0.92"/>
+      <use href="#continent" fill="none" stroke="#cfe0d6" stroke-width="2.2" stroke-dasharray="3 11" opacity="0.75"/>
+    </g>
+    <g filter="url(#rough)" fill="none" stroke="#9fb3a8" stroke-linecap="round" opacity="0.4" stroke-dasharray="22 16">
+      <use href="#continent" transform="translate(610 425) scale(1.045) translate(-610 -425)" stroke-width="1.5"/>
+    </g>
+    <g filter="url(#rough)" fill="none" stroke="#9fb3a8" stroke-linecap="round" opacity="0.28" stroke-dasharray="10 26">
+      <use href="#continent" transform="translate(610 425) scale(1.085) translate(-610 -425)" stroke-width="1.2"/>
+    </g>
+    <!-- third, faint, very-broken ripple further out -->
+    <g filter="url(#rough)" fill="none" stroke="#9fb3a8" stroke-linecap="round" opacity="0.2" stroke-dasharray="6 30">
+      <use href="#continent" transform="translate(610 425) scale(1.13) translate(-610 -425)" stroke-width="1.1"/>
+    </g>
+    <!-- sea bites carving small bays into the coast -->
+    <g fill="url(#sea)" opacity="0.95">
+      <path d="M690 156 q14 22 -2 34 q-20 -4 -18 -24 q4 -14 20 -10 Z"/>
+      <path d="M312 664 q-20 14 -10 34 q22 -2 24 -22 q-2 -14 -14 -12 Z"/>
+      <path d="M470 158 q-4 16 10 22 q12 -4 6 -18 q-6 -10 -16 -4 Z"/>
+      <path d="M906 558 q-16 8 -8 24 q16 -2 16 -16 q0 -10 -8 -8 Z"/>
+    </g>
+
+    <clipPath id="landclip"><use href="#continent"/></clipPath>
+
+    <g clip-path="url(#landclip)">
+      <!-- biome washes as irregular blurred blobs (rotated per use; no perfect ovals) -->
+      <g style="mix-blend-mode:multiply" opacity="0.5">
+        <use href="#splotch" transform="translate(330 280) scale(2.2 1.9) rotate(18)" fill="#94a05c" filter="url(#wash)"/>
+        <use href="#splotch" transform="translate(620 232) scale(3.0 1.7) rotate(-8)" fill="#d8c46f" filter="url(#wash)"/>
+        <use href="#splotch" transform="translate(600 432) scale(2.6 2.1) rotate(24)" fill="#dcc875" filter="url(#wash)"/>
+        <use href="#splotch" transform="translate(858 472) scale(2.5 1.9) rotate(-14)" fill="#b6a59f" filter="url(#wash)"/>
+        <use href="#splotch" transform="translate(470 642) scale(2.7 1.8) rotate(10)" fill="#86b496" filter="url(#wash)"/>
+        <use href="#splotch" transform="translate(300 500) scale(1.9 2.2) rotate(-22)" fill="#cdbf7e" filter="url(#wash)"/>
+        <use href="#splotch" transform="translate(900 300) scale(2.1 1.8) rotate(30)" fill="#c0b38b" filter="url(#wash)"/>
+      </g>
+
+      <!-- GRASSLAND: irregular fields (rotated hatch, varied outlines) -->
+      <g filter="url(#rough)">
+        <g stroke="#a98c46" stroke-width="2.2" stroke-linejoin="round">
+          <path d="M486 196 q44 -22 96 -8 q34 12 28 40 q-10 30 -64 26 q-58 -2 -66 -28 q-6 -22 6 -30 Z" fill="#e6cd80" opacity="0.92"/>
+          <g fill="none" stroke="#bd9f4f" stroke-width="1.5" opacity="0.8"><path d="M498 206 q40 -16 86 -4 M494 220 q44 -14 92 -2 M500 234 q40 -12 82 0"/></g>
+          <path d="M636 252 q42 -28 86 -8 q26 14 14 40 q-16 24 -62 18 q-44 -6 -46 -30 q-2 -14 8 -20 Z" fill="#ddc372" opacity="0.9"/>
+          <g fill="none" stroke="#b59a4a" stroke-width="1.5" opacity="0.75" transform="rotate(-12 678 274)"><path d="M644 266 q36 -14 76 -2 M642 280 q38 -10 78 0"/></g>
+          <path d="M536 392 q42 -20 86 -6 q28 12 18 36 q-14 24 -58 20 q-44 -4 -50 -24 q-4 -16 4 -26 Z" fill="#e3cb7c" opacity="0.86"/>
+          <g fill="none" stroke="#bca251" stroke-width="1.5" opacity="0.7" transform="rotate(9 580 408)"><path d="M548 404 q36 -14 74 -2 M546 418 q38 -10 76 0"/></g>
+        </g>
+      </g>
+      <!-- grass tufts: 3 silhouettes, irregular placement -->
+      <g filter="url(#roughLeaf)" stroke="#93a24a" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.78">
+        <path d="M470 300 l-3 -9 M474 301 l0 -11 M478 300 l3 -9"/>
+        <path d="M706 232 q-2 -8 2 -11 q3 7 1 12 M712 233 q3 -7 7 -9"/>
+        <path d="M512 332 l-3 -8 M516 333 l0 -10 M520 332 l3 -8"/>
+        <path d="M676 360 q-1 -9 3 -12 M681 361 q2 -6 6 -8"/>
+        <path d="M448 360 l-3 -8 M452 361 l0 -10 M456 360 l3 -8"/>
+        <path d="M732 322 q-2 -7 1 -10 q4 6 2 11 M738 321 q3 -6 7 -8"/>
+        <path d="M566 300 l-3 -8 M570 301 l0 -10 M574 300 l3 -8"/>
+        <path d="M624 470 q-1 -9 3 -11 M629 471 q2 -6 6 -7"/>
+        <path d="M408 470 l-3 -8 M412 471 l0 -10 M416 470 l3 -8"/>
+        <path d="M812 502 l-3 -8 M816 503 l0 -10 M820 502 l3 -8"/>
+      </g>
+
+      <!-- MOUNTAIN range (NE) — hand-drawn overlapping ridges + sketch shading, no flat triangles -->
+      <g filter="url(#rough)" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M788 362 q24 -60 48 -86 q16 38 30 50 q16 -12 24 -36 q20 44 38 56 q16 -10 26 -32 q18 40 36 52 q12 -8 20 -22 q14 34 22 94 Z" fill="#d3c79e" stroke="#9a875a" stroke-width="1.6" opacity="0.85"/>
+        <path d="M800 364 q26 -74 52 -102 q18 46 34 60 q16 -14 26 -42 q22 52 42 66 q18 -12 28 -34 q18 46 38 60 q14 -10 22 -28 q16 42 24 120 Z" fill="#c4b78a" stroke="#857142" stroke-width="2"/>
+        <!-- ridge shading hatches -->
+        <g fill="none" stroke="#9a8856" stroke-width="1.4" opacity="0.7"><path d="M850 268 l-10 52 M854 280 l-4 44 M902 256 l-11 58 M906 268 l-4 48 M958 286 l-9 46 M962 298 l-3 38"/></g>
+        <!-- snow caps -->
+        <path d="M844 266 q5 7 10 0 q5 -7 10 1 l-4 15 q-7 -5 -12 0 Z" fill="#f4efe1" stroke="none"/>
+        <path d="M896 254 q5 8 11 0 q5 -7 10 1 l-4 16 q-8 -5 -13 0 Z" fill="#f4efe1" stroke="none"/>
+        <path d="M952 284 q5 7 10 0 q4 -6 9 1 l-3 14 q-7 -5 -12 0 Z" fill="#f4efe1" stroke="none"/>
+      </g>
+
+      <!-- MOOR (E): tarn + scrub + rock cairns + scattered (uneven) heather -->
+      <g opacity="0.82">
+        <!-- moor tarn (dark-rimmed pool, fed by a thin stream off the range) -->
+        <path d="M824 482 q22 -14 48 -4 q20 8 8 22 q-16 14 -42 8 q-22 -6 -22 -18 q0 -8 8 -10 Z" fill="#7fa6a0" stroke="#557873" stroke-width="2"/>
+        <path d="M906 360 q-6 40 -50 62" fill="none" stroke="#8fb6bb" stroke-width="2" opacity="0.7" filter="url(#rough)"/>
+        <g fill="#9b86a8" stroke="none">
+          <circle cx="792" cy="446" r="3"/><circle cx="816" cy="456" r="2.3"/><circle cx="840" cy="440" r="3.3"/>
+          <circle cx="872" cy="452" r="2.6"/><circle cx="902" cy="444" r="3"/><circle cx="922" cy="462" r="2.5"/>
+          <circle cx="784" cy="490" r="2.6"/><circle cx="908" cy="506" r="3.1"/><circle cx="882" cy="520" r="2.3"/>
+          <circle cx="936" cy="488" r="2.7"/><circle cx="804" cy="516" r="2.5"/><circle cx="858" cy="528" r="2.4"/>
+          <circle cx="930" cy="520" r="2.2"/><circle cx="800" cy="470" r="2.1"/>
+        </g>
+        <g filter="url(#roughLeaf)" fill="#7e9461" stroke="#5d7546" stroke-width="1.4"><path d="M788 470 q6 -10 12 0 Z"/><path d="M900 470 q6 -10 12 0 Z"/><path d="M856 522 q6 -10 12 0 Z"/><path d="M934 506 q6 -10 12 0 Z"/></g>
+        <g fill="#b0a487" stroke="#857a5e" stroke-width="1.2"><path d="M888 540 l7 -10 7 10 Z"/><path d="M900 542 l5 -7 5 7 Z"/><path d="M810 540 l6 -9 6 9 Z"/></g>
+      </g>
+
+      <!-- FENS (S) -->
+      <g>
+        <path d="M398 636 q24 -14 52 -4 q22 8 10 24 q-16 16 -44 10 q-26 -6 -28 -18 q-2 -10 10 -12 Z" fill="#9bbfac" stroke="#6f9a86" stroke-width="1.6"/>
+        <path d="M492 666 q20 -10 42 -2 q16 8 6 20 q-14 12 -36 7 q-20 -6 -20 -16 q0 -7 8 -9 Z" fill="#9bbfac" stroke="#6f9a86" stroke-width="1.6"/>
+        <g fill="#7fae8c" stroke="none" opacity="0.85"><ellipse cx="420" cy="640" rx="6" ry="3"/><ellipse cx="512" cy="668" rx="5" ry="2.6"/><ellipse cx="452" cy="654" rx="5" ry="2.6"/></g>
+        <g filter="url(#roughLeaf)" stroke="#5e8f5a" stroke-width="2" stroke-linecap="round"><path d="M386 632 v-13 M392 634 v-17 M460 628 v-14 M468 630 v-18 M542 660 v-13 M552 662 v-16 M558 664 v-19"/></g>
+      </g>
+
+      <!-- FOREST (NW): irregular canopy + heavily mixed silhouettes/hues -->
+      <path d="M256 300 q24 -52 78 -54 q60 -2 92 30 q26 28 8 64 q-22 40 -84 40 q-66 0 -94 -34 q-18 -22 0 -46 Z" fill="#8a9b54" opacity="0.34" style="mix-blend-mode:multiply"/>
+      <g filter="url(#roughLeaf)">
+        <use href="#pine-b" x="258" y="250" width="30" height="38" transform="rotate(-5 273 269)"/>
+        <use href="#oak-a" x="286" y="244" width="40" height="45" transform="rotate(4 306 266)"/>
+        <use href="#poplar" x="324" y="236" width="26" height="44" transform="rotate(-3 337 258)"/>
+        <use href="#oak-round" x="352" y="248" width="40" height="45" transform="rotate(6 372 270)"/>
+        <use href="#pine-c" x="394" y="256" width="30" height="38" transform="rotate(-4 409 275)"/>
+        <use href="#oak-b" x="270" y="274" width="42" height="47" transform="rotate(3 291 297)"/>
+        <use href="#pine-a" x="306" y="270" width="36" height="46" transform="rotate(-6 324 293)"/>
+        <use href="#birch" x="346" y="276" width="32" height="45" transform="rotate(4 362 298)"/>
+        <use href="#pine-b" x="382" y="282" width="32" height="40" transform="rotate(-3 398 302)"/>
+        <use href="#oak-round" x="252" y="296" width="40" height="45" transform="rotate(5 272 318)"/>
+        <use href="#oak-a" x="292" y="300" width="44" height="49" transform="rotate(-4 314 324)"/>
+        <use href="#pine-c" x="332" y="306" width="30" height="38" transform="rotate(6 347 325)"/>
+        <use href="#oak-b" x="362" y="304" width="42" height="47" transform="rotate(-5 383 327)"/>
+        <use href="#poplar" x="402" y="296" width="24" height="40" transform="rotate(3 414 316)"/>
+        <use href="#oak-round" x="276" y="324" width="38" height="43" transform="rotate(-3 295 345)"/>
+        <use href="#pine-a" x="316" y="330" width="30" height="38" transform="rotate(5 331 349)"/>
+        <use href="#oak-a" x="350" y="328" width="40" height="45" transform="rotate(-4 370 350)"/>
+        <use href="#bush" x="300" y="350" width="34" height="22"/>
+        <use href="#bush" x="360" y="346" width="30" height="20"/>
+      </g>
+      <!-- spill-out + transition trees (forest no longer contained in a neat oval) -->
+      <g filter="url(#roughLeaf)" opacity="0.95">
+        <use href="#oak-round" x="226" y="324" width="32" height="36"/>
+        <use href="#pine-b" x="430" y="300" width="26" height="34"/>
+        <use href="#oak-a" x="262" y="486" width="34" height="38"/>
+        <use href="#poplar" x="300" y="498" width="22" height="38"/>
+        <use href="#oak-b" x="690" y="384" width="32" height="36"/>
+        <use href="#pine-b" x="724" y="396" width="26" height="34"/>
+        <use href="#bush" x="556" y="560" width="30" height="20"/>
+        <use href="#oak-round" x="760" y="402" width="30" height="34"/>
+        <use href="#pine-c" x="792" y="392" width="26" height="34"/>
+        <use href="#oak-a" x="455" y="312" width="28" height="32"/>
+      </g>
+
+      <!-- ===== RIVERS: FILLED tapered ribbons (thin at source, broad at the sea-mouth) + muted slate-teal ===== -->
+      <g filter="url(#rough)" opacity="0.95">
+        <!-- source Crownspire -> Heartmere: a closed ribbon widening downstream (2px -> 7px) -->
+        <path d="M899 325 C 871 355 857 379 825 399 C 799 415 773 435 743 465 C 720 489 687 501 649 509
+                 L 647 513 C 686 506 716 494 740 469 C 770 439 796 419 822 403 C 855 382 869 358 897 327 Z"
+              fill="#7c9ca2" stroke="#5f8189" stroke-width="0.8"/>
+        <!-- outlet Heartmere -> Goldport estuary: thin (5) flaring WIDE (20) at the sea -->
+        <path d="M514 503 C 470 522 430 548 388 573 C 351 595 320 611 286 625 C 274 631 262 635 250 639
+                 L 256 656 C 270 651 282 647 296 640 C 330 624 360 607 396 585 C 438 559 478 533 520 514 Z"
+              fill="#7c9ca2" stroke="#5f8189" stroke-width="0.8"/>
+        <!-- tributary forest -> lake (thin) -->
+        <path d="M330 304 C 360 350 408 398 462 446 C 492 472 512 484 532 492 L 530 497 C 509 489 488 477 458 451 C 404 403 356 354 326 306 Z" fill="#84a4a8" stroke="#5f8189" stroke-width="0.7"/>
+        <!-- fens braided channel -->
+        <path d="M392 568 C 412 596 444 624 470 640" fill="none" stroke="#84a4a8" stroke-width="2.6" stroke-linecap="round"/>
+      </g>
+      <!-- estuary mouth flaring into the sea at Goldport -->
+      <path d="M250 638 q-30 4 -46 22 q26 12 52 2 q10 -12 -6 -24 Z" fill="#7c9ca2" opacity="0.85" filter="url(#rough)"/>
+      <!-- bank hatching -->
+      <g filter="url(#rough)" stroke="#6f9398" stroke-width="1.2" opacity="0.55" stroke-linecap="round">
+        <path d="M832 392 l6 -5 M800 410 l6 -5 M748 460 l5 -6 M690 502 l4 -7 M470 528 l-5 -6 M398 566 l-6 -5 M320 612 l-6 -5"/>
+      </g>
+      <!-- Heartmere (muted, deeper value, fed + drained) -->
+      <path d="M474 498 q24 -22 58 -16 q28 6 26 24 q-4 24 -44 26 q-40 2 -46 -18 q-4 -14 6 -16 Z" fill="#8eb5ba" stroke="#5f8b92" stroke-width="2" filter="url(#rough)"/>
+      <path d="M482 500 q22 -16 52 -10 M486 514 q24 -10 50 -4" fill="none" stroke="#c2d6d2" stroke-width="1.2" opacity="0.8"/>
+
+      <!-- ===== DOTTED ROADS — meandering (S-curves) + strong wobble + per-road varied dot spacing ===== -->
+      <g filter="url(#roughRoad)">
+        <g fill="none" stroke="#d9c79a" stroke-width="6" stroke-linecap="round" opacity="0.34">
+          <path d="M600 414 C 614 372 566 360 588 322 C 600 296 560 286 556 268"/>
+          <path d="M626 416 C 672 398 700 360 730 346 C 752 336 760 312 772 298"/>
+          <path d="M612 470 C 600 502 648 520 632 548 C 622 566 648 566 640 582"/>
+          <path d="M612 606 C 540 628 470 612 430 632 C 380 656 360 600 320 590"/>
+          <path d="M556 436 C 488 446 460 472 432 452 C 400 430 360 462 332 454"/>
+          <path d="M522 238 C 470 256 442 240 410 262 C 388 278 374 256 360 268"/>
+          <path d="M800 266 C 838 282 856 290 880 300 C 892 305 898 304 904 308"/>
+        </g>
+        <g fill="none" stroke="#8a6a3e" stroke-width="2.6" stroke-linecap="round" opacity="0.85">
+          <path d="M600 414 C 614 372 566 360 588 322 C 600 296 560 286 556 268" stroke-dasharray="0.5 8"/>
+          <path d="M626 416 C 672 398 700 360 730 346 C 752 336 760 312 772 298" stroke-dasharray="0.5 9"/>
+          <path d="M612 470 C 600 502 648 520 632 548 C 622 566 648 566 640 582" stroke-dasharray="1 7"/>
+          <path d="M612 606 C 540 628 470 612 430 632 C 380 656 360 600 320 590" stroke-dasharray="0.5 7"/>
+          <path d="M556 436 C 488 446 460 472 432 452 C 400 430 360 462 332 454" stroke-dasharray="1 8"/>
+          <path d="M522 238 C 470 256 442 240 410 262 C 388 278 374 256 360 268" stroke-dasharray="0.5 9"/>
+          <path d="M800 266 C 838 282 856 290 880 300 C 892 305 898 304 904 308" stroke-dasharray="0.5 7"/>
+        </g>
+      </g>
+      <!-- hand-drawn bridges where roads cross water -->
+      <g stroke="#7a5a2e" stroke-width="2.2" stroke-linecap="round" fill="none" filter="url(#rough)">
+        <path d="M348 584 q8 -8 16 0 M350 590 l-3 4 M362 590 l3 4"/>  <!-- Larkholt->Goldport over the outlet -->
+        <path d="M452 452 q8 -7 15 1 M454 458 l-3 4 M465 459 l3 4"/>  <!-- home->Tide's End over the tributary -->
+      </g>
+    </g>
+
+    <!-- ====================== OCEAN LIFE ====================== -->
+    <g filter="url(#rough)" fill="#a9b4ab" stroke="#76857b" stroke-width="1.5" stroke-linejoin="round" opacity="0.85">
+      <path d="M208 248 l8 -13 9 13 Z"/><path d="M224 250 l6 -9 6 9 Z"/>
+      <path d="M944 602 l8 -13 9 13 Z"/><path d="M960 604 l6 -9 6 9 Z"/>
+    </g>
+    <g stroke="#7e978b" stroke-width="1.6" fill="none" opacity="0.7" stroke-linecap="round">
+      <path d="M180 470 q8 -6 16 0 q-8 6 -16 0 Z M198 470 l8 -4 v8 Z"/>
+      <path d="M205 488 q7 -5 14 0 q-7 5 -14 0 Z M219 488 l7 -3 v6 Z"/>
+      <path d="M1052 360 q8 -6 16 0 q-8 6 -16 0 Z M1070 360 l8 -4 v8 Z"/>
+    </g>
+    <!-- replaced the CAD whirlpool with broken, off-center hand-inked arcs -->
+    <g transform="translate(1070,300)" fill="none" stroke="#8fa79b" stroke-linecap="round" opacity="0.6" filter="url(#rough)">
+      <path d="M-16 -10 a20 20 0 1 1 -2 24" stroke-width="2"/><path d="M-6 -2 a10 10 0 1 0 12 6" stroke-width="1.8"/>
+    </g>
+    <!-- "Here be wonders" cartouche fills the NE sea void -->
+    <g transform="translate(1024,210)" opacity="0.7">
+      <path d="M-58 -14 q-10 0 -10 8 q-2 -4 -8 -2 q4 4 0 8 q6 -2 8 2 q0 8 10 8 H58 q10 0 10 -8 q2 4 8 2 q-4 -4 0 -8 q-6 2 -8 -2 q0 -8 -10 -8 Z" fill="#efe3c4" stroke="#c2a463" stroke-width="1.5"/>
+      <text x="0" y="4" text-anchor="middle" font-size="13" font-style="italic" fill="#7a6442">Here be wonders</text>
+    </g>
+    <g transform="translate(150,560)" opacity="0.88">
+      <path d="M-34 8 q20 -26 60 -14 q18 6 24 0 q-2 12 -16 14 q-30 12 -68 4 q-6 -4 0 -8 Z" fill="#8b9aa6" stroke="#5f6e79" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M28 -6 q10 4 12 12" fill="none" stroke="#5f6e79" stroke-width="2"/><circle cx="-22" cy="2" r="2" fill="#3a2c18"/>
+      <g stroke="#bcd7df" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.85"><path d="M30 -10 q-4 -14 4 -22 M30 -10 q4 -12 12 -16"/></g>
+      <path d="M-44 16 q12 -6 24 0" stroke="#7e978b" stroke-width="1.5" fill="none" opacity="0.7"/>
+    </g>
+    <g class="serpent-anim" transform="translate(1010,486)" opacity="0.92">
+      <g fill="none"><path d="M-6 30 q8 -4 16 0" stroke="#7e978b" stroke-width="2.4"/><path d="M64 30 q8 -4 16 0" stroke="#7e978b" stroke-width="2.4"/></g>
+      <path d="M-4 28 q10 -22 24 -6 q12 16 26 -4 q12 -18 26 2 q10 14 6 26" fill="none" stroke="#4f8a55" stroke-width="9" stroke-linecap="round"/>
+      <path d="M84 50 q12 -8 4 -22 q-10 -6 -16 2 q4 10 12 20 Z" fill="#5b9a60" stroke="#3f6b3a" stroke-width="2" stroke-linejoin="round"/>
+      <circle cx="80" cy="36" r="2.2" fill="#3a2c18"/><path d="M20 18 l-4 -12 8 6 Z M50 14 l-2 -12 8 6 Z" fill="#7cae7f" stroke="#3f6b3a" stroke-width="1.5"/>
+    </g>
+    <g class="ship-anim"><use href="#icon-ship" x="120" y="116" width="66" height="66" opacity="0.9"/><g stroke="#7e978b" stroke-width="1.5" fill="none" opacity="0.7"><path d="M120 186 q10 -5 20 0 q10 5 20 0"/></g></g>
+    <g class="ship-anim" style="animation-delay:-2s"><use href="#icon-ship" x="1004" y="120" width="54" height="54" transform="scale(-1,1) translate(-2062,0)" opacity="0.85"/><g stroke="#7e978b" stroke-width="1.4" fill="none" opacity="0.65"><path d="M1008 172 q9 -4 18 0 q9 4 18 0"/></g></g>
+    <g class="ship-anim" style="animation-delay:-4s"><use href="#icon-ship" x="430" y="730" width="48" height="48" opacity="0.8"/><g stroke="#7e978b" stroke-width="1.3" fill="none" opacity="0.6"><path d="M432 778 q8 -4 16 0"/></g></g>
+    <g class="ship-anim" style="animation-delay:-3s"><use href="#icon-ship" x="1086" y="540" width="44" height="44" opacity="0.78"/></g>
+    <g stroke="#6f7d74" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.7">
+      <path d="M250 130 q6 -5 12 0 q6 -5 12 0"/><path d="M280 142 q5 -4 10 0 q5 -4 10 0"/><path d="M232 150 q5 -4 10 0 q5 -4 10 0"/>
+      <path d="M1006 628 q5 -4 10 0 q5 -4 10 0"/><path d="M1030 640 q4 -3 8 0 q4 -3 8 0"/>
+    </g>
+    <g opacity="0.85"><ellipse cx="1100" cy="690" rx="22" ry="11" fill="url(#land)" stroke="#9c7e4a" stroke-width="1.8"/><path d="M1095 686 l10 8 M1105 686 l-10 8" stroke="#b1452f" stroke-width="2.4" stroke-linecap="round"/></g>
+
+    <!-- ====================== REGIONS (irregular hand-washes; distinct buildings) ====================== -->
+    <g class="region"><use class="glow" href="#splotch" transform="translate(320 268) scale(1.1 0.9) rotate(12)" fill="#e8cd82" filter="url(#wash)" opacity="0.5"/>
+      <g class="lift"><use href="#pine-a" x="304" y="226" width="34" height="44"/></g>
+      <text class="label" x="320" y="318" text-anchor="middle">Vale of Embergreen</text></g>
+
+    <g class="region"><use class="glow" href="#splotch" transform="translate(556 226) scale(0.82 0.72) rotate(-18)" fill="#e8cd82" filter="url(#wash)" opacity="0.34"/>
+      <use class="lift" href="#b-windmill" x="520" y="186" width="72" height="72"/>
+      <text class="label" x="556" y="276" text-anchor="middle">Goldfield March</text></g>
+
+    <g class="region"><use class="glow" href="#splotch" transform="translate(772 248) scale(0.92 0.8) rotate(8)" fill="#e8cd82" filter="url(#wash)" opacity="0.3"/>
+      <use class="lift" href="#b-castle" x="734" y="204" width="76" height="76"/>
+      <text class="label" x="772" y="302" text-anchor="middle">Sunmeadow Hold</text></g>
+
+    <g class="region"><use class="glow" href="#splotch" transform="translate(896 318) scale(1.4 0.95) rotate(-10)" fill="#e8cd82" filter="url(#wash)" opacity="0.4"/>
+      <g class="lift"></g>
+      <text class="label" x="896" y="374" text-anchor="middle">Crownspire Peaks</text></g>
+
+    <g class="region"><use class="glow" href="#splotch" transform="translate(300 452) scale(0.95 0.82) rotate(22)" fill="#e8cd82" filter="url(#wash)" opacity="0.46"/>
+      <use class="lift" href="#b-towerTall" x="268" y="408" width="64" height="68"/>
+      <text class="label" x="300" y="500" text-anchor="middle">Tide&#8217;s End</text></g>
+
+    <g class="region"><use class="glow" href="#splotch" transform="translate(838 452) scale(0.95 0.82) rotate(-26)" fill="#e8cd82" filter="url(#wash)" opacity="0.46"/>
+      <use class="lift" href="#b-towerRuin" x="806" y="412" width="64" height="64"/>
+      <text class="label" x="838" y="500" text-anchor="middle">Greymoor</text></g>
+
+    <g class="region"><use class="glow" href="#splotch" transform="translate(640 602) scale(1.0 0.82) rotate(14)" fill="#e8cd82" filter="url(#wash)" opacity="0.46"/>
+      <use class="lift" href="#b-chapel" x="606" y="566" width="68" height="68"/>
+      <text class="label" x="640" y="652" text-anchor="middle">Larkholt</text></g>
+
+    <g class="region"><use class="glow" href="#splotch" transform="translate(470 662) scale(0.9 0.78) rotate(-12)" fill="#e8cd82" filter="url(#wash)" opacity="0.42"/>
+      <use class="lift" href="#icon-marsh" x="438" y="628" width="64" height="64"/>
+      <text class="label small" x="470" y="708" text-anchor="middle">Quiet Fens</text></g>
+
+    <g class="region"><use class="lift" href="#icon-mist" x="956" y="330" width="64" height="64"/>
+      <text class="label small" x="988" y="392" text-anchor="middle">Mist Isles</text></g>
+
+    <text x="516" y="548" text-anchor="middle" font-size="11" font-style="italic" fill="#46707a" opacity="0.95" paint-order="stroke" stroke="#f7efd8" stroke-width="2.6">Heartmere</text>
+
+    <!-- ===== SETTLEMENTS — home is the heart: deeper green wash, hand-inked double ring, unique keep ===== -->
+    <g class="region">
+      <use class="glow" href="#splotch" transform="translate(600 432) scale(1.6 1.4) rotate(6)" fill="#86cf9b" filter="url(#wash)" opacity="0.4"/>
+      <g filter="url(#rough)" fill="none" stroke="#b9933a" stroke-linecap="round">
+        <path d="M548 428 C 544 396 576 374 606 376 C 642 378 664 408 660 442 C 656 476 624 496 592 491 C 558 486 545 456 551 430" stroke-width="3.6"/>
+        <path d="M556 438 C 554 410 580 392 606 394 C 638 396 654 422 651 450" stroke-width="1.6" opacity="0.6"/>
+      </g>
+      <use class="lift" href="#b-keep" x="560" y="388" width="80" height="80"/>
+      <text class="settlement-label" x="600" y="514" text-anchor="middle" paint-order="stroke" stroke="#f7efd8" stroke-width="4">Greenhaven Heartland</text>
+      <text x="600" y="532" text-anchor="middle" font-size="12" font-style="italic" fill="#7a6442">— your home —</text>
+    </g>
+
+    <g class="region">
+      <use class="glow" href="#splotch" transform="translate(270 562) scale(1.1 0.95) rotate(-8)" fill="#e8cd82" filter="url(#wash)" opacity="0.66"/>
+      <g filter="url(#rough)" fill="none" stroke="#b9933a" stroke-linecap="round">
+        <path d="M228 558 C 226 532 250 514 276 516 C 308 518 326 540 322 566 C 318 594 290 610 264 605 C 236 600 224 576 229 556" stroke-width="3.2"/>
+      </g>
+      <use class="lift" href="#icon-lighthouse" x="238" y="520" width="64" height="64"/>
+      <use href="#icon-anchor" x="296" y="566" width="34" height="34" opacity="0.85"/>
+      <text class="settlement-label" x="270" y="636" text-anchor="middle" paint-order="stroke" stroke="#f7efd8" stroke-width="4">Goldport Harbor</text>
+    </g>
+
+    <!-- ===== UNCHARTED ===== -->
+    <g class="region uncharted" opacity="0.72">
+      <path d="M165 645 C 150 622 185 600 220 612 C 258 624 262 668 232 686 C 200 704 178 678 165 645 Z" fill="none" stroke="#8a7a5c" stroke-width="2" stroke-dasharray="6 5" filter="url(#rough)"/>
+      <use href="#icon-mist" x="178" y="628" width="56" height="56" opacity="0.8"/>
+      <text class="label small" x="200" y="706" text-anchor="middle">The Ashlands</text>
+    </g>
+    <g class="region uncharted" opacity="0.62">
+      <use href="#icon-mist" x="1024" y="618" width="56" height="56" opacity="0.8"/>
+      <text class="label small" x="1052" y="690" text-anchor="middle">Beyond the Veil</text>
+    </g>
+
+    <!-- ===== ORNAMENT: gold-leaf double frame (sits inside the warm parchment mat band) ===== -->
+    <rect x="48" y="48" width="1104" height="724" rx="8" fill="none" stroke="url(#goldframe)" stroke-width="9"/>
+    <rect x="60" y="60" width="1080" height="700" rx="5" fill="none" stroke="#9c6a14" stroke-width="1.5" opacity="0.7"/>
+    <rect x="42" y="42" width="1116" height="736" rx="9" fill="none" stroke="#c98a1e" stroke-width="2" opacity="0.6"/>
+    <g fill="none" stroke="url(#goldframe)" stroke-width="3.5" stroke-linecap="round">
+      <path d="M68 94 q26 -26 52 0 M94 68 q-26 26 0 52"/><path d="M1132 94 q-26 -26 -52 0 M1106 68 q26 26 0 52"/>
+      <path d="M68 726 q26 26 52 0 M94 752 q-26 -26 0 -52"/><path d="M1132 726 q-26 26 -52 0 M1106 752 q26 -26 0 -52"/>
+    </g>
+
+    <!-- ===== TITLE CARTOUCHE ===== -->
+    <g>
+      <rect x="450" y="60" width="300" height="58" rx="8" fill="#efe3c4" stroke="url(#goldframe)" stroke-width="3" opacity="0.96"/>
+      <rect x="456" y="66" width="288" height="46" rx="5" fill="none" stroke="#c98a1e" stroke-width="1" opacity="0.6"/>
+      <text x="600" y="96" text-anchor="middle" font-size="30" font-weight="bold" letter-spacing="2" fill="#3a2c18">TERRA QUESTA</text>
+      <text x="600" y="111" text-anchor="middle" font-size="12" font-style="italic" fill="#7a6442">An Atlas of Your Realm</text>
+    </g>
+
+    <!-- ===== COMPASS ROSE (nudged up, clear of the frame) ===== -->
+    <use href="#icon-compass" x="84" y="606" width="112" height="112" opacity="0.92"/>
+
+    <!-- ===== SCALE BAR — hand-inked, wobbly segments + handwritten numerals ===== -->
+    <g transform="translate(498,712)" filter="url(#rough)">
+      <text x="100" y="-8" text-anchor="middle" font-size="12" font-style="italic" fill="#7a6442">Leagues</text>
+      <g stroke="#5b4427" stroke-width="1.4" stroke-linejoin="round">
+        <path d="M1 1 L35 0 L34 10 L0 9 Z" fill="#5b4427"/>
+        <path d="M35 0 L68 1 L69 10 L34 10 Z" fill="#f1e6c6"/>
+        <path d="M68 1 L103 0 L102 10 L69 10 Z" fill="#5b4427"/>
+        <path d="M103 0 L136 1 L137 10 L102 10 Z" fill="#f1e6c6"/>
+        <path d="M136 1 L171 0 L170 10 L137 10 Z" fill="#5b4427"/>
+        <path d="M171 0 L205 1 L204 11 L170 10 Z" fill="#f1e6c6"/>
+      </g>
+      <text x="0" y="24" text-anchor="middle" font-size="11" font-style="italic" fill="#6e5836">0</text>
+      <text x="102" y="23" text-anchor="middle" font-size="11" font-style="italic" fill="#6e5836">50</text>
+      <text x="205" y="24" text-anchor="middle" font-size="11" font-style="italic" fill="#6e5836">100</text>
+    </g>
+
+    <!-- ===== LEGEND (nudged up) ===== -->
+    <g transform="translate(908,622)">
+      <rect x="0" y="0" width="206" height="120" rx="7" fill="#efe3c4" stroke="url(#goldframe)" stroke-width="2.5" opacity="0.97"/>
+      <text x="103" y="20" text-anchor="middle" font-size="13" font-weight="bold" fill="#3a2c18">Legend</text>
+      <ellipse cx="20" cy="40" rx="10" ry="8" fill="#e8cd82" filter="url(#wash)"/><circle cx="20" cy="40" r="3.4" fill="#c98a1e"/>
+      <text x="36" y="44" font-size="12" fill="#4a3a23">Charted region</text>
+      <circle cx="20" cy="62" r="9" fill="none" stroke="#8a7a5c" stroke-width="1.5" stroke-dasharray="3 2"/>
+      <text x="36" y="66" font-size="12" fill="#4a3a23">Uncharted · misted</text>
+      <path d="M12 86 h16" stroke="#8a6a3e" stroke-width="2.4" stroke-dasharray="0.5 6" stroke-linecap="round"/>
+      <text x="36" y="90" font-size="12" fill="#4a3a23">Road between towns</text>
+      <path d="M12 108 q6 -4 12 0" stroke="#86a7ad" stroke-width="3" fill="none"/>
+      <text x="36" y="112" font-size="12" fill="#4a3a23">River · lake</text>
+    </g>
+  </svg>
+  </div>
+</body>
+</html>

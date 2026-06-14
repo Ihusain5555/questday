@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>QuestDay — The "Grade" Pipeline: Raw vs. Graded</title>
+<style>
+  /* OFFLINE / self-contained. No external fonts, images, or network. */
+  :root {
+    --emerald-deep: #10362a;
+    --emerald: #1f8a60;
+    --gold: #f5b938;
+    --cream: #f4ecd8;
+    --ink: #0b1f18;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+    color: #eaf3ee;
+    background:
+      radial-gradient(120% 90% at 50% -10%, #1a4d3a 0%, #123b2c 46%, #0a241c 100%) fixed;
+    min-height: 100vh;
+    padding: 40px 24px 80px;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+
+  header { text-align: center; margin-bottom: 14px; }
+  h1 {
+    font-size: 30px; margin: 0 0 6px;
+    color: #fff; letter-spacing: 0.2px;
+  }
+  h1 .accent { color: var(--gold); }
+  .sub { color: #bfe0cf; max-width: 760px; margin: 0 auto 8px; font-size: 15px; }
+
+  /* the Layer 1 -> Layer 2 explainer */
+  .flow {
+    display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+    margin: 18px auto 34px; max-width: 880px;
+  }
+  .pill {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(245,185,56,0.28);
+    border-radius: 12px; padding: 10px 14px; font-size: 13px;
+    flex: 1 1 240px; text-align: left;
+  }
+  .pill b { color: var(--gold); display: block; font-size: 12px; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 3px; }
+  .pill.moat { border-color: rgba(245,185,56,0.7); background: rgba(245,185,56,0.08); }
+  .arrow { align-self: center; color: var(--gold); font-size: 20px; flex: 0 0 auto; }
+
+  /* rows */
+  .row {
+    border-radius: 18px; padding: 20px 22px 24px;
+    margin-bottom: 22px;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+  }
+  .row.raw {
+    background: linear-gradient(180deg, #2a2f36 0%, #1c2026 100%);
+    border-color: rgba(255,255,255,0.12);
+  }
+  .row.graded { /* per-treatment background injected inline */ }
+
+  .rowhead { display: flex; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; }
+  .badge {
+    flex: 0 0 auto; font-weight: 700; font-size: 13px;
+    padding: 6px 12px; border-radius: 999px;
+    background: rgba(0,0,0,0.3); color: #fff; letter-spacing: 0.4px;
+  }
+  .row.raw .badge { background: #4a525c; }
+  .row.graded .badge { background: rgba(0,0,0,0.42); border: 1px solid rgba(245,185,56,0.5); }
+  .score { color: var(--gold); }
+  .titleblock { flex: 1 1 320px; min-width: 260px; }
+  .titleblock h2 { margin: 0 0 4px; font-size: 19px; color: #fff; }
+  .titleblock p { margin: 0; font-size: 13.5px; color: rgba(255,255,255,0.82); }
+  .swatches { display: flex; gap: 5px; margin-top: 10px; }
+  .sw { width: 22px; height: 22px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.25); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15); }
+
+  /* tile strip */
+  .strip { display: flex; gap: 14px; flex-wrap: wrap; }
+  .cell { width: 168px; }
+  .tile {
+    position: relative; width: 168px; height: 168px;
+    border-radius: 14px; overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15);
+  }
+  .tile .bldg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .tile .atmo { position: absolute; inset: 0; pointer-events: none; }
+  .cap { text-align: center; font-size: 12px; margin-top: 7px; color: rgba(255,255,255,0.7); }
+  .row.graded .cap { color: rgba(255,255,255,0.85); }
+
+  footer {
+    margin-top: 36px; padding: 22px 24px; border-radius: 16px;
+    background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 14px; color: #d6e8de;
+  }
+  footer h3 { margin: 0 0 10px; color: var(--gold); font-size: 16px; }
+  footer ul { margin: 0; padding-left: 20px; }
+  footer li { margin-bottom: 7px; }
+  .note { margin-top: 14px; font-size: 12.5px; color: #9fc2b1; font-style: italic; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>The <span class="accent">"Grade"</span> Pipeline — Raw vs. Graded</h1>
+    <p class="sub">Same five buildings, every time. The only thing that changes is whether the
+      QuestDay <b>Grade</b> is applied. This is the difference between "looks free" and "looks like it cost money."</p>
+  </header>
+
+  <div class="flow">
+    <div class="pill"><b>Layer 1 — Source</b>Grab free CC0 art (Kenney &amp; friends). Mismatched, plain, generic.</div>
+    <div class="arrow">&#10142;</div>
+    <div class="pill moat"><b>Layer 2 — Grade &#9733; the moat</b>One consistent treatment stamps every asset: re-color, light, shadow, atmosphere.</div>
+    <div class="arrow">&#10142;</div>
+    <div class="pill"><b>Layer 3 — Render</b>Your existing map + town views show the finished, cohesive world.</div>
+  </div>
+
+  <div id="rows"></div>
+
+  <footer>
+    <h3>What this proves</h3>
+    <ul>
+      <li><b>The assets are commodity; the Grade is the product.</b> Plain free buildings + one consistent treatment = a world that reads as a polished paid app.</li>
+      <li><b>One treatment, every asset.</b> Pick a direction below and it stamps the map, every building, and every future biome the same way &mdash; that's what keeps it cohesive as the app grows.</li>
+      <li><b>It runs offline, once, at build time.</b> The graded art ships as plain image files &mdash; <b>zero new app dependencies</b>, fully commercial-safe to ship in the installer.</li>
+    </ul>
+    <p class="note">Honesty note: these five buildings are stand-ins I drew in Kenney's flat style, deliberately plain so the Grade's effect is obvious. The real build grades Kenney's actual CC0 building PNGs the same way. The "raw" row is what dropping a free pack in with no treatment looks like.</p>
+  </footer>
+</div>
+
+<script>
+  // ---- data from the design workflow (top 3 of 6 graded directions) ----
+  var buildings = [
+    { name: "Cottage", svg: '<g><polygon points="128,150 200,108 200,150 128,192" fill="#8a7c6a"/><polygon points="128,150 56,108 56,150 128,192" fill="#a89784"/><polygon points="128,108 200,150 128,192 56,150" fill="#c4b6a4"/><polygon points="128,108 200,150 200,160 128,118" fill="#5a5a66"/><polygon points="128,108 56,150 56,160 128,118" fill="#5a5a66"/><polygon points="128,66 200,108 128,150 56,108" fill="#9aa3ad"/><polygon points="128,66 200,108 200,118 128,76" fill="#7e8893"/><polygon points="128,66 56,108 56,118 128,76" fill="#8c95a0"/><polygon points="172,124 188,133 188,150 172,141" fill="#6b6258"/><polygon points="96,142 108,149 108,168 96,161" fill="#6b6258"/></g>' },
+    { name: "Watchtower", svg: '<g><polygon points="128,150 176,122 176,150 128,178" fill="#7e7a72"/><polygon points="128,150 80,122 80,150 128,178" fill="#9a958c"/><polygon points="128,122 176,150 128,178 80,150" fill="#b4afa6"/><polygon points="128,122 176,94 176,122 128,150" fill="#7e7a72"/><polygon points="128,122 80,94 80,122 128,150" fill="#9a958c"/><polygon points="128,94 176,122 128,150 80,122" fill="#b4afa6"/><polygon points="128,84 168,107 128,130 88,107" fill="#c0bbb2"/><polygon points="88,107 168,107 168,118 128,141 88,118" fill="#8e897f"/><polygon points="152,99 162,105 162,113 152,107" fill="#6f6b62"/><polygon points="104,99 114,105 114,113 104,107" fill="#6f6b62"/><polygon points="128,72 168,95 128,118 88,95" fill="#6a4f3f"/><polygon points="88,95 168,95 168,103 128,126 88,103" fill="#503a2e"/></g>' },
+    { name: "Church", svg: '<g><polygon points="118,160 188,119 188,160 118,201" fill="#8f857a"/><polygon points="118,160 48,119 48,160 118,201" fill="#a89e92"/><polygon points="118,119 188,160 118,201 48,160" fill="#c2b8ac"/><polygon points="118,119 188,160 188,170 118,129" fill="#566069"/><polygon points="118,119 48,160 48,170 118,129" fill="#566069"/><polygon points="118,82 188,123 118,164 48,123" fill="#8e98a3"/><polygon points="118,82 188,123 188,133 118,92" fill="#727d88"/><polygon points="118,82 48,123 48,133 118,92" fill="#828d98"/><polygon points="150,128 168,138 168,160 150,150" fill="#5f574c"/><polygon points="150,128 158,123 158,145 150,150" fill="#4d463c"/><polygon points="168,104 192,90 192,124 168,138" fill="#6f6760"/><polygon points="168,104 144,90 144,124 168,138" fill="#857c73"/><polygon points="168,76 192,90 168,104 144,90" fill="#9a9189"/><polygon points="168,52 192,66 168,80 144,66" fill="#5a4738"/><polygon points="168,38 168,52 156,59 156,45" fill="#3f3128"/><polygon points="168,38 168,52 180,59 180,45" fill="#4a3a2e"/><polygon points="168,30 156,45 180,45" fill="#7a6a55"/></g>' },
+    { name: "Market Stall", svg: '<g><polygon points="128,166 184,134 184,150 128,182" fill="#7a6a54"/><polygon points="128,166 72,134 72,150 128,182" fill="#94836b"/><polygon points="128,134 184,166 128,198 72,166" fill="#ad9c80"/><polygon points="80,138 86,141 86,180 80,177" fill="#5e4f3c"/><polygon points="170,138 176,141 176,180 170,177" fill="#5e4f3c"/><polygon points="128,114 184,146 184,150 128,118" fill="#5e4f3c"/><polygon points="128,114 72,146 72,150 128,118" fill="#5e4f3c"/><polygon points="128,94 196,133 184,140 128,108 72,140 60,133" fill="#b6543f"/><polygon points="128,94 196,133 184,140 128,108" fill="#9c4636"/><polygon points="128,94 60,133 72,140 128,108" fill="#c75f48"/><polygon points="196,133 184,140 184,150 196,143" fill="#7e3a2c"/><polygon points="60,133 72,140 72,150 60,143" fill="#7e3a2c"/><polygon points="108,150 128,161 128,176 108,165" fill="#caa85f"/><polygon points="148,150 130,160 130,175 148,165" fill="#a98744"/></g>' },
+    { name: "Wall &amp; Gate", svg: '<g><polygon points="40,158 96,126 96,162 40,194" fill="#8a857c"/><polygon points="40,122 96,154 96,162 40,130" fill="#aaa49a"/><polygon points="96,126 40,158 40,122 96,90" fill="#7d786f"/><polygon points="40,122 96,90 96,126 40,158" fill="#7d786f"/><polygon points="40,90 96,122 96,126 40,94" fill="#bdb7ac"/><polygon points="40,90 96,122 40,154 -16,122" fill="#bdb7ac"/><polygon points="160,166 216,134 216,170 160,202" fill="#8a857c"/><polygon points="160,98 216,130 160,162 104,130" fill="#bdb7ac"/><polygon points="160,162 216,130 216,170 160,202" fill="#7d786f"/><polygon points="160,162 104,130 104,170 160,202" fill="#8a857c"/><polygon points="128,144 160,162 160,196 128,178" fill="#4a4640"/><polygon points="160,162 192,144 192,178 160,196" fill="#3c3934"/><polygon points="128,144 160,126 192,144 160,162" fill="#56524b"/></g>' }
+  ];
+
+  var raw = {
+    label: "RAW",
+    title: "Free CC0 asset, dropped in as-is",
+    desc: "What a free pack looks like with no treatment: flat, cool, slightly mismatched colors that read as generic clip-art.",
+    pageBg: "linear-gradient(180deg, #2a2f36 0%, #1c2026 100%)",
+    tileBg: "linear-gradient(180deg, #e9ebee 0%, #cfd4da 100%)",
+    filter: "none",
+    atmo: "none",
+    swatches: []
+  };
+
+  var treatments = [
+    {
+      label: "GRADE A", score: 34,
+      title: "Warm Storybook Parchment",
+      desc: "Every building lands on the same warm aged page under one low golden sun. Mismatched colors melt into a parchment-and-honey family — cozy hand-illustrated picture-book.",
+      pageBg: "linear-gradient(165deg, #1c5440 0%, #10362a 48%, #0a241c 100%)",
+      tileBg: "radial-gradient(120% 92% at 50% 18%, #f7f0dd 0%, #efe3c4 38%, #e7d8b0 70%, #d8c290 100%)",
+      filter: "sepia(0.62) saturate(1.45) hue-rotate(-12deg) brightness(1.08) contrast(1.06) drop-shadow(3px 5px 5px rgba(122, 100, 66, 0.45))",
+      atmo: "radial-gradient(140% 100% at 32% 8%, rgba(255, 240, 200, 0.30) 0%, rgba(255, 226, 160, 0.10) 26%, rgba(0, 0, 0, 0) 52%), radial-gradient(160% 130% at 50% 116%, rgba(122, 100, 66, 0.34) 0%, rgba(122, 100, 66, 0.12) 30%, rgba(0, 0, 0, 0) 62%)",
+      swatches: ["#f4ecd8","#efe3c4","#e7d8b0","#f4d77a","#c98a1e","#7a6442"]
+    },
+    {
+      label: "GRADE B", score: 33,
+      title: "Premium Emerald &amp; Gold",
+      desc: "The signature brand grade: deep jewel-toned emerald base with a warm gold rim-light and shadow. Any flat asset is re-painted into one expensive treasure-chest set.",
+      pageBg: "radial-gradient(120% 100% at 50% 0%, #1a4d3a 0%, #123b2c 45%, #0c2a20 100%)",
+      tileBg: "radial-gradient(75% 75% at 50% 32%, rgba(245,185,56,0.18) 0%, rgba(47,179,128,0.22) 38%, rgba(31,138,96,0.30) 70%, rgba(16,54,42,0.45) 100%)",
+      filter: "sepia(0.55) hue-rotate(96deg) saturate(1.85) brightness(1.06) contrast(1.12) drop-shadow(0 7px 9px rgba(16,54,42,0.50)) drop-shadow(0 2px 0 rgba(245,185,56,0.22))",
+      atmo: "radial-gradient(130% 95% at 50% 8%, rgba(255,207,92,0.16) 0%, rgba(245,185,56,0.06) 26%, rgba(0,0,0,0) 58%), radial-gradient(140% 120% at 50% 100%, rgba(8,28,21,0.55) 0%, rgba(8,28,21,0.18) 40%, rgba(0,0,0,0) 72%)",
+      swatches: ["#10362a","#1f8a60","#2fb380","#f5b938","#ffcf5c","#f4ecd8"]
+    },
+    {
+      label: "GRADE C", score: 32,
+      title: "Atmospheric Painterly Dusk",
+      desc: "Each building lit by the last hour of sunlight — honeyed golds, long soft shadows, a gentle haze and vignette pulling your eye in. Cinematic, hand-painted depth.",
+      pageBg: "linear-gradient(180deg, #1a4536 0%, #16382b 45%, #10362a 100%)",
+      tileBg: "radial-gradient(ellipse 120% 90% at 50% 32%, #f6e2b0 0%, #e8c585 38%, #c79a55 68%, #8f6a3a 100%)",
+      filter: "sepia(0.55) hue-rotate(-12deg) saturate(1.45) brightness(1.04) contrast(1.06) drop-shadow(14px 10px 10px rgba(20, 48, 36, 0.45))",
+      atmo: "radial-gradient(ellipse 95% 75% at 50% 40%, rgba(255, 214, 130, 0.22) 0%, rgba(240, 192, 80, 0.08) 34%, rgba(16, 54, 42, 0.0) 58%, rgba(12, 38, 28, 0.42) 88%, rgba(8, 26, 20, 0.6) 100%)",
+      swatches: ["#f0c050","#d4af37","#e8a04b","#a8632a","#0f5132","#10362a"]
+    }
+  ];
+
+  function tile(b, t) {
+    var atmo = (t.atmo && t.atmo !== "none")
+      ? '<div class="atmo" style="background:' + t.atmo + '"></div>' : '';
+    var filt = (t.filter && t.filter !== "none") ? 'filter:' + t.filter + ';' : '';
+    return '<div class="cell">' +
+      '<div class="tile" style="background:' + t.tileBg + '">' +
+        '<svg class="bldg" viewBox="0 0 256 256" style="' + filt + '">' + b.svg + '</svg>' +
+        atmo +
+      '</div>' +
+      '<div class="cap">' + b.name + '</div>' +
+    '</div>';
+  }
+
+  function swatchHTML(arr) {
+    if (!arr || !arr.length) return '';
+    var s = '<div class="swatches">';
+    for (var i = 0; i < arr.length; i++) s += '<span class="sw" style="background:' + arr[i] + '"></span>';
+    return s + '</div>';
+  }
+
+  function row(t, cls) {
+    var strip = '';
+    for (var i = 0; i < buildings.length; i++) strip += tile(buildings[i], t);
+    var scoreHTML = t.score ? ' <span class="score">' + t.score + '/40</span>' : '';
+    return '<div class="row ' + cls + '" style="background:' + t.pageBg + '">' +
+      '<div class="rowhead">' +
+        '<span class="badge">' + t.label + scoreHTML + '</span>' +
+        '<div class="titleblock">' +
+          '<h2>' + t.title + '</h2>' +
+          '<p>' + t.desc + '</p>' +
+          swatchHTML(t.swatches) +
+        '</div>' +
+      '</div>' +
+      '<div class="strip">' + strip + '</div>' +
+    '</div>';
+  }
+
+  var html = row(raw, 'raw');
+  for (var i = 0; i < treatments.length; i++) html += row(treatments[i], 'graded');
+  document.getElementById('rows').innerHTML = html;
+</script>
+</body>
+</html>

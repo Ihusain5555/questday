@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>QuestDay — Your Realm (concept mockup)</title>
+<style>
+  /* ============================================================
+     QuestDay — Your Realm  (offline concept mockup)
+     Hand-drawn isometric storybook diorama.
+     All art is CSS + inline SVG. No CDNs, no fonts, no images.
+     ============================================================ */
+
+  :root{
+    --emerald:        #10362a;
+    --emerald-deep:   #0a241c;
+    --emerald-light:  #1c5440;
+    --emerald-glass:  rgba(28,84,64,.55);
+    --gold:           #f4d77a;
+    --gold-deep:      #c9a44e;
+    --gold-soft:      #fbeec0;
+    --parchment:      #f5ecd7;
+    --parchment-2:    #efe3c4;
+    --parchment-edge: #e2d2a6;
+    --ink:            #3a3322;
+    --ink-soft:       #6c6042;
+
+    --grass-1:        #7fb24f;
+    --grass-2:        #6aa03f;
+    --grass-side:     #4f8330;
+    --grass-deep:     #3f6a26;
+
+    --serif: Georgia, 'Times New Roman', 'Iowan Old Style', serif;
+    --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+    --tileW: 120px;
+    --tileH: 60px;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    font-family:var(--sans);
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 700px at 70% -10%, #1c5440 0%, transparent 60%),
+      radial-gradient(900px 600px at 10% 110%, #0a241c 0%, transparent 55%),
+      linear-gradient(160deg, #0d2c22 0%, #10362a 45%, #0a241c 100%);
+    background-attachment:fixed;
+    min-height:100vh;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* faint paper grain over the whole chrome */
+  body::before{
+    content:"";
+    position:fixed; inset:0; pointer-events:none; z-index:0;
+    opacity:.05; mix-blend-mode:overlay;
+    background-image:
+      repeating-linear-gradient(45deg, #fff 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(-45deg, #000 0 1px, transparent 1px 4px);
+  }
+
+  /* ---------------- TITLE BAR ---------------- */
+  .titlebar{
+    position:relative; z-index:5;
+    height:46px;
+    display:flex; align-items:center; gap:12px;
+    padding:0 18px;
+    background:linear-gradient(180deg, #14402f 0%, #10362a 60%, #0c2c21 100%);
+    border-bottom:1px solid rgba(244,215,122,.28);
+    box-shadow:0 2px 14px rgba(0,0,0,.4);
+  }
+  .crest{
+    width:26px; height:26px; flex:none;
+    display:grid; place-items:center;
+    border-radius:6px;
+    background:radial-gradient(circle at 35% 30%, #fbeec0, var(--gold) 55%, var(--gold-deep));
+    box-shadow:0 0 0 1px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.35), inset 0 1px 2px rgba(255,255,255,.6);
+    color:#5a3b12; font-family:var(--serif); font-weight:bold; font-size:15px;
+  }
+  .titlebar h1{
+    margin:0; font-family:var(--serif); font-weight:600;
+    font-size:16px; letter-spacing:.4px; color:var(--gold-soft);
+    text-shadow:0 1px 1px rgba(0,0,0,.5);
+  }
+  .titlebar h1 .dim{ color:#9dc3ad; font-weight:400; font-style:italic; font-size:14px; }
+  .titlebar .spacer{ flex:1; }
+  .winbtns{ display:flex; gap:9px; }
+  .winbtns i{ width:12px; height:12px; border-radius:50%; display:block; box-shadow:inset 0 0 0 1px rgba(0,0,0,.2); }
+  .winbtns i:nth-child(1){ background:#f6c453; }
+  .winbtns i:nth-child(2){ background:#7fb24f; }
+  .winbtns i:nth-child(3){ background:#e07a5f; }
+
+  /* ---------------- LAYOUT ---------------- */
+  .shell{
+    position:relative; z-index:3;
+    display:grid;
+    grid-template-columns: 1fr 332px;
+    gap:20px;
+    padding:20px;
+    max-width:1640px; margin:0 auto;
+  }
+  @media (max-width:1080px){
+    .shell{ grid-template-columns:1fr; }
+  }
+
+  /* ---------------- STAGE +PROGRESS HEADER ---------------- */
+  .stagebar{
+    grid-column:1 / -1;
+    display:flex; align-items:center; gap:18px;
+    padding:14px 20px;
+    border-radius:16px;
+    background:linear-gradient(180deg, var(--parchment) 0%, var(--parchment-2) 100%);
+    border:1px solid var(--parchment-edge);
+    box-shadow:0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.6);
+    position:relative; overflow:hidden;
+  }
+  .stagebar::after{ /* gold hairline */
+    content:""; position:absolute; inset:4px; border-radius:12px;
+    border:1px solid rgba(201,164,78,.35); pointer-events:none;
+  }
+  .stage-emblem{
+    width:54px; height:54px; flex:none; border-radius:12px;
+    display:grid; place-items:center;
+    background:radial-gradient(circle at 35% 28%, #fff6d8, var(--gold) 60%, var(--gold-deep));
+    box-shadow:0 4px 12px rgba(120,80,10,.35), inset 0 1px 2px rgba(255,255,255,.7);
+    color:#5a3b12;
+  }
+  .stage-emblem svg{ width:30px; height:30px; }
+  .stage-text{ display:flex; flex-direction:column; gap:3px; min-width:230px; }
+  .stage-text .eyebrow{
+    font-size:10.5px; letter-spacing:2.5px; text-transform:uppercase;
+    color:var(--ink-soft); font-weight:700;
+  }
+  .stage-text .name{
+    font-family:var(--serif); font-size:26px; font-weight:700; line-height:1;
+    color:var(--emerald); text-shadow:0 1px 0 rgba(255,255,255,.5);
+  }
+  .progress-wrap{ flex:1; display:flex; flex-direction:column; gap:6px; min-width:180px; }
+  .progress-label{ display:flex; justify-content:space-between; font-size:12px; color:var(--ink-soft); font-weight:600; }
+  .progress-label b{ color:var(--emerald); }
+  .progress-track{
+    height:16px; border-radius:10px;
+    background:linear-gradient(180deg,#d8c79b,#cdb98a);
+    box-shadow:inset 0 2px 4px rgba(90,70,30,.4), inset 0 -1px 0 rgba(255,255,255,.4);
+    overflow:hidden; position:relative;
+  }
+  .progress-fill{
+    height:100%; width:0%;
+    border-radius:10px;
+    background:linear-gradient(180deg,#fbeec0 0%, var(--gold) 45%, var(--gold-deep) 100%);
+    box-shadow:0 0 12px rgba(244,215,122,.7), inset 0 1px 0 rgba(255,255,255,.7);
+    transition:width .6s cubic-bezier(.22,1,.36,1);
+    position:relative;
+  }
+  .progress-fill::after{ /* sheen */
+    content:""; position:absolute; inset:0;
+    background:repeating-linear-gradient(115deg, rgba(255,255,255,.25) 0 8px, transparent 8px 18px);
+    opacity:.5;
+  }
+  /* level crest, intentionally tiny */
+  .lv-crest{
+    flex:none; display:flex; align-items:center; gap:7px;
+    padding:6px 11px 6px 8px; border-radius:30px;
+    background:linear-gradient(180deg,#16402f,#0d2a20);
+    border:1px solid rgba(244,215,122,.45);
+    box-shadow:0 3px 8px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  .lv-crest .shield{
+    width:20px; height:20px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #fff6d8, var(--gold) 60%, var(--gold-deep));
+    display:grid; place-items:center; color:#5a3b12; font-size:9px; font-weight:bold; font-family:var(--serif);
+  }
+  .lv-crest .lvtxt{ color:var(--gold-soft); font-size:12px; font-weight:700; font-family:var(--serif); letter-spacing:.5px; }
+  .lv-crest .lvtxt small{ color:#8fb6a2; font-weight:400; }
+
+  /* ---------------- INTRO CARD ---------------- */
+  .intro{
+    grid-column:1 / -1;
+    display:flex; align-items:flex-start; gap:14px;
+    padding:16px 18px;
+    border-radius:14px;
+    background:
+      linear-gradient(180deg, #fbf4e2 0%, var(--parchment-2) 100%);
+    border:1px solid var(--parchment-edge);
+    box-shadow:0 8px 22px rgba(0,0,0,.28);
+    position:relative;
+    animation:dropIn .6s cubic-bezier(.22,1,.36,1) both;
+  }
+  .intro .seal{
+    width:40px;height:40px;flex:none;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #ffe9a8, #d9534f 75%, #9c2b27);
+    box-shadow:0 2px 6px rgba(0,0,0,.3), inset 0 2px 3px rgba(255,255,255,.4);
+    display:grid;place-items:center;color:#fff;font-family:var(--serif);font-size:18px;
+  }
+  .intro p{ margin:0; font-size:13.5px; line-height:1.55; color:var(--ink); }
+  .intro p b{ color:var(--emerald); }
+  .intro .try{ color:var(--ink-soft); font-style:italic; }
+  .intro .x{
+    position:absolute; top:8px; right:10px;
+    width:24px;height:24px;border:none;border-radius:50%;cursor:pointer;
+    background:rgba(58,51,34,.08); color:var(--ink-soft); font-size:15px; line-height:1;
+    transition:.15s;
+  }
+  .intro .x:hover{ background:rgba(58,51,34,.18); transform:rotate(90deg); }
+
+  /* ---------------- SCENE STAGE ---------------- */
+  .scene-card{
+    position:relative;
+    border-radius:18px;
+    overflow:hidden;
+    border:1px solid rgba(244,215,122,.22);
+    box-shadow:0 18px 50px rgba(0,0,0,.45), inset 0 0 0 1px rgba(0,0,0,.2);
+    min-height:560px;
+    background:#bfe2ef;
+    transition:filter .8s ease, background .8s ease;
+  }
+  /* SKY layers */
+  .sky{
+    position:absolute; inset:0; z-index:0;
+    background:
+      radial-gradient(120% 80% at 50% 120%, #cdeec2 0%, transparent 60%),
+      linear-gradient(180deg, #bfe2ef 0%, #d8f0e6 55%, #cfe9b9 100%);
+    transition:background 1.1s ease;
+  }
+  .scene-card.night .sky{
+    background:
+      radial-gradient(120% 80% at 50% 120%, #14342a 0%, transparent 65%),
+      linear-gradient(180deg, #0d1f3a 0%, #18324f 50%, #20402f 100%);
+  }
+  .scene-card.resting{ filter:saturate(.55) brightness(.86); }
+
+  /* sun / moon */
+  .celestial{
+    position:absolute; top:42px; right:80px; z-index:1;
+    width:62px; height:62px; border-radius:50%;
+    background:radial-gradient(circle at 38% 35%, #fff6cf, #ffe27a 60%, #ffca3a);
+    box-shadow:0 0 50px 14px rgba(255,226,122,.6);
+    transition:all 1.1s ease;
+  }
+  .scene-card.night .celestial{
+    top:36px; right:120px; width:46px; height:46px;
+    background:radial-gradient(circle at 38% 35%, #fdfdf4, #d7e2ef 65%, #aab8cc);
+    box-shadow:0 0 40px 8px rgba(190,205,230,.45);
+  }
+  /* clouds */
+  .cloud{
+    position:absolute; z-index:1; pointer-events:none;
+    background:rgba(255,255,255,.85); border-radius:40px;
+    filter:blur(.5px);
+    box-shadow:30px 6px 0 -4px rgba(255,255,255,.85), -28px 8px 0 -6px rgba(255,255,255,.8);
+  }
+  .scene-card.night .cloud{ background:rgba(120,140,170,.32); box-shadow:30px 6px 0 -4px rgba(120,140,170,.3), -28px 8px 0 -6px rgba(120,140,170,.28); }
+  .cloud.c1{ width:90px; height:26px; top:70px; left:-120px; animation:drift 46s linear infinite; }
+  .cloud.c2{ width:64px; height:20px; top:120px; left:-90px; animation:drift 64s linear infinite; animation-delay:-20s; }
+  .cloud.c3{ width:110px; height:30px; top:48px; left:-150px; animation:drift 80s linear infinite; animation-delay:-50s; }
+  @keyframes drift{ from{ transform:translateX(0);} to{ transform:translateX(calc(100% + 1200px)); } }
+
+  /* stars at night */
+  .stars{ position:absolute; inset:0; z-index:1; opacity:0; transition:opacity 1.1s ease; pointer-events:none; }
+  .scene-card.night .stars{ opacity:1; }
+  .star{ position:absolute; width:2px; height:2px; border-radius:50%; background:#fff; box-shadow:0 0 4px 1px rgba(255,255,255,.8); animation:twinkle 3.5s ease-in-out infinite; }
+
+  @keyframes twinkle{ 0%,100%{opacity:.25;} 50%{opacity:1;} }
+
+  /* ground plane that holds the iso world */
+  .world{
+    position:absolute; inset:0; z-index:2;
+    display:grid; place-items:center;
+    transition:transform .7s cubic-bezier(.22,1,.36,1);
+  }
+  .iso{
+    position:relative;
+    width:var(--tileW); height:var(--tileH);
+    transform: translateY(40px) scale(1.04);
+    transition:transform .7s cubic-bezier(.22,1,.36,1);
+  }
+  .iso.zoomcele{ animation:celeZoom 1.4s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes celeZoom{ 0%{transform:translateY(40px) scale(1.04);} 35%{transform:translateY(34px) scale(1.12);} 100%{transform:translateY(40px) scale(1.04);} }
+
+  /* an iso tile = a diamond; we draw the grass plot as a big diamond */
+  .ground{
+    position:absolute; left:50%; top:50%;
+    transform:translate(-50%,-50%);
+    z-index:1;
+  }
+
+  /* placed objects are absolutely positioned & set via JS left/top */
+  .obj{ position:absolute; transform-origin:50% 100%; }
+  .obj .pop{ animation:rise .55s cubic-bezier(.22,1.4,.4,1) both; }
+  @keyframes rise{
+    0%{ transform:translateY(26px) scale(.3); opacity:0; }
+    60%{ transform:translateY(-4px) scale(1.05); opacity:1; }
+    100%{ transform:translateY(0) scale(1); opacity:1; }
+  }
+  /* dust puff on placement */
+  .puff{
+    position:absolute; left:50%; bottom:2px; width:48px; height:18px;
+    transform:translateX(-50%);
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(230,215,170,.85), transparent 70%);
+    animation:puff .6s ease-out forwards; pointer-events:none;
+  }
+  @keyframes puff{ 0%{opacity:.9; transform:translateX(-50%) scale(.4);} 100%{opacity:0; transform:translateX(-50%) scale(1.6);} }
+
+  /* feature buildings: dragging cursor */
+  .obj.feature{ cursor:pointer; }
+  .obj.draggable{ cursor:grab; }
+  .obj.dragging{ cursor:grabbing; z-index:9999 !important; filter:drop-shadow(0 14px 10px rgba(0,0,0,.35)); }
+
+  /* gold pin banner over feature buildings */
+  .pin{
+    position:absolute; left:50%; transform:translateX(-50%);
+    top:-18px; white-space:nowrap; z-index:5;
+    font-family:var(--serif); font-size:10.5px; font-weight:700; letter-spacing:.3px;
+    color:#5a3b12;
+    padding:3px 9px; border-radius:7px;
+    background:linear-gradient(180deg,#fff3cf,var(--gold) 70%, var(--gold-deep));
+    box-shadow:0 3px 7px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.7);
+    pointer-events:none;
+    animation:bob 3.4s ease-in-out infinite;
+  }
+  .pin::after{ /* little flagpole notch */
+    content:""; position:absolute; left:50%; bottom:-5px; transform:translateX(-50%);
+    border-left:5px solid transparent; border-right:5px solid transparent; border-top:6px solid var(--gold-deep);
+  }
+  @keyframes bob{ 0%,100%{ transform:translateX(-50%) translateY(0);} 50%{ transform:translateX(-50%) translateY(-3px);} }
+
+  /* smoke */
+  .smoke{ position:absolute; width:8px; height:8px; border-radius:50%;
+    background:rgba(255,255,255,.5); pointer-events:none;
+    animation:smoke 4s ease-in infinite; }
+  @keyframes smoke{
+    0%{ transform:translate(0,0) scale(.5); opacity:0; }
+    20%{ opacity:.6; }
+    100%{ transform:translate(-14px,-54px) scale(2.4); opacity:0; }
+  }
+  /* night windows */
+  .win-glow{ opacity:0; transition:opacity 1s ease; }
+  .scene-card.night .win-glow{ opacity:1; }
+
+  /* bonfire flame element scales via --flame */
+  .flame-svg{ transition:transform .5s cubic-bezier(.34,1.56,.64,1); }
+
+  /* compass / hint chips bottom-left of scene */
+  .scene-hint{
+    position:absolute; left:14px; bottom:12px; z-index:6;
+    display:flex; gap:8px; flex-wrap:wrap;
+    font-size:11px;
+  }
+  .chip{
+    background:rgba(13,42,32,.72); color:#dce9df;
+    border:1px solid rgba(244,215,122,.3);
+    padding:4px 10px; border-radius:20px; backdrop-filter:blur(2px);
+    font-weight:600; letter-spacing:.2px;
+  }
+  .chip b{ color:var(--gold); }
+
+  /* resting overlay note */
+  .rest-note{
+    position:absolute; left:50%; top:18px; transform:translateX(-50%);
+    z-index:7; opacity:0; pointer-events:none;
+    background:rgba(13,42,32,.85); color:var(--gold-soft);
+    border:1px solid rgba(244,215,122,.4);
+    padding:8px 16px; border-radius:24px; font-size:12.5px; font-weight:600;
+    box-shadow:0 6px 18px rgba(0,0,0,.4);
+    transition:opacity .6s ease;
+    font-family:var(--serif);
+  }
+  .scene-card.resting .rest-note{ opacity:1; }
+
+  /* ---------------- CELEBRATION BANNERS ---------------- */
+  .toast-zone{
+    position:absolute; left:50%; top:46%; transform:translateX(-50%);
+    z-index:40; pointer-events:none; width:max-content;
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+  }
+  .toast{
+    font-family:var(--serif); font-weight:700;
+    padding:10px 22px; border-radius:30px;
+    background:linear-gradient(180deg,#16402f,#0c2c21);
+    color:var(--gold-soft); border:1px solid rgba(244,215,122,.5);
+    box-shadow:0 10px 26px rgba(0,0,0,.45);
+    font-size:14px; letter-spacing:.3px;
+    animation:toastPop 1.8s cubic-bezier(.22,1,.36,1) forwards;
+  }
+  @keyframes toastPop{
+    0%{ transform:translateY(14px) scale(.85); opacity:0; }
+    14%{ transform:translateY(0) scale(1); opacity:1; }
+    78%{ transform:translateY(0) scale(1); opacity:1; }
+    100%{ transform:translateY(-22px) scale(.96); opacity:0; }
+  }
+
+  /* big stage-up banner */
+  .stage-up{
+    position:absolute; inset:0; z-index:60; display:grid; place-items:center;
+    pointer-events:none; opacity:0;
+  }
+  .stage-up.show{ animation:stageFlash 2.6s ease forwards; }
+  @keyframes stageFlash{ 0%{opacity:0;} 8%{opacity:1;} 80%{opacity:1;} 100%{opacity:0;} }
+  .stage-up .glow{
+    position:absolute; inset:0;
+    background:radial-gradient(circle at 50% 55%, rgba(244,215,122,.45), transparent 55%);
+  }
+  .stage-up .ribbon{
+    position:relative;
+    font-family:var(--serif); font-size:28px; font-weight:700; text-align:center;
+    color:#5a3b12;
+    padding:18px 46px; border-radius:14px;
+    background:linear-gradient(180deg,#fff6d8, var(--gold) 60%, var(--gold-deep));
+    box-shadow:0 16px 40px rgba(0,0,0,.5), inset 0 2px 0 rgba(255,255,255,.7);
+    transform:scale(.9);
+  }
+  .stage-up.show .ribbon{ animation:ribbonIn 2.6s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes ribbonIn{ 0%{transform:scale(.6) rotate(-3deg);} 16%{transform:scale(1.04) rotate(0);} 100%{transform:scale(1);} }
+  .stage-up .ribbon small{ display:block; font-size:13px; font-weight:400; color:#6a481a; margin-top:4px; letter-spacing:1px; text-transform:uppercase; }
+
+  /* confetti */
+  .confetti{ position:absolute; width:9px; height:14px; z-index:61; top:40%; opacity:0; pointer-events:none; }
+  .confetti.go{ animation:fall 2.2s ease-in forwards; }
+  @keyframes fall{
+    0%{ opacity:1; transform:translateY(0) rotate(0); }
+    100%{ opacity:0; transform:translateY(360px) rotate(720deg); }
+  }
+
+  /* ---------------- CONTROL PANEL ---------------- */
+  .panel{
+    align-self:start;
+    display:flex; flex-direction:column; gap:16px;
+    position:sticky; top:20px;
+  }
+  .card{
+    border-radius:16px;
+    background:linear-gradient(180deg, var(--parchment) 0%, var(--parchment-2) 100%);
+    border:1px solid var(--parchment-edge);
+    box-shadow:0 12px 30px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.6);
+    padding:16px;
+    position:relative;
+  }
+  .card h2{
+    margin:0 0 12px; font-family:var(--serif); font-size:15px; color:var(--emerald);
+    display:flex; align-items:center; gap:8px;
+    padding-bottom:9px; border-bottom:1px solid rgba(201,164,78,.4);
+  }
+  .card h2 .ic{ width:18px;height:18px; color:var(--gold-deep); }
+  .card h2 .ic svg{ width:18px; height:18px; display:block; }
+
+  .qbtns{ display:flex; flex-direction:column; gap:9px; }
+  .qbtn{
+    display:flex; align-items:center; gap:11px; text-align:left;
+    border:none; cursor:pointer; width:100%;
+    padding:11px 13px; border-radius:11px;
+    font-family:var(--sans); font-weight:700; font-size:13.5px; color:#fff;
+    box-shadow:0 4px 10px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.25);
+    transition:transform .12s ease, box-shadow .12s ease, filter .12s;
+    position:relative; overflow:hidden;
+  }
+  .qbtn:hover{ transform:translateY(-2px); box-shadow:0 8px 18px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.3); }
+  .qbtn:active{ transform:translateY(0) scale(.98); }
+  .qbtn .dot{ width:30px;height:30px;flex:none;border-radius:9px;display:grid;place-items:center;background:rgba(255,255,255,.18); }
+  .qbtn .dot svg{ width:18px;height:18px; }
+  .qbtn .meta{ display:flex; flex-direction:column; gap:1px; }
+  .qbtn .meta small{ font-weight:500; font-size:11px; opacity:.85; }
+  .qbtn.easy{ background:linear-gradient(180deg,#7fb24f,#5d8e36); }
+  .qbtn.med{  background:linear-gradient(180deg,#3f8f6e,#226b4f); }
+  .qbtn.hard{ background:linear-gradient(180deg,#b6863c,#8a5f22); }
+
+  .row{ display:flex; gap:9px; }
+  .row .ctlbtn{ flex:1; }
+  .ctlbtn{
+    cursor:pointer; border:1px solid rgba(201,164,78,.45);
+    background:linear-gradient(180deg,#fbf4e2,#ece0bf);
+    color:var(--emerald); font-weight:700; font-size:12.5px;
+    padding:10px 8px; border-radius:10px;
+    box-shadow:0 3px 8px rgba(0,0,0,.14), inset 0 1px 0 rgba(255,255,255,.7);
+    transition:.13s; display:flex; align-items:center; justify-content:center; gap:7px;
+    font-family:var(--sans);
+  }
+  .ctlbtn:hover{ transform:translateY(-2px); border-color:var(--gold-deep); background:linear-gradient(180deg,#fff7e4,#f1e6c6); }
+  .ctlbtn:active{ transform:translateY(0); }
+  .ctlbtn svg{ width:15px; height:15px; }
+  .ctlbtn.dark{
+    background:linear-gradient(180deg,#16402f,#0d2a20); color:var(--gold-soft);
+    border-color:rgba(244,215,122,.4);
+  }
+  .ctlbtn.dark:hover{ background:linear-gradient(180deg,#1c5440,#123a2c); }
+  .ctlbtn.active{
+    background:linear-gradient(180deg,var(--gold),var(--gold-deep)); color:#5a3b12;
+    border-color:var(--gold-deep);
+    box-shadow:0 0 12px rgba(244,215,122,.5), inset 0 1px 0 rgba(255,255,255,.6);
+  }
+
+  /* bonfire / streak block */
+  .streak-row{ display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+  .streak-fire{
+    width:58px; height:64px; flex:none; position:relative;
+    display:grid; place-items:end center;
+  }
+  .streak-meta{ display:flex; flex-direction:column; gap:2px; }
+  .streak-meta .big{ font-family:var(--serif); font-size:24px; font-weight:700; color:var(--emerald); line-height:1; }
+  .streak-meta .big span{ font-size:13px; color:var(--ink-soft); font-weight:600; }
+  .streak-meta .sub{ font-size:11px; color:var(--ink-soft); font-style:italic; }
+
+  .legend{ font-size:11px; color:var(--ink-soft); line-height:1.5; }
+  .legend b{ color:var(--emerald); }
+
+  /* ---------------- FEATURE POPOVER ---------------- */
+  .pop-card{
+    position:fixed; z-index:200; max-width:280px;
+    opacity:0; transform:translateY(8px) scale(.96); pointer-events:none;
+    transition:.18s cubic-bezier(.22,1,.36,1);
+  }
+  .pop-card.show{ opacity:1; transform:translateY(0) scale(1); pointer-events:auto; }
+  .pop-inner{
+    background:linear-gradient(180deg,#fbf4e2, var(--parchment-2));
+    border:1px solid var(--gold-deep);
+    border-radius:14px; padding:14px 16px;
+    box-shadow:0 18px 44px rgba(0,0,0,.5);
+    position:relative;
+  }
+  .pop-inner::before{
+    content:""; position:absolute; left:24px; top:-9px;
+    border-left:9px solid transparent; border-right:9px solid transparent;
+    border-bottom:9px solid var(--gold-deep);
+  }
+  .pop-inner h3{
+    margin:0 0 2px; font-family:var(--serif); font-size:16px; color:var(--emerald);
+    display:flex; align-items:center; gap:7px;
+  }
+  .pop-inner .tagline{ font-size:10px; letter-spacing:1.6px; text-transform:uppercase; color:var(--gold-deep); font-weight:800; margin-bottom:7px; }
+  .pop-inner p{ margin:0; font-size:13px; line-height:1.5; color:var(--ink); }
+  .pop-inner .feat-ic{
+    width:26px;height:26px;border-radius:8px;display:inline-grid;place-items:center;
+    background:radial-gradient(circle at 35% 30%, #fff6d8, var(--gold) 60%, var(--gold-deep)); color:#5a3b12;
+  }
+  .pop-inner .feat-ic svg{ width:16px;height:16px; }
+
+  .footnote{
+    grid-column:1 / -1; text-align:center; color:#86ad99; font-size:11px;
+    padding:4px 0 8px; font-style:italic;
+  }
+
+  /* tiny shimmer animation on flame inner */
+  @keyframes flicker{
+    0%,100%{ transform:scaleY(1) translateY(0); opacity:1; }
+    25%{ transform:scaleY(1.08) translateY(-1px); opacity:.92; }
+    50%{ transform:scaleY(.94) translateX(1px); }
+    75%{ transform:scaleY(1.05) translateX(-1px); opacity:.96; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- TITLE BAR -->
+  <div class="titlebar">
+    <div class="crest">Q</div>
+    <h1>QuestDay <span class="dim">— Your Realm (concept mockup)</span></h1>
+    <div class="spacer"></div>
+    <div class="winbtns"><i></i><i></i><i></i></div>
+  </div>
+
+  <div class="shell">
+
+    <!-- STAGE + PROGRESS -->
+    <div class="stagebar">
+      <div class="stage-emblem" id="stageEmblem">
+        <!-- emblem swapped by JS -->
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 4 7v10l8 5 8-5V7l-8-5Zm0 2.3 5.6 3.5L12 11.3 6.4 7.8 12 4.3Z"/></svg>
+      </div>
+      <div class="stage-text">
+        <div class="eyebrow">Your realm is a</div>
+        <div class="name" id="stageName">Camp</div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label">
+          <span id="progressText">Camp — 0/3 quests to Settlement</span>
+          <span><b id="progressCount">0</b>/<span id="progressGoal">3</span></span>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      </div>
+      <div class="lv-crest" title="Experience — kept small on purpose; the world is the real progress">
+        <div class="shield" id="lvNum">4</div>
+        <div class="lvtxt">Lv.<span id="lvLabel">4</span> <small id="xpLabel">· 320 xp</small></div>
+      </div>
+    </div>
+
+    <!-- INTRO -->
+    <div class="intro" id="introCard">
+      <div class="seal">✦</div>
+      <p>
+        <b>This is a rough mockup to show the FEEL.</b> The real version uses professional isometric
+        art (even nicer than this). <br/>
+        <span class="try">Try this: complete a few quests, watch your town grow and level up, light the bonfire by keeping a streak, and click the <b style="color:var(--gold-deep)">gold-labelled buildings</b> to see how each one is really an app feature.</span>
+      </p>
+      <button class="x" id="introClose" title="Dismiss">✕</button>
+    </div>
+
+    <!-- SCENE -->
+    <div class="scene-card" id="scene">
+      <div class="sky"></div>
+      <div class="celestial" id="celestial"></div>
+      <div class="stars" id="stars"></div>
+      <div class="cloud c1"></div>
+      <div class="cloud c2"></div>
+      <div class="cloud c3"></div>
+
+      <div class="rest-note">😴 Your town rested while you were away — nothing was lost.</div>
+
+      <div class="world" id="world">
+        <div class="iso" id="iso">
+          <div class="ground" id="ground"></div>
+          <!-- placed objects injected here -->
+        </div>
+      </div>
+
+      <div class="scene-hint">
+        <span class="chip">🏗️ Buildings: <b id="bcount">5</b></span>
+        <span class="chip">Click the <b>gold pins</b> — they're real features</span>
+        <span class="chip" id="modeChip" style="display:none;">✥ <b>Rearrange on</b> — drag a building</span>
+      </div>
+
+      <!-- celebration layers -->
+      <div class="toast-zone" id="toastZone"></div>
+      <div class="stage-up" id="stageUp">
+        <div class="glow"></div>
+        <div class="ribbon" id="stageRibbon">✦ Banner ✦<small>milestone</small></div>
+      </div>
+    </div>
+
+    <!-- CONTROL PANEL -->
+    <div class="panel">
+
+      <div class="card">
+        <h2><span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2Z"/></svg></span>Complete a quest</h2>
+        <div class="qbtns">
+          <button class="qbtn easy" data-diff="easy">
+            <span class="dot"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 9.2 8.6 2 9.3l5.5 4.7L5.8 21 12 17.3 18.2 21l-1.7-7 5.5-4.7-7.2-.7L12 2Z" opacity=".9"/></svg></span>
+            <span class="meta">Complete Easy quest<small>+ a path, fence or tree</small></span>
+          </button>
+          <button class="qbtn med" data-diff="med">
+            <span class="dot"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 3 10v11h6v-6h6v6h6V10l-9-7Z"/></svg></span>
+            <span class="meta">Complete Medium quest<small>+ a cottage</small></span>
+          </button>
+          <button class="qbtn hard" data-diff="hard">
+            <span class="dot"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 21V8l4 2V6l4 2V4l6 4v13H5Z"/></svg></span>
+            <span class="meta">Complete Hard quest<small>+ a landmark / large hall</small></span>
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 3-1 4-1 6 0 1.5 1 2.5 1 4 0-1 2-1.5 2-3 1.5 1.5 3 4 3 6a5 5 0 0 1-10 0c0-3 3-4 3-7 0-2-1-4 2-6Z"/></svg></span>Bonfire — your streak</h2>
+        <div class="streak-row">
+          <div class="streak-fire" id="streakFireBox"></div>
+          <div class="streak-meta">
+            <div class="big"><span id="streakNum">0</span> <span>day streak</span></div>
+            <div class="sub" id="streakSub">Complete quests to feed the flame.</div>
+          </div>
+        </div>
+        <div class="row">
+          <button class="ctlbtn dark" id="restBtn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3a9 9 0 1 0 9 9c0-.5 0-.9-.1-1.4A7 7 0 0 1 12 3Z"/></svg>Skip a day (rest)</button>
+          <button class="ctlbtn" id="returnBtn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 2 12h3v8h6v-5h2v5h6v-8h3L12 3Z"/></svg>Return</button>
+        </div>
+        <div class="legend" style="margin-top:9px;">Resting is <b>safe</b> — your town only ever <b>gains</b>. No lives, no decay, nothing lost.</div>
+      </div>
+
+      <div class="card">
+        <h2><span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.8 2.8 12 1l5.2 1.8L22 8l-1.8 5.2L18 21l-6-2-6 2-2.2-7.8L2 8l4.8-5.2Z" opacity=".9"/></svg></span>Atmosphere &amp; layout</h2>
+        <div class="row" style="margin-bottom:9px;">
+          <button class="ctlbtn" id="dayNightBtn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v2m0 14v2m9-9h-2M5 12H3m14.5 6.5-1.4-1.4M7 7 5.6 5.6m12.9 0L17 7M5.6 18.4 7 17M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/></svg><span id="dnLabel">Switch to Night</span></button>
+          <button class="ctlbtn" id="rearrangeBtn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 9h4V6h3l-5-5-5 5h3v3Zm-1 1H6V7l-5 5 5 5v-3h3v-4Zm6 0v4h3v3l5-5-5-5v3h-3Zm-1 5h-4v3H6l5 5 5-5h-3v-3Z"/></svg><span id="raLabel">Rearrange: Off</span></button>
+        </div>
+        <div class="legend">Buildings <b>appear automatically</b> as you complete quests — flip <b>Rearrange</b> on to drag any building to a new tile and make the town your own.</div>
+      </div>
+
+      <div class="footnote" style="grid-column:auto; text-align:left; color:var(--ink-soft); margin-top:-4px;">
+        Lead with the world; the numbers stay tiny.
+      </div>
+    </div>
+
+    <div class="footnote">Concept mockup · hand-drawn CSS &amp; SVG diorama · fully offline · QuestDay direction study</div>
+  </div>
+
+  <!-- FEATURE POPOVER -->
+  <div class="pop-card" id="popCard">
+    <div class="pop-inner">
+      <div class="tagline" id="popTag">App feature</div>
+      <h3><span class="feat-ic" id="popIc"></span><span id="popTitle">Title</span></h3>
+      <p id="popBody">Body</p>
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- ISO PROJECTION ----------
+  const TW = 120, TH = 60;        // tile width / height (full diamond)
+  const GRID = 7;                 // 7x7 plot
+  // center the grid so middle tile is near 0,0
+  const CX = (GRID-1)/2;
+  function iso(col,row){
+    return {
+      x: (col - row) * (TW/2),
+      y: (col + row) * (TH/2)
+    };
+  }
+  // depth for back-to-front painting (greater = nearer = on top)
+  function depth(col,row){ return (col + row); }
+
+  const iso_el  = document.getElementById('iso');
+  const ground  = document.getElementById('ground');
+
+  // ---------- GROUND PLANE (single big grass diamond + tiles) ----------
+  // build the grass as one SVG diamond with subtle tile lines + a thick earthy side
+  function buildGround(){
+    const w = (GRID) * TW;          // bounding width
+    const h = (GRID) * TH + 70;     // + side depth
+    const ox = w/2;                 // origin x inside svg
+    const oy = TH;                  // origin y inside svg (top tile near top)
+    const sideH = 26;               // earth thickness
+
+    // four corners of the plot (col,row) -> (0,0),(G,0),(G,G),(0,G)
+    function P(c,r){ const p=iso(c,r); return [ox + p.x, oy + p.y]; }
+    const tl = P(0,0), tr = P(GRID,0), br = P(GRID,GRID), bl = P(0,GRID);
+
+    let tiles = "";
+    for(let r=0;r<GRID;r++){
+      for(let c=0;c<GRID;c++){
+        const a=P(c,r), b=P(c+1,r), d=P(c+1,r+1), e=P(c,r+1);
+        const alt = (c+r)%2===0;
+        const fill = alt ? "#7fb24f" : "#75a847";
+        tiles += `<polygon points="${a[0]},${a[1]} ${b[0]},${b[1]} ${d[0]},${d[1]} ${e[0]},${e[1]}" fill="${fill}" stroke="#6aa03f" stroke-width="0.6"/>`;
+      }
+    }
+
+    const svg = `
+    <svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="overflow:visible;">
+      <defs>
+        <radialGradient id="grassLight" cx="50%" cy="35%" r="75%">
+          <stop offset="0%" stop-color="#9ccb63"/>
+          <stop offset="60%" stop-color="#7fb24f"/>
+          <stop offset="100%" stop-color="#5d8e36"/>
+        </radialGradient>
+      </defs>
+      <!-- earth sides (front-left + front-right) -->
+      <polygon points="${bl[0]},${bl[1]} ${br[0]},${br[1]} ${br[0]},${br[1]+sideH} ${bl[0]},${bl[1]+sideH}" fill="#5a3d22"/>
+      <polygon points="${br[0]},${br[1]} ${tr[0]},${tr[1]} ${tr[0]},${tr[1]+sideH} ${br[0]},${br[1]+sideH}" fill="#6b4a2a"/>
+      <polygon points="${bl[0]},${bl[1]} ${tl[0]},${tl[1]} ${tl[0]},${tl[1]+sideH} ${bl[0]},${bl[1]+sideH}" fill="#6b4a2a"/>
+      <!-- grass top : gradient wash then tile mesh on top -->
+      <polygon points="${tl[0]},${tl[1]} ${tr[0]},${tr[1]} ${br[0]},${br[1]} ${bl[0]},${bl[1]}" fill="url(#grassLight)"/>
+      <g opacity="0.5">${tiles}</g>
+      <!-- soft inner vignette -->
+      <polygon points="${tl[0]},${tl[1]} ${tr[0]},${tr[1]} ${br[0]},${br[1]} ${bl[0]},${bl[1]}" fill="none" stroke="rgba(0,0,0,0.12)" stroke-width="3"/>
+    </svg>`;
+    ground.innerHTML = svg;
+    // ground svg's own origin (0,0 tile) sits at (ox,oy) inside svg; we must align
+    // the iso (col,row)->screen mapping used for objects to the same origin.
+    // We position .ground so that its internal origin (ox,oy) lands on iso element's (0,0).
+    ground.style.transform = `translate(${-ox}px, ${-oy}px)`;
+    GROUND_OX = ox; GROUND_OY = oy;
+  }
+  let GROUND_OX=0, GROUND_OY=0;
+
+  // place an object element at tile (col,row) with a y-lift (height of base off ground)
+  function placeEl(el, col, row){
+    const p = iso(col,row);
+    // object's anchor is bottom-center; we set left/top so its base sits on tile center.
+    // tile center for (col,row) is the midpoint of that diamond = iso(col+0.5,row+0.5)
+    const pc = iso(col+0.5, row+0.5);
+    el.style.left = (pc.x) + 'px';
+    el.style.top  = (pc.y) + 'px';
+    el.style.zIndex = 100 + Math.round(depth(col,row)*10);
+    el.dataset.col = col; el.dataset.row = row;
+  }
+
+  // ---------- SVG BUILDING ART (hand-drawn iso) ----------
+  // every building is an inline SVG sized so its baseline bottom-center = anchor.
+  // We wrap each in a .obj with transform translate(-50%, -100%) via inline style.
+
+  // shared palette
+  const C = {
+    wallL:"#e9d7b0", wallM:"#d8c191", wallR:"#c2a974", wallDk:"#b59663",
+    stoneL:"#cfc7ba", stoneM:"#b3aa9c", stoneR:"#988f80",
+    woodL:"#a9763f", woodM:"#8a5e30", woodR:"#6e4a24",
+    roofSlateL:"#7c8aa0", roofSlateM:"#5f6c82", roofSlateR:"#46506a",
+    roofSlate:"#5f6c82", roofSlateHi:"#7c8aa0", roofSlateLo:"#46506a",
+    roofRed:"#b8503f", roofRedHi:"#cf6450", roofRedLo:"#8f3a2c",
+    roofGold:"#e7b94e", roofGoldHi:"#f6d479", roofGoldLo:"#bf8f2e",
+    grassDk:"#4f8330", trunk:"#7a5230",
+    win:"#3a4d63", winGlow:"#ffd86b"
+  };
+
+  // helper to make an .obj wrapper
+  function objWrap(svg, classes){
+    const div = document.createElement('div');
+    div.className = 'obj ' + (classes||'');
+    div.style.transform = 'translate(-50%,-100%)';
+    div.innerHTML = `<div class="pop">${svg}</div>`;
+    return div;
+  }
+
+  // ---- TENT (camp) ----
+  function svgTent(){
+    return `<svg width="86" height="90" viewBox="0 0 86 90" style="overflow:visible;">
+      <ellipse cx="43" cy="84" rx="34" ry="9" fill="rgba(0,0,0,.18)"/>
+      <!-- right face -->
+      <polygon points="43,18 70,76 43,82" fill="#b5613a"/>
+      <!-- left face -->
+      <polygon points="43,18 16,76 43,82" fill="#d4794c"/>
+      <!-- front opening flaps -->
+      <polygon points="43,30 36,80 43,80" fill="#7d3f24"/>
+      <polygon points="43,30 50,80 43,80" fill="#90492a"/>
+      <!-- pole + flag -->
+      <rect x="42" y="6" width="2.4" height="16" fill="#6e4a24"/>
+      <polygon points="44,6 44,15 56,10" fill="#f4d77a"/>
+      <!-- guy lines -->
+      <line x1="16" y1="76" x2="6" y2="84" stroke="#6e4a24" stroke-width="1.4"/>
+      <line x1="70" y1="76" x2="80" y2="84" stroke="#6e4a24" stroke-width="1.4"/>
+    </svg>`;
+  }
+
+  // ---- CRATES (camp) ----
+  function svgCrates(){
+    return `<svg width="58" height="56" viewBox="0 0 58 56" style="overflow:visible;">
+      <ellipse cx="29" cy="50" rx="24" ry="7" fill="rgba(0,0,0,.16)"/>
+      <!-- big crate iso cube -->
+      <polygon points="10,30 29,20 48,30 29,40" fill="${C.woodL}"/>
+      <polygon points="10,30 29,40 29,52 10,42" fill="${C.woodR}"/>
+      <polygon points="48,30 29,40 29,52 48,42" fill="${C.woodM}"/>
+      <line x1="19.5" y1="30.5" x2="38.5" y2="30.5" stroke="#5a3a1c" stroke-width="1"/>
+      <!-- small barrel -->
+      <ellipse cx="44" cy="40" rx="9" ry="4" fill="#7a5230"/>
+      <rect x="35" y="38" width="18" height="13" rx="3" fill="#8a5e30"/>
+      <ellipse cx="44" cy="38" rx="9" ry="4" fill="#a9763f"/>
+      <line x1="35" y1="44" x2="53" y2="44" stroke="#5a3a1c" stroke-width="1"/>
+    </svg>`;
+  }
+
+  // ---- TREE ----
+  function svgTree(){
+    return `<svg width="56" height="84" viewBox="0 0 56 84" style="overflow:visible;">
+      <ellipse cx="28" cy="78" rx="20" ry="6" fill="rgba(0,0,0,.16)"/>
+      <rect x="25" y="52" width="6" height="24" rx="2" fill="${C.trunk}"/>
+      <ellipse cx="28" cy="44" rx="22" ry="20" fill="#4f8330"/>
+      <ellipse cx="20" cy="38" rx="14" ry="13" fill="#6aa03f"/>
+      <ellipse cx="34" cy="40" rx="13" ry="12" fill="#5d8e36"/>
+      <ellipse cx="24" cy="34" rx="9" ry="8" fill="#7fb24f"/>
+    </svg>`;
+  }
+
+  // ---- PINE (variety) ----
+  function svgPine(){
+    return `<svg width="50" height="92" viewBox="0 0 50 92" style="overflow:visible;">
+      <ellipse cx="25" cy="86" rx="16" ry="5" fill="rgba(0,0,0,.16)"/>
+      <rect x="22" y="66" width="6" height="20" rx="2" fill="${C.trunk}"/>
+      <polygon points="25,8 8,40 42,40" fill="#3f6a26"/>
+      <polygon points="25,22 6,54 44,54" fill="#4f8330"/>
+      <polygon points="25,38 4,72 46,72" fill="#5d8e36"/>
+    </svg>`;
+  }
+
+  // ---- FENCE (easy) ----
+  function svgFence(){
+    return `<svg width="76" height="46" viewBox="0 0 76 46" style="overflow:visible;">
+      <ellipse cx="38" cy="40" rx="30" ry="6" fill="rgba(0,0,0,.12)"/>
+      <g fill="${C.woodM}" stroke="${C.woodR}" stroke-width="1">
+        <rect x="8"  y="14" width="6" height="22" rx="1.5"/>
+        <rect x="24" y="11" width="6" height="22" rx="1.5"/>
+        <rect x="40" y="14" width="6" height="22" rx="1.5"/>
+        <rect x="56" y="11" width="6" height="22" rx="1.5"/>
+      </g>
+      <polygon points="8,18 62,15 62,21 8,24" fill="${C.woodL}"/>
+      <polygon points="8,26 62,23 62,29 8,32" fill="${C.woodR}"/>
+    </svg>`;
+  }
+
+  // ---- PATH TILE (easy) ----
+  function svgPath(){
+    return `<svg width="${TW}" height="${TH+10}" viewBox="0 0 ${TW} ${TH+10}" style="overflow:visible;">
+      <polygon points="${TW/2},4 ${TW-6},${TH/2+2} ${TW/2},${TH+0} 6,${TH/2+2}" fill="#caa86f" stroke="#a9854f" stroke-width="1"/>
+      <g fill="#b8965c">
+        <circle cx="${TW/2-14}" cy="${TH/2-3}" r="3"/>
+        <circle cx="${TW/2+12}" cy="${TH/2+4}" r="3.4"/>
+        <circle cx="${TW/2}" cy="${TH/2+8}" r="2.6"/>
+        <circle cx="${TW/2+4}" cy="${TH/2-7}" r="2.6"/>
+      </g>
+    </svg>`;
+  }
+
+  // ---- WELL (easy variety) ----
+  function svgWell(){
+    return `<svg width="60" height="78" viewBox="0 0 60 78" style="overflow:visible;">
+      <ellipse cx="30" cy="70" rx="22" ry="6" fill="rgba(0,0,0,.18)"/>
+      <!-- stone base diamond -->
+      <polygon points="10,52 30,42 50,52 30,62" fill="${C.stoneL}"/>
+      <polygon points="10,52 30,62 30,70 10,60" fill="${C.stoneR}"/>
+      <polygon points="50,52 30,62 30,70 50,60" fill="${C.stoneM}"/>
+      <!-- posts + roof -->
+      <rect x="16" y="20" width="4" height="32" fill="${C.woodR}"/>
+      <rect x="40" y="20" width="4" height="32" fill="${C.woodM}"/>
+      <polygon points="30,8 14,24 46,24" fill="${C.roofRedHi}"/>
+      <polygon points="30,8 46,24 30,28 14,24" fill="${C.roofRed}" opacity=".5"/>
+    </svg>`;
+  }
+
+  // generic ISO HOUSE generator: footprint diamond + walls + pitched roof.
+  // params: w(half-diamond width), depthSide, wallH, roof color set
+  function svgCottage(roof){
+    roof = roof || {hi:C.roofRedHi, m:C.roofRed, lo:C.roofRedLo};
+    return `<svg width="120" height="120" viewBox="0 0 120 120" style="overflow:visible;">
+      <ellipse cx="60" cy="108" rx="44" ry="11" fill="rgba(0,0,0,.2)"/>
+      <!-- WALLS : iso box. left wall darker, right wall lit -->
+      <polygon points="24,70 60,90 60,54 24,34" fill="${C.wallR}"/>
+      <polygon points="96,70 60,90 60,54 96,34" fill="${C.wallL}"/>
+      <!-- door on right wall -->
+      <polygon points="68,72 80,66 80,84 68,90" fill="${C.woodR}"/>
+      <polygon points="69,73 79,67.5 79,82.5 69,87.5" fill="${C.woodM}"/>
+      <!-- window on left wall -->
+      <polygon class="win-body" points="34,52 44,57 44,47 34,42" fill="${C.win}"/>
+      <polygon class="win-glow" points="34,52 44,57 44,47 34,42" fill="${C.winGlow}"/>
+      <!-- ROOF : two slopes meeting a ridge. Ridge runs left->right at top.
+           Apex front (60,18). Eaves overhang the walls at y~34. -->
+      <!-- left slope (shaded) -->
+      <polygon points="60,16 20,32 20,36 60,56 60,16" fill="${roof.m}"/>
+      <!-- right slope (lit) -->
+      <polygon points="60,16 100,32 100,36 60,56 60,16" fill="${roof.hi}"/>
+      <!-- front eave shadow -->
+      <polygon points="20,32 60,56 100,32 100,36 60,60 20,36" fill="${roof.lo}" opacity=".55"/>
+      <!-- ridge highlight -->
+      <line x1="60" y1="16" x2="60" y2="56" stroke="rgba(255,255,255,.2)" stroke-width="1.2"/>
+      <!-- chimney sits on the right slope -->
+      <rect x="76" y="20" width="9" height="15" fill="${C.stoneM}"/>
+      <polygon points="76,20 85,20 85,16 76,16" fill="${C.stoneL}"/>
+    </svg>`;
+  }
+
+  // ---- TWO-STOREY HOUSE (medium variety) ----
+  function svgTownhouse(roof){
+    roof = roof || {hi:C.roofSlateHi, m:C.roofSlate, lo:C.roofSlateLo};
+    return `<svg width="120" height="140" viewBox="0 0 120 140" style="overflow:visible;">
+      <ellipse cx="60" cy="126" rx="42" ry="11" fill="rgba(0,0,0,.2)"/>
+      <!-- walls taller -->
+      <polygon points="26,84 60,104 60,52 26,32" fill="${C.wallR}"/>
+      <polygon points="94,84 60,104 60,52 94,32" fill="${C.wallL}"/>
+      <!-- timber framing lines (storybook) -->
+      <line x1="26" y1="58" x2="60" y2="78" stroke="${C.woodR}" stroke-width="2"/>
+      <line x1="94" y1="58" x2="60" y2="78" stroke="${C.woodM}" stroke-width="2"/>
+      <!-- door -->
+      <polygon points="66,86 78,80 78,100 66,106" fill="${C.woodR}"/>
+      <!-- windows lower + upper -->
+      <polygon class="win-body" points="34,68 44,73 44,63 34,58" fill="${C.win}"/>
+      <polygon class="win-glow" points="34,68 44,73 44,63 34,58" fill="${C.winGlow}"/>
+      <polygon class="win-body" points="36,46 46,51 46,41 36,36" fill="${C.win}"/>
+      <polygon class="win-glow" points="36,46 46,51 46,41 36,36" fill="${C.winGlow}"/>
+      <polygon class="win-body" points="70,58 80,53 80,63 70,68" fill="${C.win}" opacity=".9"/>
+      <polygon class="win-glow" points="70,58 80,53 80,63 70,68" fill="${C.winGlow}"/>
+      <!-- roof -->
+      <polygon points="60,18 98,32 98,38 60,58" fill="${roof.hi}"/>
+      <polygon points="60,18 22,32 22,38 60,58" fill="${roof.m}"/>
+      <polygon points="60,58 98,38 98,42 60,62" fill="${roof.lo}"/>
+      <polygon points="60,58 22,38 22,42 60,62" fill="${roof.lo}"/>
+      <rect x="80" y="22" width="9" height="16" fill="${C.stoneM}"/>
+    </svg>`;
+  }
+
+  // ---- TOWER (hard / landmark) ----
+  function svgTower(roof){
+    roof = roof || {hi:C.roofGoldHi, m:C.roofGold, lo:C.roofGoldLo};
+    return `<svg width="110" height="170" viewBox="0 0 110 170" style="overflow:visible;">
+      <ellipse cx="55" cy="156" rx="34" ry="9" fill="rgba(0,0,0,.22)"/>
+      <!-- stone shaft -->
+      <polygon points="30,120 55,134 55,46 30,32" fill="${C.stoneR}"/>
+      <polygon points="80,120 55,134 55,46 80,32" fill="${C.stoneL}"/>
+      <polygon points="30,32 55,46 80,32 55,18" fill="${C.stoneM}"/>
+      <!-- stone courses -->
+      <line x1="30" y1="60" x2="55" y2="74" stroke="rgba(0,0,0,.12)" stroke-width="2"/>
+      <line x1="80" y1="60" x2="55" y2="74" stroke="rgba(0,0,0,.10)" stroke-width="2"/>
+      <line x1="30" y1="90" x2="55" y2="104" stroke="rgba(0,0,0,.12)" stroke-width="2"/>
+      <line x1="80" y1="90" x2="55" y2="104" stroke="rgba(0,0,0,.10)" stroke-width="2"/>
+      <!-- arched windows w/ glow -->
+      <polygon class="win-body" points="40,70 50,76 50,60 40,54" fill="${C.win}"/>
+      <polygon class="win-glow" points="40,70 50,76 50,60 40,54" fill="${C.winGlow}"/>
+      <polygon class="win-body" points="70,70 60,76 60,60 70,54" fill="#2f4054"/>
+      <polygon class="win-glow" points="70,70 60,76 60,60 70,54" fill="${C.winGlow}"/>
+      <!-- conical roof -->
+      <polygon points="55,-4 30,30 55,40 80,30" fill="${roof.hi}"/>
+      <polygon points="55,-4 30,30 55,40" fill="${roof.m}"/>
+      <polygon points="55,40 30,30 30,34 55,44 80,34 80,30" fill="${roof.lo}"/>
+      <!-- flag -->
+      <rect x="54" y="-22" width="2.4" height="18" fill="#6e4a24"/>
+      <polygon points="56,-22 56,-12 70,-17" fill="#d9534f"/>
+    </svg>`;
+  }
+
+  // ---- GREAT HALL (hard / city) ----
+  function svgHall(roof){
+    roof = roof || {hi:C.roofRedHi, m:C.roofRed, lo:C.roofRedLo};
+    return `<svg width="150" height="150" viewBox="0 0 150 150" style="overflow:visible;">
+      <ellipse cx="75" cy="134" rx="56" ry="13" fill="rgba(0,0,0,.22)"/>
+      <!-- broad walls -->
+      <polygon points="22,96 75,124 75,60 22,40" fill="${C.wallR}"/>
+      <polygon points="128,96 75,124 75,60 128,40" fill="${C.wallL}"/>
+      <!-- grand arched door -->
+      <polygon points="84,98 104,88 104,118 84,128" fill="${C.woodR}"/>
+      <polygon points="86,99 102,90 102,116 86,125" fill="${C.woodM}"/>
+      <!-- columns / windows on left wall -->
+      <g>
+        <polygon class="win-body" points="34,78 44,83 44,69 34,64" fill="${C.win}"/>
+        <polygon class="win-glow" points="34,78 44,83 44,69 34,64" fill="${C.winGlow}"/>
+        <polygon class="win-body" points="50,86 60,91 60,77 50,72" fill="${C.win}"/>
+        <polygon class="win-glow" points="50,86 60,91 60,77 50,72" fill="${C.winGlow}"/>
+      </g>
+      <!-- big gable roof -->
+      <polygon points="75,20 130,40 130,48 75,72" fill="${roof.hi}"/>
+      <polygon points="75,20 20,40 20,48 75,72" fill="${roof.m}"/>
+      <polygon points="75,72 130,48 130,54 75,78" fill="${roof.lo}"/>
+      <polygon points="75,72 20,48 20,54 75,78" fill="${roof.lo}"/>
+      <!-- gold ridge cap -->
+      <polygon points="75,20 78,21 75,73 72,72" fill="#f4d77a"/>
+      <circle cx="75" cy="18" r="4" fill="#f4d77a"/>
+    </svg>`;
+  }
+
+  // ---- CASTLE KEEP (kingdom / empire landmark) ----
+  function svgCastle(){
+    return `<svg width="170" height="190" viewBox="0 0 170 190" style="overflow:visible;">
+      <ellipse cx="85" cy="172" rx="66" ry="14" fill="rgba(0,0,0,.24)"/>
+      <!-- central keep -->
+      <polygon points="55,128 85,146 85,52 55,36" fill="${C.stoneR}"/>
+      <polygon points="115,128 85,146 85,52 115,36" fill="${C.stoneL}"/>
+      <polygon points="55,36 85,52 115,36 85,22" fill="${C.stoneM}"/>
+      <!-- crenellations -->
+      <g fill="${C.stoneM}">
+        <rect x="58" y="30" width="8" height="9"/><rect x="74" y="26" width="8" height="9"/>
+        <rect x="88" y="26" width="8" height="9"/><rect x="104" y="30" width="8" height="9"/>
+      </g>
+      <!-- gate -->
+      <polygon points="78,118 92,118 92,140 78,140" fill="#3a2716"/>
+      <path d="M78,118 a7,7 0 0 1 14,0" fill="#3a2716"/>
+      <!-- side towers -->
+      <g>
+        <polygon points="35,134 50,142 50,70 35,62" fill="${C.stoneR}"/>
+        <polygon points="65,134 50,142 50,70 65,62" fill="${C.stoneM}"/>
+        <polygon points="50,52 35,62 50,70 65,62" fill="${C.stoneL}"/>
+        <polygon points="50,40 36,58 64,58" fill="${C.roofGoldHi}"/>
+        <polygon points="50,40 36,58 50,62" fill="${C.roofGold}"/>
+        <rect x="49" y="22" width="2" height="18" fill="#6e4a24"/>
+        <polygon points="51,22 51,32 63,27" fill="#d9534f"/>
+      </g>
+      <g>
+        <polygon points="105,134 120,142 120,70 105,62" fill="${C.stoneR}"/>
+        <polygon points="135,134 120,142 120,70 135,62" fill="${C.stoneM}"/>
+        <polygon points="120,52 105,62 120,70 135,62" fill="${C.stoneL}"/>
+        <polygon points="120,40 106,58 134,58" fill="${C.roofGoldHi}"/>
+        <polygon points="120,40 106,58 120,62" fill="${C.roofGold}"/>
+        <rect x="119" y="22" width="2" height="18" fill="#6e4a24"/>
+        <polygon points="121,22 121,32 133,27" fill="#d9534f"/>
+      </g>
+      <!-- keep windows -->
+      <polygon class="win-body" points="68,86 78,91 78,73 68,68" fill="${C.win}"/>
+      <polygon class="win-glow" points="68,86 78,91 78,73 68,68" fill="${C.winGlow}"/>
+      <polygon class="win-body" points="102,86 92,91 92,73 102,68" fill="${C.win}"/>
+      <polygon class="win-glow" points="102,86 92,91 92,73 102,68" fill="${C.winGlow}"/>
+    </svg>`;
+  }
+
+  // ---- MARKET STALLS (variety filler) ----
+  function svgStall(){
+    return `<svg width="78" height="76" viewBox="0 0 78 76" style="overflow:visible;">
+      <ellipse cx="39" cy="68" rx="28" ry="7" fill="rgba(0,0,0,.16)"/>
+      <rect x="14" y="34" width="3" height="30" fill="${C.woodR}"/>
+      <rect x="61" y="34" width="3" height="30" fill="${C.woodM}"/>
+      <rect x="18" y="48" width="42" height="16" fill="${C.wallM}"/>
+      <polygon points="18,48 60,48 60,64 18,64" fill="${C.woodL}" opacity=".4"/>
+      <!-- striped awning -->
+      <polygon points="8,32 70,32 60,20 18,20" fill="#d9534f"/>
+      <g fill="#f5ecd7">
+        <polygon points="18,20 24,20 16,32 10,32"/>
+        <polygon points="30,20 36,20 28,32 22,32"/>
+        <polygon points="42,20 48,20 40,32 34,32"/>
+        <polygon points="54,20 60,20 52,32 46,32"/>
+      </g>
+    </svg>`;
+  }
+
+  // ---- BONFIRE (the streak heart, lives in the scene) ----
+  function svgBonfireScene(scale){
+    scale = scale || 1;
+    const fh = 1 + Math.min(scale,2.2)*0.5; // flame height factor
+    return `<svg width="80" height="120" viewBox="0 0 80 120" style="overflow:visible;">
+      <ellipse cx="40" cy="106" rx="28" ry="8" fill="rgba(0,0,0,.2)"/>
+      <!-- stone ring -->
+      <ellipse cx="40" cy="96" rx="24" ry="9" fill="${C.stoneR}"/>
+      <ellipse cx="40" cy="93" rx="24" ry="9" fill="${C.stoneM}"/>
+      <g fill="${C.stoneL}" stroke="${C.stoneR}">
+        <circle cx="22" cy="93" r="5"/><circle cx="34" cy="98" r="5"/>
+        <circle cx="48" cy="98" r="5"/><circle cx="58" cy="92" r="5"/>
+        <circle cx="40" cy="88" r="5"/>
+      </g>
+      <!-- logs -->
+      <rect x="26" y="80" width="28" height="6" rx="3" fill="${C.woodM}" transform="rotate(18 40 83)"/>
+      <rect x="26" y="80" width="28" height="6" rx="3" fill="${C.woodR}" transform="rotate(-18 40 83)"/>
+      <!-- FLAME group scales with streak -->
+      <g class="flame-svg" style="transform-origin:40px 82px; transform:scaleY(${fh});">
+        <g style="transform-origin:40px 82px; animation:flicker 1.1s ease-in-out infinite;">
+          <path d="M40 30 C 30 50, 24 64, 32 80 C 36 84, 44 84, 48 80 C 56 64, 50 50, 40 30 Z" fill="#ff7a1a"/>
+          <path d="M40 44 C 34 56, 31 68, 37 80 C 40 82, 44 82, 45 78 C 50 66, 46 56, 40 44 Z" fill="#ffb43a"/>
+          <path d="M40 56 C 37 64, 36 72, 40 80 C 42 80, 44 78, 43 74 C 46 66, 43 60, 40 56 Z" fill="#ffe27a"/>
+        </g>
+        <!-- sparks -->
+        <circle cx="34" cy="40" r="1.6" fill="#ffd86b"><animate attributeName="cy" values="50;20" dur="2.2s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0" dur="2.2s" repeatCount="indefinite"/></circle>
+        <circle cx="47" cy="46" r="1.4" fill="#ffb43a"><animate attributeName="cy" values="56;22" dur="2.8s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0" dur="2.8s" repeatCount="indefinite"/></circle>
+      </g>
+    </svg>`;
+  }
+
+  // small panel bonfire (mirrors streak)
+  function renderPanelFire(){
+    const s = Math.min(state.streak, 9);
+    const fh = 1 + Math.min(s,7)*0.12;
+    const box = document.getElementById('streakFireBox');
+    box.innerHTML = `<svg width="58" height="64" viewBox="0 0 58 64" style="overflow:visible;">
+      <ellipse cx="29" cy="58" rx="18" ry="5" fill="rgba(0,0,0,.15)"/>
+      <ellipse cx="29" cy="52" rx="16" ry="6" fill="${C.stoneM}"/>
+      <rect x="18" y="44" width="22" height="5" rx="2.5" fill="${C.woodM}" transform="rotate(16 29 47)"/>
+      <rect x="18" y="44" width="22" height="5" rx="2.5" fill="${C.woodR}" transform="rotate(-16 29 47)"/>
+      <g style="transform-origin:29px 46px; transform:scaleY(${fh});">
+        <g style="transform-origin:29px 46px; animation:flicker 1.1s ease-in-out infinite;">
+          <path d="M29 14 C 21 30, 17 40, 23 50 C 26 53, 32 53, 35 50 C 41 40, 37 30, 29 14 Z" fill="#ff7a1a"/>
+          <path d="M29 26 C 24 35, 22 42, 27 50 C 29 51, 32 51, 32 47 C 36 40, 33 33, 29 26 Z" fill="#ffb43a"/>
+          <path d="M29 34 C 27 40, 26 45, 29 50 C 31 50, 32 48, 31 45 C 33 40, 31 37, 29 34 Z" fill="#ffe27a"/>
+        </g>
+      </g>
+    </svg>`;
+    const glowI = Math.min(0.25 + state.streak*0.06, 0.9);
+    box.style.filter = `drop-shadow(0 0 ${4 + state.streak*1.6}px rgba(255,150,40,${glowI}))`;
+  }
+
+  // ---------- SMOKE on chimneys / forge ----------
+  function attachSmoke(objDiv, count, color, fromX, fromY){
+    for(let i=0;i<count;i++){
+      const s = document.createElement('div');
+      s.className='smoke';
+      s.style.left = (fromX) + 'px';
+      s.style.top  = (fromY) + 'px';
+      s.style.background = color || 'rgba(220,220,220,.55)';
+      s.style.animationDelay = (i*1.1)+'s';
+      objDiv.querySelector('.pop').appendChild(s);
+    }
+  }
+
+  // ---------- STAGES ----------
+  const STAGES = [
+    { name:'Camp',       goal:3,  emblem:'tent',  blurb:'a tiny camp' },
+    { name:'Settlement', goal:6,  emblem:'house', blurb:'a settlement' },
+    { name:'Village',    goal:10, emblem:'house', blurb:'a village' },
+    { name:'Town',       goal:15, emblem:'town',  blurb:'a town' },
+    { name:'City',       goal:22, emblem:'town',  blurb:'a city' },
+    { name:'Kingdom',    goal:30, emblem:'crown', blurb:'a kingdom' },
+    { name:'Empire',     goal:99, emblem:'crown', blurb:'an empire' }
+  ];
+  const EMBLEM_SVG = {
+    tent:  '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 2 21h20L12 3Zm0 5 4 9h-3l-1-3-1 3H8l4-9Z"/></svg>',
+    house: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 3 10v11h6v-6h6v6h6V10l-9-7Z"/></svg>',
+    town:  '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 21V9l4-2v3l4-3v3l4-2v3l5-2v14H3Z"/></svg>',
+    crown: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 8l4 5 5-8 5 8 4-5v11H3V8Z"/></svg>'
+  };
+
+  // ---------- STATE ----------
+  const state = {
+    completed: 0,
+    stageIdx: 0,
+    streak: 0,
+    night: false,
+    resting: false,
+    rearrange: false,
+    objects: [],          // {el,col,row}
+    occupied: new Set(),  // "col,row"
+    bonfireEl: null,
+    featureBuilt: new Set()
+  };
+
+  function key(c,r){ return c+','+r; }
+  function isFree(c,r){ return c>=0 && r>=0 && c<GRID && r<GRID && !state.occupied.has(key(c,r)); }
+
+  // pick a free tile, prefer near-center spiral
+  function pickTile(prefEdge){
+    const order = [];
+    for(let r=0;r<GRID;r++) for(let c=0;c<GRID;c++){
+      const dc=c-CX, dr=r-CX, d=dc*dc+dr*dr;
+      order.push({c,r,d});
+    }
+    order.sort((a,b)=> prefEdge ? b.d-a.d : a.d-b.d);
+    // a little jitter so it's not perfectly predictable
+    for(const t of order){
+      if(isFree(t.c,t.r) && Math.random()>0.18) return t;
+    }
+    for(const t of order){ if(isFree(t.c,t.r)) return t; }
+    return null;
+  }
+
+  // ---------- PLACE OBJECT ----------
+  function spawn(svgHtml, col, row, classes, opts){
+    opts = opts || {};
+    const div = objWrap(svgHtml, classes);
+    placeEl(div, col, row);
+    iso_el.appendChild(div);
+    // dust puff
+    const puff = document.createElement('div'); puff.className='puff';
+    div.appendChild(puff);
+    setTimeout(()=>puff.remove(), 700);
+    const rec = {el:div, col, row, kind:opts.kind||'misc', feature:opts.feature||null};
+    state.objects.push(rec);
+    if(opts.occupy!==false){ state.occupied.add(key(col,row)); }
+    if(opts.smoke){ attachSmoke(div, opts.smoke.n||2, opts.smoke.color, opts.smoke.x, opts.smoke.y); }
+    if(opts.feature){ buildFeaturePin(div, opts.feature); div.classList.add('feature'); }
+    refreshDraggable(rec);
+    updateBuildingCount();
+    return rec;
+  }
+
+  function buildFeaturePin(div, feature){
+    const pin = document.createElement('div');
+    pin.className='pin';
+    pin.textContent = feature.label;
+    div.querySelector('.pop').appendChild(pin);
+  }
+
+  function updateBuildingCount(){
+    const n = state.objects.filter(o=>['cottage','town','hall','tower','castle','tent','feature'].includes(o.kind) || o.feature).length;
+    document.getElementById('bcount').textContent = n;
+  }
+
+  // ---------- FEATURE BUILDINGS ----------
+  const FEATURES = {
+    cartographer: { label:"Cartographer's Tower", tag:"World map & lore",
+      body:"Your world map & knowledge facts live here — chart a region, collect lore.",
+      svg:()=>svgTower({hi:'#6fa3c9',m:'#4f7fa6',lo:'#3c6383'}), icon:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 5l6-2 6 2 6-2v16l-6 2-6-2-6 2V5Zm6 0v14m6-12v14" stroke="currentColor" stroke-width="0" /><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2Z"/></svg>' },
+    tavern: { label:"Tavern", tag:"The Arcade",
+      body:"Your Arcade — pop in to play the brain-training games.",
+      svg:()=>svgTownhouse({hi:C.roofRedHi,m:C.roofRed,lo:C.roofRedLo}), icon:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 4h14l-1 6a6 6 0 0 1-5 5v3h3v2H8v-2h3v-3a6 6 0 0 1-5-5L5 4Z"/></svg>' },
+    forge: { label:"The Forge", tag:"Focus timer",
+      body:"Your Focus timer — start a deep-work session here; smoke rises while you focus.",
+      svg:()=>svgHall({hi:'#9a9a9a',m:'#6f6f6f',lo:'#525252'}), icon:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 13l9-9 3 3-9 9-3 .5.5-3.5ZM14 6l4 4 3-3-4-4-3 3Z"/></svg>', smoke:true },
+    warroom: { label:"War Room", tag:"Eisenhower matrix",
+      body:"Your Eisenhower matrix — see what's urgent vs. important.",
+      svg:()=>svgTownhouse({hi:'#8a96ad',m:'#5f6c82',lo:'#46506a'}), icon:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h7v7H4V4Zm9 0h7v7h-7V4ZM4 13h7v7H4v-7Zm9 0h7v7h-7v-7Z"/></svg>' },
+    records: { label:"Hall of Records", tag:"Stats & milestones",
+      body:"Your stats & milestones, as monuments and plaques.",
+      svg:()=>svgHall({hi:'#dccaa0',m:'#bda774',lo:'#9c854f'}), icon:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 2 7l10 5 10-5-10-5Zm0 8L4 6v6l8 4 8-4V6l-8 4Zm0 6L4 12v3l8 4 8-4v-3l-8 4Z"/></svg>' },
+    questboard: { label:"Quest Board", tag:"Your quests",
+      body:"Your quests — posted in the town square.",
+      svg:()=>svgStall(), icon:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 3h14v18l-7-3-7 3V3Zm3 4h8v2H8V7Zm0 4h8v2H8v-2Z"/></svg>' }
+  };
+
+  // ---------- INITIAL CAMP ----------
+  function setupCamp(){
+    buildGround();
+    // a couple trees at the back corners
+    spawn(svgPine(), 0, 1, '', {kind:'tree'});
+    spawn(svgTree(), 6, 1, '', {kind:'tree'});
+    spawn(svgPine(), 5, 0, '', {kind:'tree'});
+    // dirt path down the middle
+    spawn(svgPath(), 3, 5, '', {kind:'path', occupy:true});
+    spawn(svgPath(), 3, 4, '', {kind:'path', occupy:true});
+    // the camp: tent + crates
+    spawn(svgTent(),   2, 3, '', {kind:'tent'});
+    spawn(svgCrates(), 4, 2, '', {kind:'misc'});
+    // the bonfire (center-ish) — this is the streak heart
+    const fire = spawn(svgBonfireScene(1), 3, 3, '', {kind:'bonfire', occupy:true});
+    state.bonfireEl = fire;
+    // Quest Board feature placed in the "square"
+    spawn(FEATURES.questboard.svg(), 4, 4, '', {kind:'feature', feature:FEATURES.questboard});
+  }
+
+  // refresh bonfire art to current streak
+  function renderSceneFire(){
+    if(!state.bonfireEl) return;
+    const scale = 1 + Math.min(state.streak,7)*0.16;
+    state.bonfireEl.el.querySelector('.pop').innerHTML = svgBonfireScene(scale);
+    // re-add a pin? no. glow:
+    const i = Math.min(0.2 + state.streak*0.05, 0.85);
+    state.bonfireEl.el.style.filter = `drop-shadow(0 0 ${6+state.streak*2}px rgba(255,150,40,${i}))`;
+  }
+
+  // ---------- QUEST COMPLETION ----------
+  // progression script: what gets built at each total count, with feature unlocks woven in
+  function buildForDifficulty(diff){
+    let rec=null, label='';
+    if(diff==='easy'){
+      const choices=[
+        ()=>{label='A new path was laid.'; const t=pickTile(); return t&&spawn(svgPath(),t.c,t.r,'',{kind:'path'});},
+        ()=>{label='A fence went up.';      const t=pickTile(true); return t&&spawn(svgFence(),t.c,t.r,'',{kind:'misc'});},
+        ()=>{label='A tree took root.';     const t=pickTile(true); return t&&spawn(Math.random()>.5?svgTree():svgPine(),t.c,t.r,'',{kind:'tree'});},
+        ()=>{label='A well was dug.';       const t=pickTile(); return t&&spawn(svgWell(),t.c,t.r,'',{kind:'misc'});}
+      ];
+      rec = choices[Math.floor(Math.random()*choices.length)]();
+    } else if(diff==='med'){
+      label='A cottage was built! 🏠';
+      const t=pickTile();
+      const roofs=[{hi:C.roofRedHi,m:C.roofRed,lo:C.roofRedLo},{hi:C.roofSlateHi,m:C.roofSlate,lo:C.roofSlateLo}];
+      const roof = roofs[Math.floor(Math.random()*roofs.length)];
+      rec = t && spawn(Math.random()>.5?svgCottage(roof):svgTownhouse(roof), t.c, t.r, '', {kind:'cottage', smoke:{n:2,color:'rgba(230,230,230,.5)',x:84,y:18}});
+    } else {
+      // hard: try to unlock the next un-built FEATURE building, else a landmark
+      const order=['tavern','forge','warroom','cartographer','records'];
+      const next = order.find(k=>!state.featureBuilt.has(k));
+      const t=pickTile();
+      if(next){
+        state.featureBuilt.add(next);
+        const f=FEATURES[next];
+        label='A landmark rose: '+f.label+'! ✦';
+        rec = t && spawn(f.svg(), t.c, t.r, '', {kind:'feature', feature:f, smoke: f.smoke?{n:3,color:'rgba(90,90,90,.55)',x:90,y:24}:null});
+      } else {
+        label='A great hall was raised! ✦';
+        rec = t && spawn(Math.random()>.5?svgHall():svgTower(), t.c, t.r, '', {kind:'hall'});
+      }
+    }
+    return label;
+  }
+
+  function completeQuest(diff){
+    if(state.resting){ wakeTown(true); } // completing also wakes the town
+    // grow streak + xp
+    state.streak += 1;
+    state.completed += 1;
+    bumpXP(diff);
+    renderSceneFire(); renderPanelFire(); renderStreakMeta();
+
+    const label = buildForDifficulty(diff) || 'Your realm grew!';
+    toast(label);
+
+    // check stage threshold
+    checkStage();
+    renderProgress();
+  }
+
+  function bumpXP(diff){
+    const add = diff==='easy'?20:diff==='med'?45:90;
+    state.xp = (state.xp||320) + add;
+    const lv = 4 + Math.floor((state.xp-320)/300);
+    document.getElementById('lvNum').textContent = lv;
+    document.getElementById('lvLabel').textContent = lv;
+    document.getElementById('xpLabel').textContent = '· '+state.xp+' xp';
+  }
+
+  function renderStreakMeta(){
+    document.getElementById('streakNum').textContent = state.streak;
+    const sub = state.streak===0 ? 'Complete quests to feed the flame.'
+      : state.streak<3 ? 'The flame is catching…'
+      : state.streak<6 ? 'A steady, warm blaze. 🔥'
+      : 'A roaring bonfire lights the whole town!';
+    document.getElementById('streakSub').textContent = sub;
+  }
+
+  // ---------- STAGE LOGIC ----------
+  function checkStage(){
+    const cur = STAGES[state.stageIdx];
+    if(state.stageIdx < STAGES.length-1 && state.completed >= cur.goal){
+      state.stageIdx += 1;
+      const next = STAGES[state.stageIdx];
+      stageUp(cur.name, next.name);
+      // reveal a stage-exclusive landmark
+      revealStageLandmark(state.stageIdx);
+    }
+  }
+
+  function revealStageLandmark(idx){
+    const t = pickTile();
+    if(!t) return;
+    setTimeout(()=>{
+      if(idx>=5){ spawn(svgCastle(), t.c, t.r, '', {kind:'castle'}); }
+      else if(idx>=3){ spawn(svgHall({hi:C.roofGoldHi,m:C.roofGold,lo:C.roofGoldLo}), t.c, t.r, '', {kind:'hall'}); }
+      else { spawn(svgTower(), t.c, t.r, '', {kind:'tower'}); }
+    }, 700);
+  }
+
+  function renderProgress(){
+    const cur = STAGES[state.stageIdx];
+    const next = STAGES[Math.min(state.stageIdx+1, STAGES.length-1)];
+    const prevGoal = state.stageIdx===0 ? 0 : STAGES[state.stageIdx-1].goal;
+    const span = cur.goal - prevGoal;
+    const into = state.completed - prevGoal;
+    const pct = state.stageIdx===STAGES.length-1 ? 100 : Math.max(0,Math.min(100, (into/span)*100));
+    document.getElementById('progressFill').style.width = pct+'%';
+    document.getElementById('stageName').textContent = cur.name;
+    document.getElementById('stageEmblem').innerHTML = EMBLEM_SVG[cur.emblem];
+    if(state.stageIdx===STAGES.length-1){
+      document.getElementById('progressText').textContent = cur.name+' — your realm is complete ✦';
+      document.getElementById('progressCount').textContent = state.completed;
+      document.getElementById('progressGoal').textContent = '∞';
+    } else {
+      document.getElementById('progressText').textContent =
+        `${cur.name} — ${state.completed}/${cur.goal} quests to ${next.name}`;
+      document.getElementById('progressCount').textContent = state.completed;
+      document.getElementById('progressGoal').textContent = cur.goal;
+    }
+  }
+
+  // ---------- CELEBRATIONS ----------
+  function toast(msg){
+    const z = document.getElementById('toastZone');
+    const t = document.createElement('div'); t.className='toast'; t.textContent=msg;
+    z.appendChild(t);
+    setTimeout(()=>t.remove(), 1850);
+  }
+
+  function stageUp(fromName, toName){
+    const up = document.getElementById('stageUp');
+    document.getElementById('stageRibbon').innerHTML =
+      `✦ Your ${fromName} became a ${toName}! ✦<small>a new chapter begins</small>`;
+    up.classList.remove('show'); void up.offsetWidth; up.classList.add('show');
+    // zoom the iso
+    iso_el.classList.remove('zoomcele'); void iso_el.offsetWidth; iso_el.classList.add('zoomcele');
+    confettiBurst();
+  }
+
+  function confettiBurst(){
+    const scene = document.getElementById('scene');
+    const colors=['#f4d77a','#d9534f','#7fb24f','#fff','#6fa3c9','#f6d479'];
+    for(let i=0;i<46;i++){
+      const c=document.createElement('div'); c.className='confetti';
+      c.style.left=(40+Math.random()*20)+'%';
+      c.style.background=colors[i%colors.length];
+      c.style.borderRadius = Math.random()>.5?'2px':'50%';
+      c.style.transform='rotate('+(Math.random()*360)+'deg)';
+      scene.appendChild(c);
+      const dx=(Math.random()*2-1)*240;
+      requestAnimationFrame(()=>{ c.classList.add('go'); c.style.marginLeft=dx+'px'; c.style.animationDelay=(Math.random()*.3)+'s'; });
+      setTimeout(()=>c.remove(), 2700);
+    }
+  }
+
+  // ---------- DAY / NIGHT ----------
+  function toggleDayNight(){
+    state.night = !state.night;
+    document.getElementById('scene').classList.toggle('night', state.night);
+    document.getElementById('dnLabel').textContent = state.night ? 'Switch to Day' : 'Switch to Night';
+    document.getElementById('dayNightBtn').classList.toggle('active', state.night);
+  }
+
+  // build stars once
+  (function buildStars(){
+    const s=document.getElementById('stars');
+    for(let i=0;i<60;i++){
+      const st=document.createElement('div'); st.className='star';
+      st.style.left=Math.random()*100+'%';
+      st.style.top=Math.random()*55+'%';
+      st.style.animationDelay=(Math.random()*3.5)+'s';
+      s.appendChild(st);
+    }
+  })();
+
+  // ---------- REST / RETURN ----------
+  function restTown(){
+    if(state.resting) return;
+    state.resting = true;
+    document.getElementById('scene').classList.add('resting');
+    if(!state.night) toggleDayNight();
+    document.getElementById('restBtn').classList.add('active');
+    document.getElementById('returnBtn').classList.remove('active');
+    toast('🛏️ Resting — your streak is safe, nothing lost.');
+  }
+  let festivalAdded=false;
+  function wakeTown(silent){
+    if(!state.resting){ if(!silent) toast('Your town is already wide awake! ☀️'); return; }
+    state.resting = false;
+    document.getElementById('scene').classList.remove('resting');
+    if(state.night) toggleDayNight();
+    document.getElementById('restBtn').classList.remove('active');
+    document.getElementById('returnBtn').classList.add('active');
+    // welcome-home glow
+    flashWelcome();
+    if(!silent) toast('🎉 Welcome home! The town relights for you.');
+    // tiny festival decoration appears once
+    addFestival();
+    setTimeout(()=>document.getElementById('returnBtn').classList.remove('active'), 1400);
+  }
+  function flashWelcome(){
+    const scene=document.getElementById('scene');
+    const g=document.createElement('div');
+    g.style.cssText='position:absolute;inset:0;z-index:30;pointer-events:none;background:radial-gradient(circle at 50% 60%, rgba(255,210,120,.5), transparent 60%);opacity:0;transition:opacity .5s;';
+    scene.appendChild(g);
+    requestAnimationFrame(()=>{ g.style.opacity='1'; });
+    setTimeout(()=>{ g.style.opacity='0'; }, 700);
+    setTimeout(()=>g.remove(), 1400);
+  }
+  function addFestival(){
+    // bunting + a couple lanterns near the bonfire square
+    const t = pickTile(true);
+    if(!t) return;
+    const svg = `<svg width="90" height="60" viewBox="0 0 90 60" style="overflow:visible;">
+      <ellipse cx="45" cy="54" rx="20" ry="5" fill="rgba(0,0,0,.12)"/>
+      <rect x="14" y="8" width="2" height="44" fill="${C.woodR}"/>
+      <rect x="74" y="8" width="2" height="44" fill="${C.woodR}"/>
+      <path d="M15 12 Q45 30 75 12" stroke="${C.gold||'#f4d77a'}" stroke-width="2" fill="none"/>
+      <g>
+        <polygon points="24,15 30,15 27,24" fill="#d9534f"/>
+        <polygon points="36,18 42,18 39,27" fill="#f4d77a"/>
+        <polygon points="48,18 54,18 51,27" fill="#7fb24f"/>
+        <polygon points="60,15 66,15 63,24" fill="#6fa3c9"/>
+      </g>
+      <circle cx="20" cy="40" r="5" fill="#ffce5a"/><circle cx="70" cy="40" r="5" fill="#ffce5a"/>
+    </svg>`;
+    const rec = spawn(svg, t.c, t.r, '', {kind:'misc'});
+    toast('🎪 A little festival sprang up to welcome you!');
+  }
+
+  // ---------- REARRANGE (drag) ----------
+  function toggleRearrange(){
+    state.rearrange = !state.rearrange;
+    document.getElementById('raLabel').textContent = 'Rearrange: '+(state.rearrange?'On':'Off');
+    document.getElementById('rearrangeBtn').classList.toggle('active', state.rearrange);
+    document.getElementById('modeChip').style.display = state.rearrange?'inline-block':'none';
+    state.objects.forEach(refreshDraggable);
+  }
+  function refreshDraggable(rec){
+    // only buildings/decor are draggable, not ground or bonfire
+    const movable = rec.kind!=='bonfire';
+    rec.el.classList.toggle('draggable', state.rearrange && movable);
+  }
+
+  // pointer-based drag with snap-to-grid
+  let drag=null;
+  function onPointerDown(e){
+    if(!state.rearrange) return;
+    const objEl = e.target.closest('.obj');
+    if(!objEl) return;
+    const rec = state.objects.find(o=>o.el===objEl);
+    if(!rec || rec.kind==='bonfire') return;
+    e.preventDefault();
+    drag = { rec, startX:e.clientX, startY:e.clientY };
+    objEl.classList.add('dragging');
+  }
+  function screenToTile(clientX, clientY){
+    // map cursor to iso col,row using the iso element's box as origin
+    const r = iso_el.getBoundingClientRect();
+    // iso element origin (0,0) is its top-left + we offset to where (col,row)->(0,0) center sits.
+    // ground origin within iso is at (0,0) of iso coordinate (handled by ground transform).
+    const px = clientX - r.left;
+    const py = clientY - r.top;
+    // invert iso: x=(c-r)*TW/2 ; y=(c+r)*TH/2  => relative to center pc of tile
+    // our object anchor uses iso(col+0.5,row+0.5); approximate by solving then floor.
+    const a = px/(TW/2);
+    const b = py/(TH/2);
+    let c = (a+b)/2 - 0.5;
+    let rr= (b-a)/2 - 0.5;
+    c=Math.round(c); rr=Math.round(rr);
+    return {c, r:rr};
+  }
+  function onPointerMove(e){
+    if(!drag) return;
+    // live follow: position element under cursor (free), snap visually to tile center
+    const t = screenToTile(e.clientX, e.clientY);
+    if(t.c>=0 && t.r>=0 && t.c<GRID && t.r<GRID){
+      placeEl(drag.rec.el, t.c, t.r);
+      drag.target = t;
+    }
+  }
+  function onPointerUp(){
+    if(!drag) return;
+    const rec=drag.rec;
+    rec.el.classList.remove('dragging');
+    const t = drag.target;
+    if(t && isFreeOrSelf(t.c,t.r,rec)){
+      // commit move
+      state.occupied.delete(key(rec.col,rec.row));
+      rec.col=t.c; rec.row=t.r;
+      placeEl(rec.el, rec.col, rec.row);
+      if(rec.kind!=='path' && rec.kind!=='tree') state.occupied.add(key(rec.col,rec.row));
+    } else {
+      // snap back
+      placeEl(rec.el, rec.col, rec.row);
+    }
+    drag=null;
+  }
+  function isFreeOrSelf(c,r,rec){
+    if(c<0||r<0||c>=GRID||r>=GRID) return false;
+    if(c===rec.col && r===rec.row) return true;
+    return !state.occupied.has(key(c,r));
+  }
+
+  // ---------- FEATURE POPOVER ----------
+  const popCard=document.getElementById('popCard');
+  function showFeaturePopover(feature, anchorEl){
+    document.getElementById('popTag').textContent = feature.tag;
+    document.getElementById('popTitle').textContent = feature.label;
+    document.getElementById('popBody').textContent = feature.body;
+    document.getElementById('popIc').innerHTML = feature.icon;
+    popCard.classList.add('show');
+    const r=anchorEl.getBoundingClientRect();
+    let x = r.left + r.width/2 - 30;
+    let y = r.bottom + 8;
+    // keep on screen
+    const pw=280, ph=140;
+    if(x+pw > window.innerWidth-12) x = window.innerWidth-12-pw;
+    if(x<12) x=12;
+    if(y+ph > window.innerHeight-12) y = r.top - ph - 8;
+    popCard.style.left=x+'px';
+    popCard.style.top=y+'px';
+  }
+  function hidePopover(){ popCard.classList.remove('show'); }
+
+  // ---------- EVENTS ----------
+  document.querySelectorAll('.qbtn').forEach(b=>{
+    b.addEventListener('click', ()=> completeQuest(b.dataset.diff));
+  });
+  document.getElementById('restBtn').addEventListener('click', restTown);
+  document.getElementById('returnBtn').addEventListener('click', ()=>wakeTown(false));
+  document.getElementById('dayNightBtn').addEventListener('click', toggleDayNight);
+  document.getElementById('rearrangeBtn').addEventListener('click', toggleRearrange);
+  document.getElementById('introClose').addEventListener('click', ()=>{
+    document.getElementById('introCard').style.display='none';
+  });
+
+  // feature clicks (delegated)
+  iso_el.addEventListener('click', (e)=>{
+    if(state.rearrange) return; // dragging mode, ignore taps
+    const objEl=e.target.closest('.obj.feature');
+    if(!objEl){ return; }
+    const rec=state.objects.find(o=>o.el===objEl);
+    if(rec && rec.feature){ showFeaturePopover(rec.feature, objEl); e.stopPropagation(); }
+  });
+  document.addEventListener('click', (e)=>{
+    if(!e.target.closest('.obj.feature') && !e.target.closest('#popCard')) hidePopover();
+  });
+
+  // drag listeners
+  iso_el.addEventListener('pointerdown', onPointerDown);
+  window.addEventListener('pointermove', onPointerMove);
+  window.addEventListener('pointerup', onPointerUp);
+
+  // reposition popover on scroll/resize
+  window.addEventListener('resize', hidePopover);
+
+  // ---------- BOOT ----------
+  setupCamp();
+  renderProgress();
+  renderPanelFire();
+  renderStreakMeta();
+  updateBuildingCount();
+
+})();
+</script>
+</body>
+</html>

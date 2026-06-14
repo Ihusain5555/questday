@@ -73,6 +73,9 @@ Pure engines live in `src/shared/engine/` (current-quest scoring, rewards, **rea
   decoration and render via the bundled Twemoji color webfont.
 - **Toggleable features:** new optional feature = one `features.ts` entry + one App.tsx tab +
   one `enabledFeatures` key (data is never deleted, only the tab hidden — tone rule).
+- **Design mockups → `mockups/`** (self-contained OFFLINE HTML, inline SVG/CSS, no deps/network,
+  double-click to view). The user is highly visual and can't read code — for any visual feature,
+  build a mockup and get it APPROVED before coding the real thing (e.g. `mockups/worldmap-mockup.html`).
 - Style: 2-space indent, named exports, Prettier-ish, comments explain *why* (cite spec §).
 
 ## Working in parallel & shipping
@@ -82,6 +85,51 @@ per feature, and claim the shared app-lock before opening the app (single-instan
 → See the **parallel-worktrees** skill for the worktree flow.
 → See the **shipping-and-gotchas** skill for `npm run dist`, the install-it-for-the-user steps,
   and the known build gotchas (electron extract, winCodeSign, single-instance, db.json stashing).
+
+## Civilization reward layer ("Your Realm", v1.10 — IN PROGRESS)
+
+Replacing the Realm's *prominence* with an explorable medieval-fantasy **civilization** that grows from quest
+completions (Camp→Empire) across multiple towns, navigated by 3 zoom levels (world map ↔ town ↔
+feature-building). Full design: `docs/superpowers/specs/2026-06-11-civilization-reward-layer-design.md`.
+Built **one feature at a time** (plan → user OK → build → test steps → user confirms → next). The user directs
+by outcome and **cannot read code**, so the gates below are load-bearing, not optional.
+
+- **Integrity line:** gains-only, never punishing (extends the tone rule) — the civilization only GAINS; a
+  missed day = a cozy "resting" state, never decay/reset/loss; the Bonfire never goes out. The reward must
+  **never overshadow doing tasks**: the full reward (building + celebration + XP/streak) fires on completion
+  from the DEFAULT view; pan/zoom/travel/decorate are optional; the whole feature sits behind the
+  `enabledFeatures` toggle (data hidden, never deleted). **↩ Restore stays EXACT** — civilization unlocks are a
+  pure function of all-time completions (DERIVED, not stored); each completion stores its exact award. Do NOT
+  delete the inert garden engine, `realm.ts`, or `chronicle.ts` — they are **reused** (Terra Questa becomes the
+  world map; the Chronicle lives inside the Cartographer's Tower). Bundled art is **commercial-safe CC0 only**,
+  recorded in a license/credits manifest; no art-export feature; no NC/SA/CraftPix/Inkarnate assets.
+  **Installer-licensing rule (hard, learned 2026-06-13):** the NSIS installer ships art as EXTRACTABLE files, so any
+  license forbidding end-user *extraction* (Adobe Stock, Shutterstock, Envato/GraphicRiver, GameDev Market, the standard
+  itch.io paid license) is DISQUALIFIED even though it permits "commercial use" — the only bundle-safe channels are
+  **CC0**, **AI output you hold a license to** (Midjourney/Scenario), or a **work-for-hire commission**.
+  **Art direction DECIDED (2026-06-13):** style = *Warm Storybook Parchment*, **FREE CC0 art for v1**, with an
+  AI-style-lock or hero-map commission upgrade explicitly DEFERRED (standing reminder). Menu + budget tiers:
+  `docs/art-system-research.md`; build sequence: `docs/art-system-build-plan.md`. The v1.10 world map is already
+  productionized as a storybook re-skin of `RealmMap` (see the **codebase-overview** skill's gotchas).
+  **Look RESTYLED & APPROVED (2026-06-14):** the user explored an antique pen-and-ink cartography restyle (3 options)
+  and approved the **"Inked Watercolor"** look in `mockups/world-map-final.html` — soft watercolor washes under light
+  ink, a rust **mountain-ring border**, ornate compass, swallowtail banners, **every settlement is now a full TOWN**
+  (8 clusters), per-region terrain, and **seamless animations** (diving sea-creatures w/ underwater shadow, drifting
+  wind, lapping waves, sailing boats — none teleport). This SUPERSEDES the storybook-parchment map look but is still a
+  **MOCKUP** — the next feature is integrating it into the in-app `RealmMap`. Durable lessons: (1) **an AI image model
+  (Gemini flash) is NOT a reliable art-quality gate** for hand-authored vector SVG — it's judge-variable, confabulates
+  fixed elements, and can't see sub-pixel roughening after downsampling; the **visually-driven user is the judge**, not
+  a model score. (2) **Seamless loops = no teleport** (alternate/ping-pong, fade-before-reset, or 0%==100% keyframes).
+  (3) Playwright MCP blocks `file://` — serve mockups via `scripts/_mockserver.mjs` to screenshot them.
+- **Stop-and-confirm (irreversible) actions — explicit yes for the SPECIFIC action, every time, even mid-flow:**
+  changing the `db.json` schema or the save deep-merge/validate logic; deleting/renaming existing engines or
+  views; adding/removing npm dependencies (target is ZERO new deps); touching preload/IPC/sandbox/window
+  security; `npm run dist` / building or publishing an installer; `git push` / force-push / branch deletion;
+  any write to the REAL `db.json` (pw drivers use an isolated `--user-data-dir`).
+- **Definition of done:** `npm run typecheck` clean (main + renderer) AND the relevant `pw:` driver passes
+  against the built `out/` AND the spec's acceptance check for that task is met; visual/art tasks ALSO require
+  the user to have seen it in the real app and accepted the look. Partial work is flagged explicitly — never
+  reported as done.
 
 ## Standing guidance (efficiency)
 

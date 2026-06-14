@@ -65,7 +65,16 @@ ONLY writer of the data file. This is why edits in one window appear live in oth
   world (replaces the garden). Each completion earns an "expedition" you spend to chart a CHOSEN
   region of Terra Questa; scouts return with a knowledge entry YOU pick (tease-then-reveal →
   re-readable Chronicle codex). Pure function of completions + `settings.realmChronicle`;
-  gains-only, ↩ Restore trims only the newest (`normalizeChronicle`).
+  gains-only, ↩ Restore trims only the newest (`normalizeChronicle`). **The Realm has 15 regions**
+  (not 16); `realmProgress`/`pw-realm` show "/15".
+- **Civilization ("Your Realm", v1.10 — IN PROGRESS)** (`engine/civilization.ts`, `balance.civilization`,
+  scaffold `app/CivilizationPanel.tsx`): replacing the Realm's prominence with an explorable iso
+  medieval-fantasy town that grows Camp→Empire across multiple towns (3-level zoom: world map ↔ town ↔
+  feature-building). Engine is **pure-derived** — stage + town unlocks computed from `totalCompletions`,
+  nothing persisted (mirrors `realm.ts`, so ↩ Restore stays exact). Design spec:
+  `docs/superpowers/specs/2026-06-11-civilization-reward-layer-design.md`; guardrails in CLAUDE.md.
+  Reward-world art **mockups live in `mockups/`** (self-contained offline HTML; `worldmap-mockup.html`
+  is the user-APPROVED parchment map to productionize). `CivilizationPanel.tsx` is a THROWAWAY scaffold.
 - **Matrix** (v1.6, `app/EisenhowerView.tsx`): renders `engine/eisenhower.ts`. Each quadrant
   shows a Phosphor icon in a colour-tinted badge (`.eh-badge`; icon NAME in
   `balance.eisenhower.quadrants[].icon`, mapped to component in EisenhowerView).
@@ -134,3 +143,61 @@ ONLY writer of the data file. This is why edits in one window appear live in oth
   in `index.ts`) — they're no longer always-on. `nudgedFrameKeys` is pruned on day-change.
 - **Focus / Matrix / Active mode are SUB-tabs under the "Forge" top-level tab (v1.8.1).** A pw driver
   reaching Focus must click `Forge` then the `.subtab` "Focus" — there is no top-level "Focus" button.
+- **The Realm tab is a CORE, non-toggleable tab** (App.tsx) — it is NOT in the `enabledFeatures` toggle
+  set, so it can't be hidden in Data. (The v1.10 civilization feature toggle is therefore DEFERRED until
+  the tab fully becomes the civilization.) Also: **the Realm has 15 regions, not 16.**
+- **Reward-world / feature MOCKUPS live in `mockups/`** — self-contained OFFLINE HTML (inline SVG + CSS,
+  no deps, no network), open by double-click. They're throwaway design artifacts, not app code. The user
+  is very visually driven and judges look via these before we build — `mockups/worldmap-mockup.html` is the
+  APPROVED parchment world-map look (productionize that, NOT Azgaar, per the user's choice).
+- **`balance.civilization` + `engine/civilization.ts` (v1.10) are PURE-DERIVED** like `realm.ts` — stage +
+  town unlocks are computed from `totalCompletions(quests)`, nothing is persisted, so ↩ Restore stays exact
+  with no extra claw-back code. Alias `as const` thresholds `: number` before arithmetic (same `as const`
+  footgun as the arcade tunables). `app/CivilizationPanel.tsx` is a TEMPORARY scaffold (inline styles),
+  replaced by the canvas town in build Step 2.
+- **The Realm/Terra Questa map is now WARM STORYBOOK PARCHMENT (v1.10, 2026-06-13).** The `RealmMap` SVG in
+  `app/RealmView.tsx` was re-skinned in place — parchment sea/land gradients, gold-leaf frame, `realmGrain`
+  feTurbulence, sepia labels (inline `style` beats the `.realm-label` CSS), parchment-faded fog. The expedition
+  CLASS HOOKS + structure are unchanged on purpose (`.realm-region`/`.realm-claimable`/`.realm-charted`/`.realm-fog`/
+  `.realm-label*`), so `pw:realm` still passes — don't rename them.
+- **`RealmMap` is SHARED by the Realm tab AND the Dashboard `RealmPeek` thumbnail** (both in RealmView.tsx) —
+  any restyle changes both. That's intended (consistent look); just be aware.
+- **Landmark icons come from `app/storybookMapIcons.tsx`** — 12 cozy CC0-style icons on a 0 0 100 100 viewBox,
+  rendered as `<symbol id="sbm-*">` via **`dangerouslySetInnerHTML` on an SVG `<g>`** (works in Electron's
+  Chromium for inline SVG; verified in the BUILT app, not just dev) and drawn with `<use href="#sbm-<kind>">`.
+  The `Landmark` switch maps region `landmark.kind` (keep/town/tower/mountains/village/forest) → an icon name.
+  These icons + the warm palette are **PLACEHOLDER free-route art (storybook look)** to be upgraded later — not final.
+- **Workflow-generated SVG sometimes arrives wrapped in `<![CDATA[ … ]]>`** which silently renders as nothing in
+  an HTML/JSX `<svg>` — strip `<![CDATA[`/`]]>` before embedding (the icon generator and mockup builders do this).
+- **pw drivers screenshot to `pw-shots/`** (e.g. `realm-tab.png`, `realm-reread.png`) — `Read` those to visually
+  verify a re-skin in the BUILT app without launching it by hand.
+- **Reward-world look dev uses `mockups/` + Workflow-generated art.** Art-system research/decisions are in
+  `docs/art-system-research.md` (style = Storybook Parchment, FREE CC0 for v1, art-upgrade deferred); the build
+  sequence is `docs/art-system-build-plan.md`. **Licensing landmine:** paid marketplace packs (Adobe/Envato/
+  GameDev Market/standard-itch) forbid end-user *extraction* → UNSAFE to bundle in the extractable NSIS installer;
+  only CC0, AI-output-you-license, or work-for-hire commission are bundle-safe.
+- **The APPROVED v1.10 world-map look is now `mockups/world-map-final.html` (2026-06-14)** — an "Inked Watercolor"
+  antique style: light pen-ink over soft watercolor washes, a rust **mountain-ring border**, ornate red/gold compass,
+  swallowtail banner labels, **8 full TOWN clusters** (each settlement is a town, not a single icon), per-region
+  terrain (hills/lakes/moor+tarn/groves/marsh/rivers), Embergreen=forest + Crownspire=mountains kept, and seamless
+  animations. Explored as 3 options (`world-map-antique-1/2/3.html` = full-antique / cozy-hybrid / inked-watercolor);
+  the user picked #3 then asked for the towns+terrain+living-map upgrade. **Still a MOCKUP — not yet in the app**; the
+  next feature is integrating this look into `RealmView.tsx`'s `RealmMap` (which is currently the warm-storybook re-skin).
+- **Previewing offline mockups in Playwright (MCP):** the Playwright MCP browser BLOCKS `file://`. Serve the repo over
+  http first — `node scripts/_mockserver.mjs` → `http://localhost:8777/mockups/...` — then navigate/screenshot. Heavy
+  SVG filters (displacement/blur) can TIME OUT a fullPage screenshot above ~2000px wide; render at ≤1500px.
+- **AI art-judge (Gemini) is NOT a reliable quality gate for hand-authored vector SVG.** `scripts/gemini-critique.mjs`
+  (key in gitignored `scripts/.gemini-key.txt` or `$GEMINI_API_KEY`; retries transients + cascades models) is fine for
+  an *independent opinion*, BUT: it's judge-VARIABLE (gemini-2.5-flash vs 3.5-flash score differently — PIN the model
+  via `GEMINI_MODEL`), it CONFABULATES (faulted "blue auras"/"perfect-ellipse washes"/"90° scale bar" that had already
+  been fixed), and it can't perceive sub-pixel ink-roughening after Gemini's image downsampling (kept calling roughened
+  linework "clean vector"). Score plateaued 6.5–7.5 regardless of real improvements. **The visually-driven USER is the
+  judge — don't chase a model's number.** True painterly fidelity needs the deferred raster/AI art upgrade, not more SVG.
+- **Seamless loop-animation rule (no teleport):** waves/boats use `animation-direction: alternate` (ping-pong);
+  travelling elements (wind streaks) fade to `opacity:0` *before* the position resets so the jump is invisible; the
+  sea-creature dive loop is ONE keyframe set whose 0% == 100% (transform AND opacity), with a separate shadow animation
+  on the SAME duration/easing. Always add `@media (prefers-reduced-motion: reduce){…{animation:none}}`.
+- **Map assets are assembled via `scripts/assemble-map.mjs`** — it reads a Workflow run's `.output` JSON (array of
+  `{name, svg}`), HTML-entity-decodes, and injects each town `<g>` into a `<!--TOWNS-->` marker in the base HTML. The 8
+  town clusters were fan-out generated by parallel agents against a strict shared style spec (exact hex tokens + an
+  example building) so they stay cohesive — blind multi-agent SVG only works with a tight spec + a final review pass.

@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>QuestDay — Look Directions (pick one)</title>
+<style>
+ :root{--emerald-deep:#10362a;--emerald:#1f8a60;--gold:#f5b938;--cream:#f4ecd8}
+ *{box-sizing:border-box} html,body{margin:0}
+ body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;color:#eaf3ee;line-height:1.5;
+   background:radial-gradient(125% 95% at 50% -10%,#1a4d3a 0%,#123b2c 46%,#0a241c 100%) fixed;min-height:100vh;padding:38px 22px 70px}
+ .wrap{max-width:1200px;margin:0 auto}
+ header{text-align:center;margin-bottom:6px}
+ h1{font-size:29px;margin:0 0 6px;color:#fff} h1 .a{color:var(--gold)}
+ .sub{color:#bfe0cf;max-width:820px;margin:0 auto;font-size:15px}
+ .truth{max-width:900px;margin:20px auto 26px;background:rgba(245,185,56,.09);border:1px solid rgba(245,185,56,.5);border-radius:12px;padding:13px 18px;font-size:14px;color:#ffe9b8}
+ .truth b{color:var(--gold)}
+ .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+ @media(max-width:760px){.grid{grid-template-columns:1fr}}
+ .card{background:linear-gradient(180deg,#16382b,#0f2c22);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:18px;box-shadow:0 14px 34px rgba(0,0,0,.32)}
+ .cardhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+ .cardhead h2{margin:0;font-size:18px;color:#fff}
+ .badge{font-size:11px;font-weight:700;letter-spacing:.4px;padding:4px 10px;border-radius:999px;white-space:nowrap}
+ .b-gold{background:rgba(245,185,56,.18);color:var(--gold);border:1px solid rgba(245,185,56,.6)}
+ .b-blue{background:rgba(120,170,255,.15);color:#bcd6ff;border:1px solid rgba(120,170,255,.5)}
+ .b-green{background:rgba(47,179,128,.18);color:#9fe9c6;border:1px solid rgba(47,179,128,.5)}
+ .b-grey{background:rgba(255,255,255,.08);color:#cdd7d2;border:1px solid rgba(255,255,255,.2)}
+ .tile{height:260px;border-radius:14px;background:radial-gradient(120% 92% at 50% 16%,#f7f0dd,#e7d8b0 70%,#d8c290);display:flex;align-items:center;justify-content:center;overflow:hidden}
+ .bldg{width:88%;height:88%;display:block}
+ .swatches{display:flex;gap:5px;margin:12px 0 8px} .sw{width:22px;height:22px;border-radius:6px;border:1px solid rgba(0,0,0,.25)}
+ .rows{font-size:13px}
+ .r{display:flex;gap:10px;padding:6px 0;border-top:1px solid rgba(255,255,255,.07)}
+ .r b{flex:0 0 96px;color:var(--gold);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding-top:1px}
+ .r span{color:rgba(255,255,255,.85)} .r .lic{color:#9fe9c6;font-style:normal;font-size:11px;border:1px solid rgba(47,179,128,.5);border-radius:5px;padding:1px 6px;margin-left:6px}
+ .r.premium span{color:#ffe9b8}
+ footer{margin-top:30px;padding:20px 22px;border-radius:14px;background:rgba(0,0,0,.26);border:1px solid rgba(255,255,255,.08);font-size:14px;color:#d6e8de;max-width:980px;margin-left:auto;margin-right:auto}
+ footer h3{margin:0 0 10px;color:var(--gold);font-size:15px} footer ul{margin:0;padding-left:20px} footer li{margin-bottom:7px}
+ .note{margin-top:12px;font-size:12.5px;color:#9fc2b1;font-style:italic}
+</style></head>
+<body><div class="wrap">
+ <header>
+  <h1>Look Directions — <span class="a">pick one</span></h1>
+  <p class="sub">Same cozy cottage, four art directions, all in your emerald-gold-parchment palette. This is the one decision the research couldn't make for you — it's a taste call. Each card shows how it'd be sourced and an honest "how premium does it read."</p>
+ </header>
+ <div class="truth">⚠️ <b>The key truth from the research:</b> there is <b>no free 2D art that reads "premium painterly" as-is</b> — the polished free sets got their polish from a 3D-prerender. So premium comes from <b>the Grade</b> or a <b>3D-prerender / commission</b>, never from dropping a free pack in. These four are illustrative of each direction's target look (hand-drawn stand-ins), not final assets.</div>
+ <div class="grid">
+  <div class="card">
+    <div class="cardhead">
+      <h2>Pixel-art cozy</h2>
+      <span class="badge b-grey">Fastest</span>
+    </div>
+    <div class="tile"><svg class="bldg" viewBox="0 0 256 256"><defs><filter id="pixel_crisp"><feComponentTransfer><feFuncA type="discrete" tableValues="0 1"/></feComponentTransfer></filter></defs>
+<g shape-rendering="crispEdges">
+<!-- ===== GROUND PATCH (iso diamond, stepped) ===== -->
+<g>
+<rect x="56" y="180" width="144" height="8" fill="#1f8a60"/>
+<rect x="40" y="188" width="176" height="8" fill="#1f8a60"/>
+<rect x="48" y="196" width="160" height="8" fill="#1f8a60"/>
+<rect x="64" y="204" width="128" height="8" fill="#1f8a60"/>
+<rect x="80" y="212" width="96" height="8" fill="#1f8a60"/>
+<rect x="96" y="220" width="64" height="8" fill="#1f8a60"/>
+<rect x="112" y="228" width="32" height="8" fill="#1f8a60"/>
+<!-- darker grass shadow band toward front-right -->
+<rect x="128" y="204" width="64" height="8" fill="#176b4a"/>
+<rect x="128" y="212" width="48" height="8" fill="#176b4a"/>
+<rect x="128" y="220" width="32" height="8" fill="#176b4a"/>
+<rect x="128" y="228" width="16" height="8" fill="#176b4a"/>
+<!-- bright grass speckles -->
+<rect x="72" y="188" width="8" height="8" fill="#2fb380"/>
+<rect x="104" y="196" width="8" height="8" fill="#2fb380"/>
+<rect x="88" y="204" width="8" height="8" fill="#2fb380"/>
+<rect x="168" y="188" width="8" height="8" fill="#2fb380"/>
+</g>
+
+<!-- ===== HOUSE BODY ===== -->
+<!-- TOP face of cube (cream/parchment) - iso diamond -->
+<g>
+<rect x="96" y="76" width="64" height="8" fill="#f4ecd8"/>
+<rect x="80" y="84" width="96" height="8" fill="#f4ecd8"/>
+<rect x="72" y="92" width="112" height="8" fill="#f4ecd8"/>
+<rect x="80" y="100" width="96" height="8" fill="#f4ecd8"/>
+<rect x="96" y="108" width="64" height="8" fill="#f4ecd8"/>
+</g>
+
+<!-- LEFT face (lit - parchment cream) -->
+<g>
+<rect x="72" y="100" width="56" height="8" fill="#f4ecd8"/>
+<rect x="72" y="108" width="56" height="8" fill="#f4ecd8"/>
+<rect x="80" y="116" width="48" height="8" fill="#f4ecd8"/>
+<rect x="80" y="124" width="48" height="8" fill="#f4ecd8"/>
+<rect x="88" y="132" width="40" height="8" fill="#f4ecd8"/>
+<rect x="88" y="140" width="40" height="8" fill="#f4ecd8"/>
+<rect x="96" y="148" width="32" height="8" fill="#f4ecd8"/>
+<rect x="96" y="156" width="32" height="8" fill="#f4ecd8"/>
+<rect x="104" y="164" width="24" height="8" fill="#f4ecd8"/>
+<rect x="104" y="172" width="24" height="8" fill="#f4ecd8"/>
+<!-- left-face edge highlight (brighter) -->
+<rect x="72" y="100" width="8" height="8" fill="#fff6e4"/>
+<rect x="72" y="108" width="8" height="8" fill="#fff6e4"/>
+<rect x="80" y="116" width="8" height="8" fill="#fff6e4"/>
+<rect x="80" y="124" width="8" height="8" fill="#fff6e4"/>
+<rect x="88" y="132" width="8" height="8" fill="#fff6e4"/>
+<rect x="88" y="140" width="8" height="8" fill="#fff6e4"/>
+<rect x="96" y="148" width="8" height="8" fill="#fff6e4"/>
+<rect x="96" y="156" width="8" height="8" fill="#fff6e4"/>
+<rect x="104" y="164" width="8" height="8" fill="#fff6e4"/>
+<rect x="104" y="172" width="8" height="8" fill="#fff6e4"/>
+<!-- WINDOW on left face -->
+<rect x="88" y="124" width="24" height="24" fill="#10362a"/>
+<rect x="92" y="128" width="16" height="16" fill="#ffcf5c"/>
+<rect x="92" y="136" width="16" height="2" fill="#10362a"/>
+<rect x="99" y="128" width="2" height="16" fill="#10362a"/>
+<rect x="92" y="128" width="8" height="8" fill="#f5b938"/>
+</g>
+
+<!-- RIGHT face (shaded - darker emerald-tinted parchment) -->
+<g>
+<rect x="128" y="108" width="56" height="8" fill="#d8cdab"/>
+<rect x="128" y="116" width="48" height="8" fill="#d8cdab"/>
+<rect x="128" y="124" width="48" height="8" fill="#d8cdab"/>
+<rect x="128" y="132" width="40" height="8" fill="#d8cdab"/>
+<rect x="128" y="140" width="40" height="8" fill="#d8cdab"/>
+<rect x="128" y="148" width="32" height="8" fill="#d8cdab"/>
+<rect x="128" y="156" width="32" height="8" fill="#d8cdab"/>
+<rect x="128" y="164" width="24" height="8" fill="#d8cdab"/>
+<rect x="128" y="172" width="24" height="8" fill="#d8cdab"/>
+<!-- deeper shade band at far right edge -->
+<rect x="160" y="116" width="16" height="8" fill="#bcb191"/>
+<rect x="160" y="124" width="16" height="8" fill="#bcb191"/>
+<rect x="152" y="132" width="16" height="8" fill="#bcb191"/>
+<rect x="152" y="140" width="16" height="8" fill="#bcb191"/>
+<rect x="144" y="148" width="16" height="8" fill="#bcb191"/>
+<rect x="144" y="156" width="16" height="8" fill="#bcb191"/>
+<rect x="136" y="164" width="16" height="8" fill="#bcb191"/>
+<rect x="136" y="172" width="16" height="8" fill="#bcb191"/>
+<!-- DOOR on right face -->
+<rect x="132" y="140" width="20" height="40" fill="#10362a"/>
+<rect x="135" y="144" width="14" height="36" fill="#1f8a60"/>
+<rect x="135" y="144" width="14" height="6" fill="#2fb380"/>
+<rect x="142" y="144" width="2" height="36" fill="#10362a"/>
+<rect x="145" y="160" width="3" height="3" fill="#f5b938"/>
+</g>
+
+<!-- ===== PITCHED ROOF ===== -->
+<!-- left roof slope (lit gold) -->
+<g>
+<rect x="96" y="44" width="32" height="8" fill="#ffcf5c"/>
+<rect x="88" y="52" width="40" height="8" fill="#ffcf5c"/>
+<rect x="80" y="60" width="48" height="8" fill="#ffcf5c"/>
+<rect x="72" y="68" width="56" height="8" fill="#ffcf5c"/>
+<rect x="64" y="76" width="64" height="8" fill="#ffcf5c"/>
+<rect x="56" y="84" width="72" height="8" fill="#ffcf5c"/>
+<rect x="64" y="92" width="64" height="8" fill="#ffcf5c"/>
+<rect x="72" y="100" width="56" height="8" fill="#ffcf5c"/>
+<!-- shingle stair-step lines (gold) -->
+<rect x="88" y="52" width="40" height="2" fill="#f5b938"/>
+<rect x="72" y="68" width="56" height="2" fill="#f5b938"/>
+<rect x="56" y="84" width="72" height="2" fill="#f5b938"/>
+<rect x="72" y="100" width="56" height="2" fill="#f5b938"/>
+<!-- ridge highlight -->
+<rect x="96" y="44" width="32" height="4" fill="#fff0c4"/>
+</g>
+
+<!-- right roof slope (shaded gold) -->
+<g>
+<rect x="128" y="44" width="32" height="8" fill="#f5b938"/>
+<rect x="128" y="52" width="40" height="8" fill="#f5b938"/>
+<rect x="128" y="60" width="48" height="8" fill="#f5b938"/>
+<rect x="128" y="68" width="56" height="8" fill="#f5b938"/>
+<rect x="128" y="76" width="64" height="8" fill="#f5b938"/>
+<rect x="128" y="84" width="72" height="8" fill="#f5b938"/>
+<rect x="128" y="92" width="64" height="8" fill="#f5b938"/>
+<rect x="128" y="100" width="56" height="8" fill="#f5b938"/>
+<!-- shingle stair-step lines (darker gold) -->
+<rect x="128" y="52" width="40" height="2" fill="#d99a22"/>
+<rect x="128" y="68" width="56" height="2" fill="#d99a22"/>
+<rect x="128" y="84" width="72" height="2" fill="#d99a22"/>
+<rect x="128" y="100" width="56" height="2" fill="#d99a22"/>
+<!-- deep eave shade far edge -->
+<rect x="184" y="68" width="8" height="8" fill="#c98a1c"/>
+<rect x="184" y="76" width="8" height="8" fill="#c98a1c"/>
+</g>
+
+<!-- chimney (right slope, emerald brick) -->
+<rect x="148" y="36" width="16" height="24" fill="#10362a"/>
+<rect x="148" y="36" width="16" height="6" fill="#1f8a60"/>
+<rect x="150" y="30" width="12" height="6" fill="#176b4a"/>
+<!-- smoke puffs (cream) -->
+<rect x="152" y="22" width="6" height="6" fill="#f4ecd8"/>
+<rect x="158" y="14" width="6" height="6" fill="#f4ecd8"/>
+<rect x="150" y="8" width="6" height="6" fill="#fff6e4"/>
+
+<!-- ===== LITTLE TREE (charm, left side) ===== -->
+<!-- trunk -->
+<rect x="44" y="168" width="8" height="20" fill="#176b4a"/>
+<rect x="44" y="168" width="3" height="20" fill="#10362a"/>
+<!-- chunky pixel foliage -->
+<g>
+<rect x="36" y="148" width="24" height="8" fill="#1f8a60"/>
+<rect x="32" y="156" width="32" height="8" fill="#1f8a60"/>
+<rect x="36" y="164" width="24" height="8" fill="#1f8a60"/>
+<rect x="40" y="140" width="16" height="8" fill="#2fb380"/>
+<!-- highlights -->
+<rect x="40" y="148" width="8" height="8" fill="#2fb380"/>
+<rect x="36" y="156" width="8" height="8" fill="#2fb380"/>
+<rect x="44" y="140" width="8" height="8" fill="#5fd6a6"/>
+<!-- shade -->
+<rect x="52" y="156" width="12" height="8" fill="#176b4a"/>
+<rect x="52" y="164" width="8" height="8" fill="#176b4a"/>
+</g>
+</g></svg></div>
+    <div class="swatches"><span class="sw" style="background:#10362a"></span><span class="sw" style="background:#1f8a60"></span><span class="sw" style="background:#2fb380"></span><span class="sw" style="background:#f5b938"></span><span class="sw" style="background:#ffcf5c"></span><span class="sw" style="background:#f4ecd8"></span></div>
+    <div class="rows">
+      <div class="r"><b>Delivered by</b><span>Route 1 — recolor pixel CC0 (as-is)</span></div>
+      <div class="r"><b>Source</b><span>Screaming Brain Iso Town (443 tiles) · Kenney Tiny Town <em class="lic">CC0</em></span></div>
+      <div class="r"><b>How it's made</b><span>Everything is built from 8px &lt;rect> blocks snapped to a coarse grid with shape-rendering="crispEdges", so every edge is hard and stair-stepped — no anti-aliasing, no gradients. The isometric read comes from offsetting each row of blocks by 8px to fake 2:1 diamond faces (top, lit-left, shaded-right). Each face uses a strict 2-3 tone flat ramp from one hue family: cream cube (white-cream highlight / parchment / khaki-shade), gold roof (pale ridge / bright-left / dark-right) with 2px shingle step-lines, and emerald grass/tree (deep / mid / bright). Tiny touches — a glowing gold window, a green plank door with a gold handle, an emerald-brick chimney with stacked cream smoke puffs, and a blocky tree — sell the cozy 16-bit town-tile feel.</span></div>
+      <div class="r premium"><b>Premium read</b><span>Reads cozy & retro "sim-game," NOT premium-fantasy. Fastest to ship; clashes with your clean Clash-Display/Satoshi brand.</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="cardhead">
+      <h2>Clean flat-vector</h2>
+      <span class="badge b-blue">Best brand-fit</span>
+    </div>
+    <div class="tile"><svg class="bldg" viewBox="0 0 256 256"><defs>
+  <linearGradient id="vector_sky" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#f4ecd8"/>
+    <stop offset="1" stop-color="#f4ecd8"/>
+  </linearGradient>
+</defs>
+
+<!-- ===== GROUND PATCH (isometric diamond, 2:1) ===== -->
+<!-- center ~ (128,196); half-width 92, half-height 46 -->
+<polygon points="128,150 220,196 128,242 36,196" fill="#2fb380" stroke="#f5b938" stroke-width="2.5" stroke-linejoin="round"/>
+<!-- soft top-shade band on ground for subtle depth -->
+<polygon points="128,150 220,196 128,242 36,196" fill="#10362a" opacity="0.06"/>
+<!-- grass tufts (flat) -->
+<path d="M70,205 l3,-9 3,9 z" fill="#1f8a60"/>
+<path d="M183,200 l3,-9 3,9 z" fill="#1f8a60"/>
+<path d="M150,225 l3,-8 3,8 z" fill="#1f8a60"/>
+
+<!-- ===== HOUSE BODY (cube in 2:1 iso) ===== -->
+<!-- footprint corners: front-bottom apex F=(110,200), right R=(168,171), left L=(52,171), back B=(110,142) -->
+<!-- wall height = 52 -->
+
+<!-- LEFT WALL (front-facing, lighter) -->
+<polygon points="52,171 110,200 110,148 52,119" fill="#1f8a60" stroke="#f5b938" stroke-width="2.5" stroke-linejoin="round"/>
+<!-- RIGHT WALL (side, darker single-tone shade) -->
+<polygon points="110,200 168,171 168,119 110,148" fill="#10362a" stroke="#f5b938" stroke-width="2.5" stroke-linejoin="round"/>
+
+<!-- ===== PITCHED ROOF ===== -->
+<!-- top wall rim corners: left Lt=(52,119), front Ft=(110,148), right Rt=(168,119), back Bt=(110,90) -->
+<!-- ridge runs left<->right; ridge ends raised by 34 above rim, centered over back/front midline -->
+<!-- ridge points: ridgeL=(52,85), ridgeR=(168,85) sit above the left/right top corners, eaves overhang -->
+
+<!-- LEFT roof slope (faces front-left, bright emerald) -->
+<polygon points="44,123 116,159 124,124 52,88" fill="#2fb380" stroke="#f5b938" stroke-width="2.5" stroke-linejoin="round"/>
+<!-- RIGHT roof slope (faces front-right, mid emerald) -->
+<polygon points="116,159 176,123 168,88 124,124" fill="#1f8a60" stroke="#f5b938" stroke-width="2.5" stroke-linejoin="round"/>
+<!-- ridge line accent -->
+<line x1="52" y1="88" x2="124" y2="124" stroke="#f5b938" stroke-width="2" stroke-linecap="round" opacity="0.85"/>
+
+<!-- ===== DOOR (on left/front-facing wall) ===== -->
+<!-- door sits on the lighter left wall, aligned to its iso slope -->
+<polygon points="74,165 92,174 92,148 74,139" fill="#10362a" stroke="#f5b938" stroke-width="2" stroke-linejoin="round"/>
+<!-- door knob -->
+<circle cx="88.5" cy="160.5" r="1.8" fill="#ffcf5c"/>
+<!-- door arch top accent -->
+<path d="M74,139 L83,141 L92,148" fill="none" stroke="#f5b938" stroke-width="1.6" opacity="0.7"/>
+
+<!-- ===== WINDOW (on right/darker wall) ===== -->
+<polygon points="126,160 148,149 148,133 126,144" fill="#ffcf5c" stroke="#f5b938" stroke-width="2" stroke-linejoin="round"/>
+<!-- window mullions -->
+<line x1="137" y1="155.5" x2="137" y2="138.5" stroke="#10362a" stroke-width="1.6"/>
+<line x1="126" y1="152" x2="148" y2="141" stroke="#10362a" stroke-width="1.6"/>
+
+<!-- ===== SMALL TREE (charm) — sits on ground, right side ===== -->
+<!-- trunk -->
+<polygon points="190,184 196,187 196,176 190,173" fill="#10362a" stroke="#f5b938" stroke-width="1.6" stroke-linejoin="round"/>
+<!-- foliage: stacked flat blobs -->
+<circle cx="193" cy="166" r="15" fill="#1f8a60" stroke="#f5b938" stroke-width="2.5"/>
+<circle cx="193" cy="160" r="10" fill="#2fb380"/>
+<!-- subtle shade crescent on foliage -->
+<path d="M193,151 a15,15 0 0 1 0,30 a11,15 0 0 0 0,-30 z" fill="#10362a" opacity="0.10"/>
+
+<!-- ===== LANTERN by the door (extra cozy charm) ===== -->
+<line x1="68" y1="150" x2="68" y2="158" stroke="#f5b938" stroke-width="1.6"/>
+<rect x="65.5" y="158" width="5" height="6" rx="1" fill="#ffcf5c" stroke="#f5b938" stroke-width="1.4"/></svg></div>
+    <div class="swatches"><span class="sw" style="background:#10362a"></span><span class="sw" style="background:#1f8a60"></span><span class="sw" style="background:#2fb380"></span><span class="sw" style="background:#f5b938"></span><span class="sw" style="background:#ffcf5c"></span><span class="sw" style="background:#f4ecd8"></span></div>
+    <div class="rows">
+      <div class="r"><b>Delivered by</b><span>Vector-iso — recolor + extend one CC0 SVG kit</span></div>
+      <div class="r"><b>Source</b><span>Artyom Zagorskiy "Isometric Medieval Pack" (269 SVG tiles, CC0) <em class="lic">CC0 (true vector)</em></span></div>
+      <div class="r"><b>How it's made</b><span>Built on a true 2:1 isometric grid (every diamond is twice as wide as tall): the ground patch, cube footprint, and roof ridge all follow the same 26.6 degree slope. Each face is a single flat solid color with no gradients — the emerald palette is mapped to light/dark by face orientation only (bright #2fb380 catches light, #1f8a60 mid, deep #10362a in shadow), which is the one subtle "shade" the style allows. Every shape carries a thin consistent gold (#f5b938 / soft #ffcf5c) outline at uniform 2.5px with rounded joins, so it reads like a Phosphor-icon-adjacent vector. Door, window panes, lantern, tree, and grass tufts are all polygons aligned to the iso axes; near-invisible 6-10% opacity overlays add depth without breaking the flat look.</span></div>
+      <div class="r premium"><b>Premium read</b><span>Clean & modern-premium; unifies best with your Phosphor/SVG brand. Coverage is thin (one kit) — needs in-house extension for an Empire-scale world.</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="cardhead">
+      <h2>Painterly 2.5D (3D-prerender look)</h2>
+      <span class="badge b-gold">★ Recommended primary</span>
+    </div>
+    <div class="tile"><svg class="bldg" viewBox="0 0 256 256"><defs>
+  <!-- GROUND -->
+  <radialGradient id="painterly_ground" cx="50%" cy="42%" r="62%">
+    <stop offset="0%" stop-color="#3fbf86"/>
+    <stop offset="55%" stop-color="#1f8a60"/>
+    <stop offset="100%" stop-color="#13archived0" stop-opacity="1"/>
+    <stop offset="100%" stop-color="#145138"/>
+  </radialGradient>
+  <linearGradient id="painterly_groundRim" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#7fe0b0" stop-opacity="0.9"/>
+    <stop offset="40%" stop-color="#2fb380" stop-opacity="0"/>
+  </linearGradient>
+  <!-- WALL LEFT (in light) -->
+  <linearGradient id="painterly_wallL" x1="0" y1="0" x2="1" y2="0.55">
+    <stop offset="0%" stop-color="#fbf4e2"/>
+    <stop offset="45%" stop-color="#efe1c0"/>
+    <stop offset="100%" stop-color="#d9c79e"/>
+  </linearGradient>
+  <!-- WALL RIGHT (in shade) -->
+  <linearGradient id="painterly_wallR" x1="0" y1="0" x2="1" y2="0.6">
+    <stop offset="0%" stop-color="#cdb892"/>
+    <stop offset="55%" stop-color="#b39e78"/>
+    <stop offset="100%" stop-color="#917c5a"/>
+  </linearGradient>
+  <!-- ROOF LEFT (sunlit) -->
+  <linearGradient id="painterly_roofL" x1="0" y1="0" x2="0.85" y2="1">
+    <stop offset="0%" stop-color="#3fbf86"/>
+    <stop offset="50%" stop-color="#2a9d6e"/>
+    <stop offset="100%" stop-color="#1c6f4c"/>
+  </linearGradient>
+  <!-- ROOF RIGHT (shaded) -->
+  <linearGradient id="painterly_roofR" x1="0" y1="0" x2="0.7" y2="1">
+    <stop offset="0%" stop-color="#236b4c"/>
+    <stop offset="55%" stop-color="#184f39"/>
+    <stop offset="100%" stop-color="#10362a"/>
+  </linearGradient>
+  <!-- ROOF GABLE END (front-facing triangle, lit) -->
+  <linearGradient id="painterly_roofGable" x1="0" y1="0" x2="0.6" y2="1">
+    <stop offset="0%" stop-color="#34ac78"/>
+    <stop offset="100%" stop-color="#1f7a55"/>
+  </linearGradient>
+  <!-- DOOR -->
+  <linearGradient id="painterly_door" x1="0" y1="0" x2="0.5" y2="1">
+    <stop offset="0%" stop-color="#7a4a24"/>
+    <stop offset="100%" stop-color="#4a2c14"/>
+  </linearGradient>
+  <!-- WINDOW glow -->
+  <linearGradient id="painterly_win" x1="0" y1="0" x2="0.3" y2="1">
+    <stop offset="0%" stop-color="#ffe39a"/>
+    <stop offset="60%" stop-color="#f5b938"/>
+    <stop offset="100%" stop-color="#d99320"/>
+  </linearGradient>
+  <!-- TREE foliage -->
+  <radialGradient id="painterly_leaf" cx="38%" cy="32%" r="72%">
+    <stop offset="0%" stop-color="#4fcf94"/>
+    <stop offset="55%" stop-color="#2a9d6e"/>
+    <stop offset="100%" stop-color="#185b3f"/>
+  </radialGradient>
+  <!-- TRUNK -->
+  <linearGradient id="painterly_trunk" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#7a5230"/>
+    <stop offset="100%" stop-color="#46301a"/>
+  </linearGradient>
+  <!-- soft cast shadow blur -->
+  <filter id="painterly_softshadow" x="-40%" y="-40%" width="180%" height="180%">
+    <feGaussianBlur stdDeviation="4.5"/>
+  </filter>
+  <filter id="painterly_leafblur" x="-30%" y="-30%" width="160%" height="160%">
+    <feGaussianBlur stdDeviation="0.6"/>
+  </filter>
+  <!-- subtle wall texture (speckle) -->
+  <filter id="painterly_grain">
+    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch" result="n"/>
+    <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.06 0"/>
+  </filter>
+</defs>
+
+<!-- ===== SOFT CAST SHADOW on ground ===== -->
+<ellipse cx="132" cy="208" rx="78" ry="30" fill="#0c2a1f" opacity="0.45" filter="url(#painterly_softshadow)"/>
+
+<!-- ===== GROUND PATCH (iso diamond) ===== -->
+<polygon points="128,160 224,206 132,250 36,204" fill="url(#painterly_ground)"/>
+<!-- ground top rim light -->
+<polygon points="128,160 224,206 132,250 36,204" fill="url(#painterly_groundRim)" opacity="0.55"/>
+<!-- ground edge AO -->
+<polygon points="128,160 224,206 132,250 36,204" fill="none" stroke="#0d3324" stroke-width="2" opacity="0.4"/>
+
+<!-- ============================================================
+     HOUSE BODY — true 2:1 iso cube. Base footprint top corners:
+     top=128,118  right=196,156  front=128,194  left=60,156
+     Wall height = 44px (verticals).
+     ============================================================ -->
+
+<!-- LEFT wall (front-left face, sunlit) -->
+<polygon points="60,156 128,194 128,150 60,112" fill="url(#painterly_wallL)"/>
+<polygon points="60,156 128,194 128,150 60,112" filter="url(#painterly_grain)"/>
+<!-- LEFT wall AO at bottom -->
+<polygon points="60,156 128,194 128,182 60,144" fill="#000000" opacity="0.10"/>
+
+<!-- RIGHT wall (front-right face, shaded) -->
+<polygon points="128,194 196,156 196,112 128,150" fill="url(#painterly_wallR)"/>
+<polygon points="128,194 196,156 196,112 128,150" filter="url(#painterly_grain)"/>
+<!-- RIGHT wall corner AO (along shared vertical edge) -->
+<polygon points="128,194 134,191 134,147 128,150" fill="#000000" opacity="0.12"/>
+
+<!-- ===== ROOF ===== ridge runs left-front to right-back.
+     Eave corners (overhang) extend the wall-top diamond outward.
+     Wall-top diamond: T=128,106(apexBack) L=54,144 F=128,182 R=202,144
+     Ridge line peak height ~ y=78. Gable apex front/back. -->
+
+<!-- Roof: LEFT slope (lit) — from left eave up to ridge -->
+<polygon points="52,148 128,186 128,108 52,148" fill="url(#painterly_roofL)" opacity="0"/>
+<!-- Use proper hip/gable roof: front gable triangle + two slopes -->
+
+<!-- FRONT-LEFT roof slope (sunlit large face) -->
+<polygon points="50,146 128,90 128,184 128,184" fill="none"/>
+<polygon points="50,146 122,82 128,90 128,186" fill="url(#painterly_roofL)"/>
+<!-- redefine cleanly below -->
+
+<!-- ---- CLEAN ROOF (pitched, two visible slopes + front gable) ---- -->
+<!-- ridge: from front-peak (128,80) back-peak hidden; eaves overhang walls -->
+<!-- LEFT slope: lit -->
+<polygon points="48,150 128,188 128,86 48,150" fill="url(#painterly_roofL)"/>
+<!-- ridge highlight on left slope -->
+<polygon points="128,86 124,88 124,182 128,188" fill="#7fe0b0" opacity="0.35"/>
+<!-- RIGHT slope: shaded -->
+<polygon points="128,188 208,150 128,86 128,188" fill="url(#painterly_roofR)"/>
+<!-- ridge crest rim-light line -->
+<polygon points="48,150 52,150 132,86 128,84" fill="#a8edc8" opacity="0.55"/>
+<polygon points="128,84 132,86 212,150 208,150" fill="#1f8a60" opacity="0.5"/>
+
+<!-- eave AO shadow cast onto walls -->
+<polygon points="60,154 128,192 128,186 60,148" fill="#000000" opacity="0.16"/>
+<polygon points="128,192 196,154 196,148 128,186" fill="#000000" opacity="0.22"/>
+
+<!-- thatch/shingle ridge cap -->
+<path d="M48,150 L128,84 L208,150" fill="none" stroke="#10362a" stroke-width="2.4" opacity="0.7"/>
+
+<!-- ============ FRONT DETAILS on LEFT (sunlit) wall ============ -->
+<!-- DOOR (parallelogram following left-wall iso) -->
+<polygon points="78,152 100,164 100,140 78,128" fill="url(#painterly_door)"/>
+<polygon points="78,152 100,164 100,140 78,128" fill="none" stroke="#2e1b0d" stroke-width="1.2" opacity="0.8"/>
+<!-- door rim-light edge -->
+<polygon points="78,128 80,129 80,151 78,150" fill="#caa06a" opacity="0.6"/>
+<!-- door knob -->
+<circle cx="96.5" cy="153" r="1.6" fill="#f5b938"/>
+<!-- door top frame highlight -->
+<polygon points="78,128 100,140 100,138 78,126" fill="#e9d6ab" opacity="0.5"/>
+
+<!-- WINDOW on left wall (glowing) -->
+<polygon points="104,144 116,151 116,135 104,128" fill="#3a2a16"/>
+<polygon points="105.4,143 114.6,148 114.6,136 105.4,131" fill="url(#painterly_win)"/>
+<!-- window mullions -->
+<line x1="110" y1="129.5" x2="110" y2="145.5" stroke="#3a2a16" stroke-width="1"/>
+<line x1="105" y1="137" x2="115" y2="142.6" stroke="#3a2a16" stroke-width="0.9"/>
+<!-- window inner glow bloom -->
+<polygon points="105.4,143 114.6,148 114.6,136 105.4,131" fill="#fff3c4" opacity="0.25"/>
+
+<!-- ============ FRONT-RIGHT (shaded) wall window ============ -->
+<polygon points="150,158 162,151 162,135 150,142" fill="#2a1d0f"/>
+<polygon points="151.4,156.4 160.6,151 160.6,137 151.4,142.4" fill="url(#painterly_win)" opacity="0.85"/>
+<line x1="156" y1="138" x2="156" y2="154.4" stroke="#2a1d0f" stroke-width="1"/>
+
+<!-- ============ GABLE small loft window under front peak ============ -->
+<polygon points="124,118 132,118 132,108 128,104 124,108" fill="#2a1d0f"/>
+<polygon points="125.4,116.6 130.6,116.6 130.6,109 128,106 125.4,109" fill="url(#painterly_win)" opacity="0.9"/>
+
+<!-- ============ LANTERN beside door (charm) ============ -->
+<line x1="72" y1="120" x2="72" y2="138" stroke="#3a2c18" stroke-width="1.6"/>
+<polygon points="69,138 75,138 76,148 68,148" fill="#5a4326"/>
+<polygon points="69.5,139 74.5,139 75.2,147 68.8,147" fill="url(#painterly_win)"/>
+<circle cx="72" cy="143" r="5.5" fill="#ffcf5c" opacity="0.30"/>
+<circle cx="72" cy="143" r="2.4" fill="#fff3c4" opacity="0.85"/>
+
+<!-- ============ TREE (right of house, behind) for charm ============ -->
+<!-- trunk -->
+<polygon points="214,168 220,168 219,150 215,150" fill="url(#painterly_trunk)"/>
+<!-- trunk AO base -->
+<ellipse cx="217" cy="170" rx="9" ry="3.2" fill="#0c2a1f" opacity="0.4" filter="url(#painterly_softshadow)"/>
+<!-- foliage clusters -->
+<circle cx="217" cy="138" r="20" fill="url(#painterly_leaf)" filter="url(#painterly_leafblur)"/>
+<circle cx="205" cy="146" r="13" fill="url(#painterly_leaf)" filter="url(#painterly_leafblur)"/>
+<circle cx="228" cy="146" r="12" fill="url(#painterly_leaf)" filter="url(#painterly_leafblur)"/>
+<!-- foliage rim-light (top-left) -->
+<circle cx="211" cy="130" r="7" fill="#7fe0b0" opacity="0.45"/>
+<circle cx="222" cy="133" r="4" fill="#a8edc8" opacity="0.35"/>
+
+<!-- ===== global front-edge AO under house onto ground ===== -->
+<polygon points="60,156 128,194 196,156 196,160 128,198 60,160" fill="#08231a" opacity="0.30"/>
+</svg></div>
+    <div class="swatches"><span class="sw" style="background:#10362a"></span><span class="sw" style="background:#1f8a60"></span><span class="sw" style="background:#2fb380"></span><span class="sw" style="background:#f5b938"></span><span class="sw" style="background:#ffcf5c"></span><span class="sw" style="background:#f4ecd8"></span></div>
+    <div class="rows">
+      <div class="r"><b>Delivered by</b><span>Route 2 — pre-render CC0 3D kits (Blender) ⭐</span></div>
+      <div class="r"><b>Source</b><span>KayKit Medieval Builder (200+) · Kenney Town/Castle/Base 3D — CC0 <em class="lic">CC0</em></span></div>
+      <div class="r"><b>How it's made</b><span>Every face carries its own multi-stop linear/radial gradient running light-to-dark (cream walls sunlit on the left, ochre walls in shade on the right; emerald roof bright on the lit slope, near-black emerald on the shaded slope). A consistent top-left key light drives a soft warm rim-light: pale-mint and cream strokes trace the ridge crest, wall-top edges, door and window frames. Ambient occlusion is painted as low-opacity dark polygons in the crevices — where the eaves overhang the walls, along the inner vertical corner, and at wall bases. A blurred dark ellipse under the house plus a faint contact-line gives the soft grounded cast shadow, and a turbulence-noise filter lays subtle speckle texture on the plaster walls. The emerald-glazed roof, gold-lit windows, hanging lantern, and a rim-lit tree complete the cozy gains-only mood.</span></div>
+      <div class="r premium"><b>Premium read</b><span>The highest premium ceiling reachable with free art — "polished mobile city-builder." Controllable emerald-gold lighting. One-time Blender setup (AI-scripted, you judge the look).</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="cardhead">
+      <h2>Storybook parchment</h2>
+      <span class="badge b-green">Best tone / Phase 2 moat</span>
+    </div>
+    <div class="tile"><svg class="bldg" viewBox="0 0 256 256"><defs>
+  <radialGradient id="storybook_bg" cx="50%" cy="42%" r="72%">
+    <stop offset="0%" stop-color="#fbf5e6"/>
+    <stop offset="60%" stop-color="#f4ecd8"/>
+    <stop offset="100%" stop-color="#ecdfc2"/>
+  </radialGradient>
+  <linearGradient id="storybook_groundTop" x1="0" y1="0" x2="0.6" y2="1">
+    <stop offset="0%" stop-color="#5fc591"/>
+    <stop offset="100%" stop-color="#2fb380"/>
+  </linearGradient>
+  <linearGradient id="storybook_groundSide" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#1f8a60"/>
+    <stop offset="100%" stop-color="#176b4a"/>
+  </linearGradient>
+  <linearGradient id="storybook_wallL" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#fbf2dd"/>
+    <stop offset="100%" stop-color="#f0e2c2"/>
+  </linearGradient>
+  <linearGradient id="storybook_wallR" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#ecdcb8"/>
+    <stop offset="100%" stop-color="#dcc699"/>
+  </linearGradient>
+  <linearGradient id="storybook_roofL" x1="0" y1="0" x2="0.4" y2="1">
+    <stop offset="0%" stop-color="#ffcf5c"/>
+    <stop offset="100%" stop-color="#f5b938"/>
+  </linearGradient>
+  <linearGradient id="storybook_roofR" x1="0" y1="0" x2="0.5" y2="1">
+    <stop offset="0%" stop-color="#f3b53a"/>
+    <stop offset="100%" stop-color="#d99520"/>
+  </linearGradient>
+  <radialGradient id="storybook_glow" cx="50%" cy="50%" r="50%">
+    <stop offset="0%" stop-color="#ffe9a8"/>
+    <stop offset="100%" stop-color="#ffcf5c" stop-opacity="0"/>
+  </radialGradient>
+  <filter id="storybook_paper" x="-20%" y="-20%" width="140%" height="140%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="n"/>
+    <feColorMatrix in="n" type="saturate" values="0"/>
+    <feComponentTransfer><feFuncA type="linear" slope="0.05"/></feComponentTransfer>
+    <feComposite operator="over" in2="SourceGraphic"/>
+  </filter>
+  <filter id="storybook_soft" x="-30%" y="-30%" width="160%" height="160%">
+    <feGaussianBlur stdDeviation="2.4"/>
+  </filter>
+</defs>
+
+<!-- parchment backdrop -->
+<rect x="0" y="0" width="256" height="256" fill="url(#storybook_bg)"/>
+<rect x="0" y="0" width="256" height="256" fill="#f4ecd8" filter="url(#storybook_paper)" opacity="0.6"/>
+
+<!-- soft warm ground shadow -->
+<ellipse cx="128" cy="210" rx="84" ry="30" fill="#caa86a" opacity="0.35" filter="url(#storybook_soft)"/>
+
+<!-- ground patch (2:1 iso diamond) -->
+<g stroke="#10362a" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+  <!-- side depth of ground -->
+  <path d="M46 196 L46 206 L128 247 L128 237 Z" fill="url(#storybook_groundSide)"/>
+  <path d="M128 237 L128 247 L210 206 L210 196 Z" fill="url(#storybook_groundSide)"/>
+  <!-- top of ground -->
+  <path d="M128 155 L210 196 L128 237 L46 196 Z" fill="url(#storybook_groundTop)"/>
+  <!-- little grass tufts on the patch -->
+  <path d="M84 199 q3 -8 6 0" fill="none" stroke-width="2"/>
+  <path d="M170 196 q3 -8 6 0" fill="none" stroke-width="2"/>
+  <path d="M120 215 q3 -8 6 0" fill="none" stroke-width="2"/>
+</g>
+
+<!-- ============ COTTAGE BODY (true 2:1 iso cube) ============ -->
+<!-- iso math: dx=2, dy=1. Footprint corners on ground top:
+     front-bottom apex ~ (128,192); left ~ (74,165); right ~ (182,165); back ~ (128,138) -->
+<g stroke="#10362a" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round">
+  <!-- LEFT wall face -->
+  <path d="M74 113 L74 165 L128 192 L128 140 Z" fill="url(#storybook_wallL)"/>
+  <!-- RIGHT wall face -->
+  <path d="M128 140 L128 192 L182 165 L182 113 Z" fill="url(#storybook_wallR)"/>
+
+  <!-- DOOR on right face -->
+  <path d="M140 154 L140 184 L160 174 L160 124 Z" fill="none" opacity="0"/>
+  <path d="M141 151 L141 181 L159 172 L159 142 Z" fill="#9a6a34" stroke-width="2.2"/>
+  <circle cx="146.5" cy="166.5" r="1.8" fill="#f5b938" stroke-width="1.4"/>
+  <!-- warm light spilling at the door base -->
+  <path d="M141 178 L141 181 L159 172 L159 169 Z" fill="#ffcf5c" stroke="none" opacity="0.7"/>
+
+  <!-- WINDOW on left face -->
+  <path d="M88 128 L88 144 L106 153 L106 137 Z" fill="#ffe9a8" stroke-width="2.2"/>
+  <line x1="97" y1="132.5" x2="97" y2="148.5" stroke-width="1.6"/>
+  <line x1="88" y1="136" x2="106" y2="145" stroke-width="1.6"/>
+  <!-- window box charm -->
+  <path d="M88 144 L88 148 L106 157 L106 153 Z" fill="#9a6a34" stroke-width="1.8"/>
+</g>
+
+<!-- ============ PITCHED ROOF (gable) ============ -->
+<g stroke="#10362a" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round">
+  <!-- ridge runs front-to-back over the iso cube; eaves overhang the walls -->
+  <!-- LEFT roof slope -->
+  <path d="M70 110 L124 83 L130 110 L128 138 Z" fill="url(#storybook_roofL)"/>
+  <!-- RIGHT roof slope -->
+  <path d="M186 110 L132 83 L130 110 L128 138 Z" fill="url(#storybook_roofR)"/>
+  <!-- front gable triangle (the visible roof peak facing us) -->
+  <path d="M70 110 L128 138 L186 110 L132 83 L124 83 Z" fill="none" opacity="0"/>
+  <!-- ridge line -->
+  <line x1="124" y1="83" x2="132" y2="83" stroke-width="2.4"/>
+</g>
+<!-- roof plank texture (hand-wobble) -->
+<g stroke="#b9851c" stroke-width="1.3" opacity="0.55" fill="none" stroke-linecap="round">
+  <path d="M86 106 L120 90"/>
+  <path d="M102 114 L124 102"/>
+  <path d="M170 106 L136 90"/>
+  <path d="M154 114 L132 102"/>
+</g>
+
+<!-- chimney with a curl of cozy smoke -->
+<g stroke="#10362a" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+  <path d="M150 92 L150 78 L160 73 L160 87 Z" fill="#caa86a"/>
+  <path d="M150 78 L160 73 L166 76 L156 81 Z" fill="#dcc699"/>
+</g>
+<path d="M158 70 q6 -7 0 -13 q-6 -6 1 -12" fill="none" stroke="#caa86a" stroke-width="3" stroke-linecap="round" opacity="0.55"/>
+
+<!-- ============ ONE LITTLE TREE for charm ============ -->
+<g stroke="#10362a" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+  <!-- shadow -->
+  <ellipse cx="196" cy="183" rx="16" ry="6" fill="#caa86a" stroke="none" opacity="0.4"/>
+  <!-- trunk -->
+  <path d="M193 182 L193 166 q3 -2 6 0 L199 182 Z" fill="#9a6a34"/>
+  <!-- canopy: rounded storybook clusters -->
+  <circle cx="196" cy="158" r="15" fill="#2fb380"/>
+  <circle cx="187" cy="164" r="10" fill="#1f8a60"/>
+  <circle cx="205" cy="163" r="10" fill="#1f8a60"/>
+  <circle cx="196" cy="151" r="11" fill="#5fc591" stroke="none"/>
+</g>
+
+<!-- warm glow puddle from the doorway -->
+<ellipse cx="150" cy="186" rx="20" ry="8" fill="url(#storybook_glow)" opacity="0.75"/>
+
+<!-- tiny illustrative birds for picture-book warmth -->
+<g stroke="#10362a" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.7">
+  <path d="M58 56 q5 -5 10 0"/>
+  <path d="M68 56 q5 -5 10 0"/>
+  <path d="M210 64 q4 -4 8 0"/>
+</g></svg></div>
+    <div class="swatches"><span class="sw" style="background:#f4ecd8"></span><span class="sw" style="background:#ffcf5c"></span><span class="sw" style="background:#f5b938"></span><span class="sw" style="background:#2fb380"></span><span class="sw" style="background:#1f8a60"></span><span class="sw" style="background:#10362a"></span></div>
+    <div class="rows">
+      <div class="r"><b>Delivered by</b><span>Grade direction + commission hero pieces (Phase 2)</span></div>
+      <div class="r"><b>Source</b><span>CC0 base + your Grade; AI-to-style or a freelance buyout for hero art <em class="lic">CC0 + owned</em></span></div>
+      <div class="r"><b>How it's made</b><span>Cream/parchment radial backdrop with a subtle fractal-noise paper grain overlay sells the hand-illustrated page. Everything is drawn in true 2:1 isometric (dx:dy = 2:1) — the ground diamond, the cube-shaped house body, and the gable roof all follow the same axis so the silhouette reads as a real iso building. Warmth comes from honey-gold roof and a softly glowing doorway/window; cozy rounded forms (pillowy tree clusters, rounded chimney smoke curl, grass tufts, drifting birds) keep it picture-book. The signature storybook touch is the chunky dark-emerald ink outline (#10362a) on every shape with rounded joins/caps, mimicking a hand-drawn pen line, plus soft warm drop-shadows instead of hard ones — never grim, always inviting.</span></div>
+      <div class="r premium"><b>Premium read</b><span>Warmest, most "cozy gains-only" tone and the most ownable/defensible — but true painterly needs a commission or AI-to-style step (not free 2D).</span></div>
+    </div>
+  </div></div>
+ <footer>
+  <h3>My recommendation</h3>
+  <ul>
+   <li><b>Primary: the Painterly 2.5D direction via Route 2 (pre-render CC0 3D kits).</b> It's the only path to a genuinely premium look that stays free/CC0 and zero-dependency — and the firm-up confirmed it's realistic for me to set up while you just judge the renders.</li>
+   <li><b>If you want the cleanest brand match instead → the Flat-Vector direction</b> (Artyom Zagorskiy's CC0 SVG kit), accepting thinner coverage we'd extend over time.</li>
+   <li><b>Phase 2 moat: commission a few hero pieces</b> in the Storybook tone once the design is proven — owned, defensible art on top of the CC0 base.</li>
+   <li><b>Pixel</b> is the fastest but reads "retro sim," not premium — best only as a quick prototype.</li>
+  </ul>
+  <p class="note">Accessibility note baked into the plan: emerald+gold is the hardest pairing for red-green colorblindness, so the real build never uses color alone — every town/state/region also gets a label, icon, or shape, with a colorblind-safe blue reserved for the "current" highlight.</p>
+ </footer>
+</div></body></html>
