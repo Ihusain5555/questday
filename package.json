@@ -20,7 +20,7 @@
     "pw:rollover": "node scripts/pw-rollover.mjs",
     "pw:deck": "node scripts/pw-deck.mjs",
     "dist": "node scripts/with-app.mjs \"electron-vite build && electron-builder --win -c.directories.output=C:/Users/ihusa/questday-release\"",
-    "dist:mac": "electron-vite build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac",
+    "dist:mac": "electron-vite build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac --publish never",
     "typecheck:node": "tsc -p tsconfig.node.json --noEmit",
     "typecheck:web": "tsc -p tsconfig.web.json --noEmit",
     "typecheck": "npm run typecheck:node && npm run typecheck:web"
@@ -58,7 +58,7 @@
       ],
       "icon": "resources/icon.png",
       "category": "public.app-category.productivity",
-      "identity": null,
+      "identity": "-",
       "hardenedRuntime": false,
       "darkModeSupport": true,
       "artifactName": "${productName}-${version}-${arch}.${ext}"
