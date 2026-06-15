@@ -3415,6 +3415,15 @@ code {
   fill: #cf9a3a !important;
   font-style: normal;
 }
+/* Hand-drawn hero towns (Layer 2): unexplored = a faded "ghost" of the same town
+   art; it brightens a touch on hover when an expedition is ready to chart it. */
+.realm-svg .realm-town-ghost {
+  opacity: 0.32;
+  transition: opacity 0.18s ease;
+}
+.realm-svg .realm-claimable:hover .realm-town-ghost {
+  opacity: 0.6;
+}
 
 /* ---- Living map animations (v1.10 Build 2): seamless, NO-teleport loops ---- */
 /* Lapping waves: gentle ease-in-out ping-pong (alternate => returns to exact start). */

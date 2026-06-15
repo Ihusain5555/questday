@@ -61,6 +61,28 @@ function banner(h: number): string {
   return `M${-h} -12 L${h} -12 L${h + 11} 0 L${h} 12 L${-h} 12 L${-h - 11} 0 Z`
 }
 
+// Hand-drawn hero towns (Layer 2): a region id -> its reusable town <symbol> id.
+// Regions not listed fall back to the simple #sbm landmark icon. Charted = full
+// colour; unexplored = a faded "ghost" of the SAME art (a CSS opacity class), so
+// the two states can never drift apart and nothing extra is stored.
+const TOWN_ART: Record<string, string> = { larkholt: 'town-larkholt' }
+const TOWN_SIZE = 84
+
+/** A hand-drawn town placed at a region's spot (sits like Landmark, but is the
+ *  full town cluster). `ghost` renders the faded unexplored state. */
+function Town({ id, x, y, ghost }: { id: string; x: number; y: number; ghost?: boolean }): JSX.Element {
+  return (
+    <use
+      href={`#${id}`}
+      x={x - TOWN_SIZE / 2}
+      y={y - TOWN_SIZE * 0.86}
+      width={TOWN_SIZE}
+      height={TOWN_SIZE}
+      className={ghost ? 'realm-town realm-town-ghost' : 'realm-town'}
+    />
+  )
+}
+
 /** True while the document is VISIBLE. Pauses map motion only when the window is
  *  actually hidden/minimized — NOT on mere focus loss, so a visible-but-unfocused
  *  map (e.g. while you read another window) keeps animating. `enabled` is false
@@ -195,6 +217,51 @@ function RealmMap({
           <use href="#tqContinent" />
         </clipPath>
         <MapIconSymbols />
+        {/* Hand-drawn hero towns (Layer 2). viewBox is a square around the town so
+            <use width=height> scales it without distortion. CC0 hand-authored SVG. */}
+        <symbol id="town-larkholt" viewBox="580 532 120 120">
+          <g fill="none" stroke="#5a4a2e" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round">
+            <path d="M610 632 L632 632 L658 632 L632 640 Z" fill="#b09a6e" stroke="#b09a6e" strokeWidth={2} strokeDasharray="1 6" />
+            <path d="M640 600 L660 624 L632 636 Z" fill="#b09a6e" stroke="#b09a6e" strokeWidth={2} strokeDasharray="1 6" />
+            <path d="M633 614 V578 L632 555 L631 578 V614 Z" fill="#ecdfba" />
+            <path d="M632 555 L645 578 L633 578 Z" fill="#cf7f50" />
+            <path d="M632 555 L619 578 L631 578 Z" fill="#cf7f50" />
+            <path d="M632 614 V589 L645 583 L645 614 Z" fill="#f0e3bc" />
+            <path d="M632 589 L645 583 L656 590 L645 596 Z" fill="#f7d98a" />
+            <path d="M631 540 V548 M627 544 H635" stroke="#5a4a2e" strokeWidth={1.4} />
+            <rect x="628" y="600" width="6" height="14" rx="2" fill="#cf9a3a" />
+            <rect x="648" y="595" width="5" height="6" fill="#cf9a3a" />
+            <path d="M604 614 V596 L617 585 L630 596 V614 Z" fill="#f0e3bc" />
+            <path d="M604 596 L617 585 L630 596" fill="#f7d98a" />
+            <rect x="612" y="602" width="6" height="12" rx="1.5" fill="#cf9a3a" />
+            <rect x="606" y="599" width="4" height="4" fill="#cf9a3a" />
+            <path d="M657 614 V598 L669 588 L681 598 V614 Z" fill="#ecdfba" />
+            <path d="M657 598 L669 588 L681 598" fill="#cf7f50" />
+            <rect x="664" y="603" width="6" height="11" rx="1.5" fill="#cf9a3a" />
+            <rect x="673" y="600" width="4" height="4" fill="#cf9a3a" />
+            <path d="M598 580 V566 L609 557 L620 566 V580 Z" fill="#f0e3bc" />
+            <path d="M598 566 L609 557 L620 566" fill="#f7d98a" />
+            <rect x="605" y="569" width="5" height="11" rx="1.5" fill="#cf9a3a" />
+            <path d="M663 578 V564 L674 556 L686 564 V578 Z" fill="#ecdfba" />
+            <path d="M663 564 L674 556 L686 564" fill="#f7d98a" />
+            <rect x="670" y="567" width="5" height="11" rx="1.5" fill="#cf9a3a" />
+            <rect x="678" y="565" width="4" height="4" fill="#cf9a3a" />
+            <path d="M619 632 V620 L630 612 L641 620 V632 Z" fill="#f0e3bc" />
+            <path d="M619 620 L630 612 L641 620" fill="#cf7f50" />
+            <rect x="626" y="623" width="5" height="9" rx="1.5" fill="#cf9a3a" />
+            <ellipse cx="640" cy="625" rx="9" ry="5" fill="#ddd2bb" />
+            <path d="M633 624 a8 5 0 0 1 14 0" fill="#ddd2bb" />
+            <path d="M634 620 L640 611 L646 620" fill="#6a5a36" stroke="#5a4a2e" strokeWidth={1.4} />
+            <path d="M640 611 V606" stroke="#5a4a2e" strokeWidth={1.4} />
+            <path d="M588 600 c-7 0 -8 -9 -1 -10 c1 -7 11 -7 12 0 c6 0 6 9 -1 10 Z" fill="#83b257" stroke="#4f7e3a" />
+            <path d="M593 600 V610" stroke="#6a5a36" strokeWidth={2} />
+            <path d="M690 596 l5 12 l-10 0 Z" fill="#74a84e" stroke="#4f7e3a" />
+            <path d="M688 588 l6 11 l-12 0 Z" fill="#86b85c" stroke="#4f7e3a" />
+            <path d="M689 599 V610" stroke="#6a5a36" strokeWidth={2} />
+            <path d="M615 590 c-6 0 -7 -8 -1 -9 c1 -6 10 -6 11 0 c5 0 5 8 -1 9 Z" fill="#86b85c" stroke="#4f7e3a" />
+            <path d="M619 590 V598" stroke="#6a5a36" strokeWidth={2} />
+          </g>
+        </symbol>
       </defs>
 
       {/* ===== SEA ===== */}
@@ -343,7 +410,11 @@ function RealmMap({
               {!lite && (
                 <ellipse cx={r.landmark.x} cy={r.landmark.y - 6} rx={34} ry={26} fill="#f4d77a" opacity={0.18} filter="url(#tqSoftGlow)" />
               )}
-              <Landmark kind={r.landmark.kind} x={r.landmark.x} y={r.landmark.y} />
+              {TOWN_ART[r.id] ? (
+                <Town id={TOWN_ART[r.id]} x={r.landmark.x} y={r.landmark.y} />
+              ) : (
+                <Landmark kind={r.landmark.kind} x={r.landmark.x} y={r.landmark.y} />
+              )}
               {!lite && (
                 <g transform={`translate(${r.label.x} ${r.label.y})`}>
                   <path d={banner(h)} fill="#f5ebcb" stroke="#b98a2e" strokeWidth={1} />
@@ -362,17 +433,21 @@ function RealmMap({
             onClick={canClaim ? () => onClaim?.(r.id) : undefined}
           >
             <title>{canClaim ? `Chart ${r.name}` : `${r.name} — unexplored`}</title>
-            <circle
-              className="realm-fogdot"
-              cx={r.landmark.x}
-              cy={r.landmark.y}
-              r={16}
-              fill={canClaim ? 'rgba(244,215,122,0.10)' : 'rgba(120,100,70,0.05)'}
-              stroke={canClaim ? '#cf9a3a' : '#9c8a64'}
-              strokeWidth={1.4}
-              strokeDasharray="4 4"
-              opacity={canClaim ? 0.9 : 0.5}
-            />
+            {TOWN_ART[r.id] ? (
+              <Town id={TOWN_ART[r.id]} x={r.landmark.x} y={r.landmark.y} ghost />
+            ) : (
+              <circle
+                className="realm-fogdot"
+                cx={r.landmark.x}
+                cy={r.landmark.y}
+                r={16}
+                fill={canClaim ? 'rgba(244,215,122,0.10)' : 'rgba(120,100,70,0.05)'}
+                stroke={canClaim ? '#cf9a3a' : '#9c8a64'}
+                strokeWidth={1.4}
+                strokeDasharray="4 4"
+                opacity={canClaim ? 0.9 : 0.5}
+              />
+            )}
             {!lite && (
               <text
                 className="realm-label-fog"

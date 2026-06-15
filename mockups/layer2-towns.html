@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Layer 2 — Town reveal styles + Greymoor reframe</title>
+<style>
+  * { box-sizing: border-box; } html, body { margin: 0; }
+  body { background: #1e3a36; color: #efe3c4; font-family: "Iowan Old Style","Palatino Linotype","Georgia",serif; padding: 24px 16px 60px; }
+  h1 { text-align: center; font-size: 23px; color: #f4d77a; margin: 0 0 4px; letter-spacing: 1px; }
+  .sub { text-align: center; color: #cfe7da; font-family: "Segoe UI",system-ui,sans-serif; font-size: 13px; margin: 0 auto 24px; max-width: 860px; line-height: 1.55; }
+  .panel { max-width: 1000px; margin: 0 auto 22px; background: #ecdfba; border: 2px solid #b98a2e; border-radius: 12px; padding: 16px 20px 20px; box-shadow: 0 14px 38px rgba(0,0,0,.45); }
+  .panel h2 { margin: 0 0 4px; font-size: 18px; color: #43381f; font-variant: small-caps; letter-spacing: .5px; }
+  .panel p { margin: 0 0 16px; font-family: "Segoe UI",system-ui,sans-serif; font-size: 12.5px; color: #6a5a36; line-height: 1.55; }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; justify-content: center; }
+  .cell { background: #f6eed4; border: 1px solid #d8c690; border-radius: 10px; padding: 8px; text-align: center; width: 210px; }
+  .cell.pick { cursor: pointer; }
+  .cell svg, .inkstack > svg { display: block; width: 100%; height: auto; background: #f3e8c8; border-radius: 6px; }
+  .cap { font-family: "Segoe UI",system-ui,sans-serif; font-size: 12.5px; margin-top: 7px; color: #5a4a30; }
+  .cap b { color: #43381f; }
+  .tag { font-family: "Segoe UI",system-ui,sans-serif; font-size: 11px; color: #9c5b3f; }
+  .arrow { align-self: center; font-size: 13px; color: #b98a2e; font-family: "Segoe UI",system-ui,sans-serif; text-align: center; min-width: 64px; }
+  .arrow span { font-size: 26px; display: block; line-height: 1; }
+  .reco { display: inline-block; background: #76a455; color: #fff; font-family: "Segoe UI",system-ui,sans-serif; font-size: 10px; padding: 1px 7px; border-radius: 10px; margin-left: 6px; vertical-align: middle; }
+  /* ghost treatments */
+  .gh-fade { opacity: .30; }
+  .gh-sepia { opacity: .55; filter: sepia(.8) saturate(.55) brightness(1.08); }
+  .gh-pencil { opacity: .62; }
+  .gh-pencil path, .gh-pencil rect, .gh-pencil ellipse, .gh-pencil circle {
+    fill: none !important; stroke: #6b5236 !important; stroke-width: 1.1 !important;
+  }
+  /* auto "inks in" reveal */
+  .inkstack { display: grid; background: #f3e8c8; border-radius: 6px; }
+  .inkstack > svg { grid-area: 1 / 1; background: transparent; }
+  .inkstack .inked { opacity: 0; animation: inkIn 6s ease-in-out infinite; }
+  .inkstack .ghost { opacity: .62; animation: inkOut 6s ease-in-out infinite; }
+  @keyframes inkIn { 0%,18% { opacity: 0; } 46%,72% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes inkOut { 0%,18% { opacity: .62; } 46%,72% { opacity: 0; } 100% { opacity: .62; } }
+</style>
+</head>
+<body>
+  <h1>Layer 2 — Town reveal styles</h1>
+  <div class="sub">Charting a region "builds" a hand-drawn town on your map. <b>Unexplored</b> regions show a faint
+    <b>ghost</b> of the town that <b>inks in</b> to full colour when you chart it — a gain, never a ruin. Two things to pick:
+    (1) which <b>ghost style</b> you like, and (2) the <b>Greymoor reframe</b> (its mockup is a half-ruin, which reads as damage).</div>
+
+  <!-- ============ PANEL 1: the reveal ============ -->
+  <div class="panel">
+    <h2>1 · The reveal — unexplored → charted</h2>
+    <p>The same town, before and after charting. The middle card auto-plays the "inks in" moment on a loop.</p>
+    <div class="row">
+      <div class="cell">
+        <svg viewBox="584 536 116 110"><g class="gh-pencil"><g fill="none" stroke="#5a4a2e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M610 632 L632 632 L658 632 L632 640 Z" fill="#b09a6e" stroke="#b09a6e" stroke-width="2" stroke-dasharray="1 6"/><path d="M640 600 L660 624 L632 636 Z" fill="#b09a6e" stroke="#b09a6e" stroke-width="2" stroke-dasharray="1 6"/><path d="M633 614 V578 L632 555 L631 578 V614 Z" fill="#ecdfba"/><path d="M632 555 L645 578 L633 578 Z" fill="#cf7f50"/><path d="M632 555 L619 578 L631 578 Z" fill="#cf7f50"/><path d="M632 614 V589 L645 583 L645 614 Z" fill="#f0e3bc"/><path d="M632 589 L645 583 L656 590 L645 596 Z" fill="#f7d98a"/><path d="M631 540 V548 M627 544 H635" stroke="#5a4a2e" stroke-width="1.4"/><rect x="628" y="600" width="6" height="14" rx="2" fill="#cf9a3a"/><rect x="648" y="595" width="5" height="6" fill="#cf9a3a"/><path d="M604 614 V596 L617 585 L630 596 V614 Z" fill="#f0e3bc"/><path d="M604 596 L617 585 L630 596" fill="#f7d98a"/><rect x="612" y="602" width="6" height="12" rx="1.5" fill="#cf9a3a"/><rect x="606" y="599" width="4" height="4" fill="#cf9a3a"/><path d="M657 614 V598 L669 588 L681 598 V614 Z" fill="#ecdfba"/><path d="M657 598 L669 588 L681 598" fill="#cf7f50"/><rect x="664" y="603" width="6" height="11" rx="1.5" fill="#cf9a3a"/><rect x="673" y="600" width="4" height="4" fill="#cf9a3a"/><path d="M598 580 V566 L609 557 L620 566 V580 Z" fill="#f0e3bc"/><path d="M598 566 L609 557 L620 566" fill="#f7d98a"/><rect x="605" y="569" width="5" height="11" rx="1.5" fill="#cf9a3a"/><path d="M663 578 V564 L674 556 L686 564 V578 Z" fill="#ecdfba"/><path d="M663 564 L674 556 L686 564" fill="#f7d98a"/><rect x="670" y="567" width="5" height="11" rx="1.5" fill="#cf9a3a"/><rect x="678" y="565" width="4" height="4" fill="#cf9a3a"/><path d="M619 632 V620 L630 612 L641 620 V632 Z" fill="#f0e3bc"/><path d="M619 620 L630 612 L641 620" fill="#cf7f50"/><rect x="626" y="623" width="5" height="9" rx="1.5" fill="#cf9a3a"/><ellipse cx="640" cy="625" rx="9" ry="5" fill="#ddd2bb"/><path d="M633 624 a8 5 0 0 1 14 0" fill="#ddd2bb"/><path d="M634 620 L640 611 L646 620" fill="#6a5a36" stroke="#5a4a2e" stroke-width="1.4"/><path d="M640 611 V606" stroke="#5a4a2e" stroke-width="1.4"/><path d="M588 600 c-7 0 -8 -9 -1 -10 c1 -7 11 -7 12 0 c6 0 6 9 -1 10 Z" fill="#83b257" stroke="#4f7e3a"/><path d="M593 600 V610" stroke="#6a5a36" stroke-width="2"/><path d="M690 596 l5 12 l-10 0 Z" fill="#74a84e" stroke="#4f7e3a"/><path d="M688 588 l6 11 l-12 0 Z" fill="#86b85c" stroke="#4f7e3a"/><path d="M689 599 V610" stroke="#6a5a36" stroke-width="2"/><path d="M615 590 c-6 0 -7 -8 -1 -9 c1 -6 10 -6 11 0 c5 0 5 8 -1 9 Z" fill="#86b85c" stroke="#4f7e3a"/><path d="M619 590 V598" stroke="#6a5a36" stroke-width="2"/></g></g></svg>
+        <div class="cap"><b>Unexplored</b><br><span class="tag">a faint pencil ghost</span></div>
+      </div>
+      <div class="arrow"><span>→</span>chart it</div>
+      <div class="cell">
+        <div class="inkstack">
+          <svg class="ghost" viewBox="584 536 116 110"><g class="gh-pencil"><g fill="none" stroke="#5a4a2e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M610 632 L632 632 L658 632 L632 640 Z" fill="#b09a6e" stroke="#b09a6e" stroke-width="2" stroke-dasharray="1 6"/><path d="M640 600 L660 624 L632 636 Z" fill="#b09a6e" stroke="#b09a6e" stroke-width="2" stroke-dasharray="1 6"/><path d="M633 614 V578 L632 555 L631 578 V614 Z" fill="#ecdfba"/><path d="M632 555 L645 578 L633 578 Z" fill="#cf7f50"/><path d="M632 555 L619 578 L631 578 Z" fill="#cf7f50"/><path d="M632 614 V589 L645 583 L645 614 Z" fill="#f0e3bc"/><path d="M632 589 L645 583 L656 590 L645 596 Z" fill="#f7d98a"/><path d="M631 540 V548 M627 544 H635" stroke="#5a4a2e" stroke-width="1.4"/><rect x="628" y="600" width="6" height="14" rx="2" fill="#cf9a3a"/><rect x="648" y="595" width="5" height="6" fill="#cf9a3a"/><path d="M604 614 V596 L617 585 L630 596 V614 Z" fill="#f0e3bc"/><path d="M604 596 L617 585 L630 596" fill="#f7d98a"/><rect x="612" y="602" width="6" height="12" rx="1.5" fill="#cf9a3a"/><rect x="606" y="599" width="4" height="4" fill="#cf9a3a"/><path d="M657 614 V598 L669 588 L681 598 V614 Z" fill="#ecdfba"/><path d="M657 598 L669 588 L681 598" fill="#cf7f50"/><rect x="664" y="603" width="6" height="11" rx="1.5" fill="#cf9a3a"/><rect x="673" y="600" width="4" height="4" fill="#cf9a3a"/><path d="M598 580 V566 L609 557 L620 566 V580 Z" fill="#f0e3bc"/><path d="M598 566 L609 557 L620 566" fill="#f7d98a"/><rect x="605" y="569" width="5" height="11" rx="1.5" fill="#cf9a3a"/><path d="M663 578 V564 L674 556 L686 564 V578 Z" fill="#ecdfba"/><path d="M663 564 L674 556 L686 564" fill="#f7d98a"/><rect x="670" y="567" width="5" height="11" rx="1.5" fill="#cf9a3a"/><rect x="678" y="565" width="4" height="4" fill="#cf9a3a"/><path d="M619 632 V620 L630 612 L641 620 V632 Z" fill="#f0e3bc"/><path d="M619 620 L630 612 L641 620" fill="#cf7f50"/><rect x="626" y="623" width="5" height="9" rx="1.5" fill="#cf9a3a"/><ellipse cx="640" cy="625" rx="9" ry="5" fill="#ddd2bb"/><path d="M633 624 a8 5 0 0 1 14 0" fill="#ddd2bb"/><path d="M634 620 L640 611 L646 620" fill="#6a5a36" stroke="#5a4a2e" stroke-width="1.4"/><path d="M640 611 V606" stroke="#5a4a2e" stroke-width="1.4"/><path d="M588 600 c-7 0 -8 -9 -1 -10 c1 -7 11 -7 12 0 c6 0 6 9 -1 10 Z" fill="#83b257" stroke="#4f7e3a"/><path d="M593 600 V610" stroke="#6a5a36" stroke-width="2"/><path d="M690 596 l5 12 l-10 0 Z" fill="#74a84e" stroke="#4f7e3a"/><path d="M688 588 l6 11 l-12 0 Z" fill="#86b85c" stroke="#4f7e3a"/><path d="M689 599 V610" stroke="#6a5a36" stroke-width="2"/><path d="M615 590 c-6 0 -7 -8 -1 -9 c1 -6 10 -6 11 0 c5 0 5 8 -1 9 Z" fill="#86b85c" stroke="#4f7e3a"/><path d="M619 590 V598" stroke="#6a5a36" stroke-width="2"/></g></g></svg>
+          <svg class="inked" viewBox="584 536 116 110"><use href="#lk"/></svg>
+        </div>
+        <div class="cap"><b>Inks in ✦</b><br><span class="tag">(auto-loops)</span></div>
+      </div>
+      <div class="arrow"><span>→</span></div>
+      <div class="cell">
+        <svg viewBox="584 536 116 110"><use href="#lk"/></svg>
+        <div class="cap"><b>Charted</b><br><span class="tag">full hand-drawn town</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PANEL 2: pick the ghost ============ -->
+  <div class="panel">
+    <h2>2 · Pick the ghost style</h2>
+    <p>How an unexplored town should look — the "not yet charted" state. Which reads best to you?</p>
+    <div class="row">
+      <div class="cell pick">
+        <svg viewBox="584 536 116 110"><g class="gh-pencil"><g fill="none" stroke="#5a4a2e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M610 632 L632 632 L658 632 L632 640 Z" fill="#b09a6e" stroke="#b09a6e" stroke-width="2" stroke-dasharray="1 6"/><path d="M640 600 L660 624 L632 636 Z" fill="#b09a6e" stroke="#b09a6e" stroke-width="2" stroke-dasharray="1 6"/><path d="M633 614 V578 L632 555 L631 578 V614 Z" fill="#ecdfba"/><path d="M632 555 L645 578 L633 578 Z" fill="#cf7f50"/><path d="M632 555 L619 578 L631 578 Z" fill="#cf7f50"/><path d="M632 614 V589 L645 583 L645 614 Z" fill="#f0e3bc"/><path d="M632 589 L645 583 L656 590 L645 596 Z" fill="#f7d98a"/><path d="M631 540 V548 M627 544 H635" stroke="#5a4a2e" stroke-width="1.4"/><rect x="628" y="600" width="6" height="14" rx="2" fill="#cf9a3a"/><rect x="648" y="595" width="5" height="6" fill="#cf9a3a"/><path d="M604 614 V596 L617 585 L630 596 V614 Z" fill="#f0e3bc"/><path d="M604 596 L617 585 L630 596" fill="#f7d98a"/><rect x="612" y="602" width="6" height="12" rx="1.5" fill="#cf9a3a"/><rect x="606" y="599" width="4" height="4" fill="#cf9a3a"/><path d="M657 614 V598 L669 588 L681 598 V614 Z" fill="#ecdfba"/><path d="M657 598 L669 588 L681 598" fill="#cf7f50"/><rect x="664" y="603" width="6" height="11" rx="1.5" fill="#cf9a3a"/><rect x="673" y="600" width="4" height="4" fill="#cf9a3a"/><path d="M598 580 V566 L609 557 L620 566 V580 Z" fill="#f0e3bc"/><path d="M598 566 L609 557 L620 566" fill="#f7d98a"/><rect x="605" y="569" width="5" height="11" rx="1.5" fill="#cf9a3a"/><path d="M663 578 V564 L674 556 L686 564 V578 Z" fill="#ecdfba"/><path d="M663 564 L674 556 L686 564" fill="#f7d98a"/><rect x="670" y="567" width="5" height="11" rx="1.5" fill="#cf9a3a"/><rect x="678" y="565" width="4" height="4" fill="#cf9a3a"/><path d="M619 632 V620 L630 612 L641 620 V632 Z" fill="#f0e3bc"/><path d="M619 620 L630 612 L641 620" fill="#cf7f50"/><rect x="626" y="623" width="5" height="9" rx="1.5" fill="#cf9a3a"/><ellipse cx="640" cy="625" rx="9" ry="5" fill="#ddd2bb"/><path d="M633 624 a8 5 0 0 1 14 0" fill="#ddd2bb"/><path d="M634 620 L640 611 L646 620" fill="#6a5a36" stroke="#5a4a2e" stroke-width="1.4"/><path d="M640 611 V606" stroke="#5a4a2e" stroke-width="1.4"/><path d="M588 600 c-7 0 -8 -9 -1 -10 c1 -7 11 -7 12 0 c6 0 6 9 -1 10 Z" fill="#83b257" stroke="#4f7e3a"/><path d="M593 600 V610" stroke="#6a5a36" stroke-width="2"/><path d="M690 596 l5 12 l-10 0 Z" fill="#74a84e" stroke="#4f7e3a"/><path d="M688 588 l6 11 l-12 0 Z" fill="#86b85c" stroke="#4f7e3a"/><path d="M689 599 V610" stroke="#6a5a36" stroke-width="2"/><path d="M615 590 c-6 0 -7 -8 -1 -9 c1 -6 10 -6 11 0 c5 0 5 8 -1 9 Z" fill="#86b85c" stroke="#4f7e3a"/><path d="M619 590 V598" stroke="#6a5a36" stroke-width="2"/></g></g></svg>
+        <div class="cap"><b>A · Pencil lines</b><span class="reco">my pick</span><br><span class="tag">unfinished sketch, "to be drawn"</span></div>
+      </div>
+      <div class="cell pick">
+        <svg viewBox="584 536 116 110"><use href="#lk" class="gh-fade"/></svg>
+        <div class="cap"><b>B · Faded colour</b><br><span class="tag">the real town, very pale</span></div>
+      </div>
+      <div class="cell pick">
+        <svg viewBox="584 536 116 110"><use href="#lk" class="gh-sepia"/></svg>
+        <div class="cap"><b>C · Sepia wash</b><br><span class="tag">old faded-map look</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PANEL 3: Greymoor reframe ============ -->
+  <div class="panel">
+    <h2>3 · The Greymoor reframe</h2>
+    <p>The mockup's Greymoor is a <b>half-ruined</b> watchtower (broken battlements) — which reads as damage / decay and
+      breaks the gains-only rule. The reframe keeps it characterful (weathered stone + ivy = ancient) but <b>whole</b>.</p>
+    <div class="row">
+      <div class="cell">
+        <svg viewBox="790 402 108 96"><use href="#gmOrig"/></svg>
+        <div class="cap"><b>Mockup — half-ruin</b><br><span class="tag">broken merlons = reads as damage</span></div>
+      </div>
+      <div class="arrow"><span>→</span>reframe</div>
+      <div class="cell">
+        <svg viewBox="790 402 108 96"><g fill="none" stroke="#5a4a2e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+          <path d="M820 470 Q812 487 829 489 L859 489 Q874 487 866 470 Q852 472 843 471 Q831 470 820 470 Z" fill="#b09a6e" stroke="#b09a6e" stroke-width="2" stroke-dasharray="1 6"/>
+          <path d="M845 488 Q838 470 850 458" fill="none" stroke="#b09a6e" stroke-width="2" stroke-dasharray="1 6"/>
+          <g fill="#83b257" stroke="#4f7e3a"><path d="M803 478 Q794 478 796 470 Q791 466 797 461 Q797 454 805 456 Q809 451 814 457 Q821 457 819 465 Q822 471 816 474 Q815 480 808 478 Q806 481 803 478 Z"/><path d="M809 478 V486" stroke="#6a5a36"/></g>
+          <g fill="#74a84e" stroke="#4f7e3a"><path d="M883 462 L878 474 H888 Z"/><path d="M884 456 L879 467 H889 Z"/><path d="M883 451 L880 460 H887 Z"/><path d="M883 474 V482" stroke="#6a5a36"/></g>
+          <!-- INTACT ancient watchtower: full even crenellations, weathered courses, ivy -->
+          <path d="M818 452 V406 H823 V412 H828 V406 H833 V412 H838 V406 H841 V452 Z" fill="#d7cdb6"/>
+          <path d="M818 424 H841 M818 436 H841" stroke="#a89e88" stroke-width="1" opacity="0.6"/>
+          <path d="M826 452 V441 Q826 435 832 435 Q838 435 838 441 V452 Z" fill="#6a5a36"/>
+          <path d="M829.5 418 V428 M827.5 421 H831.5" stroke="#6a5a36" stroke-width="2"/>
+          <path d="M829.5 406 V397" stroke="#5a4a2e" stroke-width="1.4"/>
+          <path d="M829.5 397 L839 400 L829.5 403 Z" fill="#cf7f50" stroke="#5a4a2e" stroke-width="1.2"/>
+          <path d="M819 452 q5 -12 -1 -22 q-4 -9 3 -16" stroke="#4f7e3a" stroke-width="1.6" fill="none"/>
+          <g fill="#74a84e" stroke="#4f7e3a" stroke-width="0.6"><circle cx="817" cy="440" r="2.4"/><circle cx="821" cy="432" r="2.2"/><circle cx="816" cy="425" r="2.3"/><circle cx="822" cy="418" r="2"/><circle cx="819" cy="412" r="2.2"/></g>
+          <!-- the four squat grey cottages (kept) -->
+          <path d="M798 472 V452 L799 442 L813 433 L827 443 L827 451" fill="#ddd2bb"/><path d="M799 442 L813 433 L827 443" fill="#cf7f50"/><path d="M813 433 L813 472" stroke="#5a4a2e" stroke-width="1.4"/><rect x="803" y="458" width="6" height="14" rx="1" fill="#6a5a36" stroke="#5a4a2e" stroke-width="1.4"/><rect x="817" y="450" width="6" height="6" fill="#cf9a3a"/>
+          <path d="M852 472 V450 L867 439 L883 449 V472 Z" fill="#d7cdb6"/><path d="M850 451 L867 438 L885 451" fill="#cf7f50"/><rect x="861" y="458" width="7" height="14" rx="1" fill="#6a5a36" stroke="#5a4a2e" stroke-width="1.4"/><rect x="872" y="455" width="6" height="6" fill="#cf9a3a"/><path d="M858 449 L876 449" stroke="#5a4a2e" stroke-width="1.4"/>
+          <path d="M829 491 V474 L830 467 L842 460 L854 468 V491 Z" fill="#ddd2bb"/><path d="M829 468 L842 459 L855 468" fill="#cf7f50"/><path d="M842 460 L842 491" stroke="#5a4a2e" stroke-width="1.4"/><rect x="833" y="478" width="6" height="13" rx="1" fill="#6a5a36" stroke="#5a4a2e" stroke-width="1.4"/><rect x="845" y="474" width="6" height="6" fill="#cf9a3a"/>
+          <path d="M870 492 V476 L871 470 L882 464 L893 471 V492 Z" fill="#d7cdb6"/><path d="M870 471 L882 463 L894 471" fill="#cf7f50"/><rect x="874" y="480" width="6" height="12" rx="1" fill="#6a5a36" stroke="#5a4a2e" stroke-width="1.4"/><rect x="885" y="476" width="5" height="5" fill="#cf9a3a"/>
+        </g></svg>
+        <div class="cap"><b>Reframed — intact ancient</b><br><span class="tag">whole tower, ivy, weathered stone</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== reusable inked art ===== -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <g id="lk"><g fill="none" stroke="#5a4a2e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M610 632 L632 632 L658 632 L632 640 Z" fill="#b09a6e" stroke="#b09a6e" stroke-width="2" stroke-dasharray="1 6"/><path d="M640 600 L660 624 L632 636 Z" fill="#b09a6e" stroke="#b09a6e" stroke-width="2" stroke-dasharray="1 6"/><path d="M633 614 V578 L632 555 L631 578 V614 Z" fill="#ecdfba"/><path d="M632 555 L645 578 L633 578 Z" fill="#cf7f50"/><path d="M632 555 L619 578 L631 578 Z" fill="#cf7f50"/><path d="M632 614 V589 L645 583 L645 614 Z" fill="#f0e3bc"/><path d="M632 589 L645 583 L656 590 L645 596 Z" fill="#f7d98a"/><path d="M631 540 V548 M627 544 H635" stroke="#5a4a2e" stroke-width="1.4"/><rect x="628" y="600" width="6" height="14" rx="2" fill="#cf9a3a"/><rect x="648" y="595" width="5" height="6" fill="#cf9a3a"/><path d="M604 614 V596 L617 585 L630 596 V614 Z" fill="#f0e3bc"/><path d="M604 596 L617 585 L630 596" fill="#f7d98a"/><rect x="612" y="602" width="6" height="12" rx="1.5" fill="#cf9a3a"/><rect x="606" y="599" width="4" height="4" fill="#cf9a3a"/><path d="M657 614 V598 L669 588 L681 598 V614 Z" fill="#ecdfba"/><path d="M657 598 L669 588 L681 598" fill="#cf7f50"/><rect x="664" y="603" width="6" height="11" rx="1.5" fill="#cf9a3a"/><rect x="673" y="600" width="4" height="4" fill="#cf9a3a"/><path d="M598 580 V566 L609 557 L620 566 V580 Z" fill="#f0e3bc"/><path d="M598 566 L609 557 L620 566" fill="#f7d98a"/><rect x="605" y="569" width="5" height="11" rx="1.5" fill="#cf9a3a"/><path d="M663 578 V564 L674 556 L686 564 V578 Z" fill="#ecdfba"/><path d="M663 564 L674 556 L686 564" fill="#f7d98a"/><rect x="670" y="567" width="5" height="11" rx="1.5" fill="#cf9a3a"/><rect x="678" y="565" width="4" height="4" fill="#cf9a3a"/><path d="M619 632 V620 L630 612 L641 620 V632 Z" fill="#f0e3bc"/><path d="M619 620 L630 612 L641 620" fill="#cf7f50"/><rect x="626" y="623" width="5" height="9" rx="1.5" fill="#cf9a3a"/><ellipse cx="640" cy="625" rx="9" ry="5" fill="#ddd2bb"/><path d="M633 624 a8 5 0 0 1 14 0" fill="#ddd2bb"/><path d="M634 620 L640 611 L646 620" fill="#6a5a36" stroke="#5a4a2e" stroke-width="1.4"/><path d="M640 611 V606" stroke="#5a4a2e" stroke-width="1.4"/><path d="M588 600 c-7 0 -8 -9 -1 -10 c1 -7 11 -7 12 0 c6 0 6 9 -1 10 Z" fill="#83b257" stroke="#4f7e3a"/><path d="M593 600 V610" stroke="#6a5a36" stroke-width="2"/><path d="M690 596 l5 12 l-10 0 Z" fill="#74a84e" stroke="#4f7e3a"/><path d="M688 588 l6 11 l-12 0 Z" fill="#86b85c" stroke="#4f7e3a"/><path d="M689 599 V610" stroke="#6a5a36" stroke-width="2"/><path d="M615 590 c-6 0 -7 -8 -1 -9 c1 -6 10 -6 11 0 c5 0 5 8 -1 9 Z" fill="#86b85c" stroke="#4f7e3a"/><path d="M619 590 V598" stroke="#6a5a36" stroke-width="2"/></g></g>
+    <g id="gmOrig"><g fill="none" stroke="#5a4a2e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M820 470 Q812 487 829 489 L859 489 Q874 487 866 470 Q852 472 843 471 Q831 470 820 470 Z" fill="#b09a6e" stroke="#b09a6e" stroke-width="2" stroke-dasharray="1 6"/><path d="M845 488 Q838 470 850 458" fill="none" stroke="#b09a6e" stroke-width="2" stroke-dasharray="1 6"/><g fill="#83b257" stroke="#4f7e3a"><path d="M803 478 Q794 478 796 470 Q791 466 797 461 Q797 454 805 456 Q809 451 814 457 Q821 457 819 465 Q822 471 816 474 Q815 480 808 478 Q806 481 803 478 Z"/><path d="M809 478 V486" stroke="#6a5a36"/></g><g fill="#74a84e" stroke="#4f7e3a"><path d="M883 462 L878 474 H888 Z"/><path d="M884 456 L879 467 H889 Z"/><path d="M883 451 L880 460 H887 Z"/><path d="M883 474 V482" stroke="#6a5a36"/></g><path d="M819 452 L819 415 L815 415 L815 408 L820 408 L820 414 L825 414 L825 408 L830 408 L830 414 L835 414 L835 408 L840 408 L840 452 Z" fill="#ddd2bb"/><path d="M824 452 L824 422 Q829 419 835 422 L835 452" fill="#d7cdb6"/><path d="M819 426 L840 426" stroke="#5a4a2e" stroke-width="1.4"/><rect x="826" y="431" width="7" height="11" rx="1" fill="#6a5a36" stroke="#5a4a2e" stroke-width="1.4"/><rect x="827" y="416" width="4" height="5" fill="#cf9a3a"/><path d="M833 411 L833 405" stroke="#5a4a2e" stroke-width="1.4"/><path d="M833 406 L840 408 L833 410 Z" fill="#cf7f50" stroke="#5a4a2e" stroke-width="1.4"/><path d="M798 472 V452 L799 442 L813 433 L827 443 L827 451" fill="#ddd2bb"/><path d="M799 442 L813 433 L827 443" fill="#cf7f50"/><path d="M813 433 L813 472" stroke="#5a4a2e" stroke-width="1.4"/><rect x="803" y="458" width="6" height="14" rx="1" fill="#6a5a36" stroke="#5a4a2e" stroke-width="1.4"/><rect x="817" y="450" width="6" height="6" fill="#cf9a3a"/><path d="M852 472 V450 L867 439 L883 449 V472 Z" fill="#d7cdb6"/><path d="M850 451 L867 438 L885 451" fill="#cf7f50"/><rect x="861" y="458" width="7" height="14" rx="1" fill="#6a5a36" stroke="#5a4a2e" stroke-width="1.4"/><rect x="872" y="455" width="6" height="6" fill="#cf9a3a"/><path d="M858 449 L876 449" stroke="#5a4a2e" stroke-width="1.4"/><path d="M829 491 V474 L830 467 L842 460 L854 468 V491 Z" fill="#ddd2bb"/><path d="M829 468 L842 459 L855 468" fill="#cf7f50"/><path d="M842 460 L842 491" stroke="#5a4a2e" stroke-width="1.4"/><rect x="833" y="478" width="6" height="13" rx="1" fill="#6a5a36" stroke="#5a4a2e" stroke-width="1.4"/><rect x="845" y="474" width="6" height="6" fill="#cf9a3a"/><path d="M870 492 V476 L871 470 L882 464 L893 471 V492 Z" fill="#d7cdb6"/><path d="M870 471 L882 463 L894 471" fill="#cf7f50"/><rect x="874" y="480" width="6" height="12" rx="1" fill="#6a5a36" stroke="#5a4a2e" stroke-width="1.4"/><rect x="885" y="476" width="5" height="5" fill="#cf9a3a"/></g></g>
+  </defs></svg>
+</body>
+</html>
