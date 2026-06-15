@@ -77,6 +77,9 @@ const TOWN_ART: Record<string, string> = {
 const TOWN_SIZE = 76
 /** Per-symbol size override (the capital citadel renders larger as the showpiece). Keyed by symbol id. */
 const TOWN_SIZE_BY_ID: Record<string, number> = { 'town-greenhaven': 100 }
+/** Regions whose landmark IS painted map terrain (e.g. the Crownspire range), so
+ *  they draw NO separate icon — just the name + a soft highlight of their area on hover. */
+const ICONLESS = new Set(['crownspire'])
 
 /** A hand-drawn town placed at a region's spot (sits like Landmark, but is the
  *  full town cluster). `ghost` renders the faded unexplored state. */
@@ -352,12 +355,18 @@ function RealmMap({
       <g filter={rough}>
         <path
           id="tqContinent"
-          d="M250 300 C 210 250 250 200 330 190 C 410 178 470 150 560 158 C 660 166 700 140 790 162 C 880 184 940 180 980 250 C 1010 300 980 360 940 400 C 980 450 960 520 900 560 C 850 595 820 640 740 650 C 660 660 600 700 520 690 C 440 680 380 700 320 660 C 250 612 230 560 240 500 C 200 470 210 400 250 360 C 232 338 236 318 250 300 Z"
+          d="M250 300 C 210 250 250 200 330 190 C 410 178 470 150 560 158 C 660 166 700 140 790 162 C 880 184 940 180 980 250 C 1012 298 1030 324 1042 352 C 1052 380 1000 392 940 400 C 980 450 960 520 900 560 C 850 595 820 640 740 650 C 660 660 600 700 520 690 C 440 680 380 700 320 660 C 250 612 230 560 240 500 C 200 470 210 400 250 360 C 232 338 236 318 250 300 Z"
           fill="url(#tqParch)"
           stroke="#9c7e4a"
           strokeWidth={1.8}
         />
-        <path d="M958 330 C 985 312 1020 320 1030 350 C 1040 380 1018 405 988 400 C 960 396 944 360 958 330 Z" fill="url(#tqParch)" stroke="#9c7e4a" strokeWidth={1.5} />
+        {/* Mist Isles — tiny isles in the sea off the eastern cape (the cape itself is
+            now part of the mainland; these offshore dots keep the "isles" their name) */}
+        <g fill="url(#tqParch)" stroke="#9c7e4a" strokeWidth={1.1} opacity={0.92}>
+          <path d="M1066 348 q14 -6 22 3 q6 11 -7 16 q-15 4 -19 -7 q-2 -8 4 -12 Z" />
+          <path d="M1082 378 q11 -4 17 4 q4 9 -7 12 q-12 3 -15 -6 Z" />
+          <path d="M1058 396 q9 -4 15 3 q3 7 -6 10 q-11 2 -13 -6 Z" />
+        </g>
         <path d="M165 645 C 150 622 185 600 220 612 C 258 624 262 668 232 686 C 200 704 178 678 165 645 Z" fill="url(#tqParch)" stroke="#9c7e4a" strokeWidth={1.5} opacity={0.95} />
         <path d="M1010 620 C 1000 598 1035 585 1066 600 C 1096 615 1090 656 1058 666 C 1028 675 1016 648 1010 620 Z" fill="url(#tqParch)" stroke="#9c7e4a" strokeWidth={1.5} opacity={0.9} />
       </g>
@@ -382,12 +391,20 @@ function RealmMap({
           <ellipse cx={470} cy={648} rx={140} ry={92} fill="url(#tqWFen)" filter={wc} />
           <ellipse cx={650} cy={600} rx={120} ry={80} fill="url(#tqWForest)" filter={wc} opacity={0.5} />
         </g>
-        {/* rivers */}
-        <g filter={rough} fill="none" stroke="#5f9aa0" strokeLinecap="round" opacity={0.9}>
-          <path d="M898 322 C 860 360 840 392 800 430 C 760 468 700 492 648 508" strokeWidth={2.4} />
-          <path d="M516 502 C 460 526 400 556 340 586 C 308 602 280 616 252 632" strokeWidth={3} />
-          <path d="M330 304 C 366 352 430 410 500 466 C 516 478 528 486 540 492" strokeWidth={2} />
-          <path d="M712 612 C 690 580 660 540 560 510" strokeWidth={1.8} />
+        {/* rivers — gentle meanders, kept OFF the harsh rough filter so the thin
+            strokes stay continuous; 3 feed Heartmere, 1 drains it toward the sea */}
+        <g fill="none" stroke="#5f9aa0" strokeLinecap="round" opacity={0.8}>
+          <path d="M858 372 C 824 398 802 416 766 438 C 728 462 690 478 652 488 C 618 499 582 505 552 507" strokeWidth={2.4} />
+          <path d="M340 316 C 366 348 392 376 424 408 C 456 440 482 466 504 490" strokeWidth={2} />
+          <path d="M712 614 C 698 586 676 558 644 540 C 610 521 580 513 556 508" strokeWidth={1.8} />
+          <path d="M484 514 C 446 544 410 568 368 592 C 334 612 304 634 282 650" strokeWidth={3} />
+        </g>
+        {/* source tarns (over the river starts) + Heartmere (over the inflow/outflow
+            ends) so every river begins and ends in real water — no dead ends */}
+        <g fill="#8fc0c4" stroke="#5f9aa0" strokeWidth={1.3}>
+          <ellipse cx={861} cy={373} rx={13} ry={8} />
+          <ellipse cx={338} cy={314} rx={12} ry={8} />
+          <ellipse cx={714} cy={616} rx={12} ry={8} />
         </g>
         {/* Heartmere — the central lake */}
         <path d="M474 498 q24 -20 58 -14 q26 6 24 22 q-4 22 -44 24 q-40 2 -46 -16 q-4 -14 8 -16 Z" fill="#8fc0c4" stroke="#5f9aa0" strokeWidth={1.4} filter={wc} opacity={0.9} />
@@ -413,6 +430,10 @@ function RealmMap({
         </g>
       </g>
 
+      {/* river-mouth estuary — a soft brackish delta where the outflow meets the sea,
+          blending river teal into the ocean tone (no hard clipped shoreline edge) */}
+      <path d="M306 638 Q 292 656 276 674 Q 270 680 262 684 Q 278 664 290 648 Q 298 640 306 638 Z" fill="#7cabae" opacity={0.5} />
+
       {/* Crownspire mountain range (on top of the land) */}
       <g filter={rough} stroke="#6b5236" strokeWidth={1} strokeLinejoin="round">
         <path d="M788 360 L838 282 L876 360 Z" fill="#c8b48a" />
@@ -436,11 +457,13 @@ function RealmMap({
               onClick={onRead ? () => onRead(r.id) : undefined}
             >
               {onRead && <title>{`${r.name} — re-read your discovery`}</title>}
-              {!lite && (
+              {!lite && !ICONLESS.has(r.id) && (
                 <ellipse cx={r.landmark.x} cy={r.landmark.y - 6} rx={34} ry={26} fill="#f4d77a" opacity={0.18} filter="url(#tqSoftGlow)" />
               )}
               {TOWN_ART[r.id] ? (
                 <Town id={TOWN_ART[r.id]} x={r.landmark.x} y={r.landmark.y} />
+              ) : ICONLESS.has(r.id) ? (
+                <path d={r.path} className="realm-hit" />
               ) : (
                 <Landmark kind={r.landmark.kind} x={r.landmark.x} y={r.landmark.y} />
               )}
@@ -464,6 +487,8 @@ function RealmMap({
             <title>{canClaim ? `Chart ${r.name}` : `${r.name} — unexplored`}</title>
             {TOWN_ART[r.id] ? (
               <Town id={TOWN_ART[r.id]} x={r.landmark.x} y={r.landmark.y} ghost />
+            ) : ICONLESS.has(r.id) ? (
+              <path d={r.path} className={canClaim ? 'realm-hit realm-hit-claim' : 'realm-hit'} />
             ) : (
               <circle
                 className="realm-fogdot"

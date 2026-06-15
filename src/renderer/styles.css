@@ -3425,6 +3425,26 @@ code {
   opacity: 0.6;
 }
 
+/* Icon-less regions (e.g. Crownspire) whose landmark IS painted terrain: an invisible
+   hit-area that glows a soft gold over the region on hover. */
+.realm-svg .realm-hit {
+  fill: transparent;
+  stroke: none;
+  pointer-events: all;
+  cursor: pointer;
+  transition: fill 0.18s ease;
+}
+.realm-svg .realm-region:hover .realm-hit {
+  fill: rgba(244, 215, 122, 0.22);
+}
+/* When still unexplored + claimable, a faint persistent tint hints it can be charted. */
+.realm-svg .realm-hit-claim {
+  fill: rgba(244, 215, 122, 0.08);
+}
+.realm-svg .realm-claimable:hover .realm-hit-claim {
+  fill: rgba(244, 215, 122, 0.3);
+}
+
 /* ---- Living map animations (v1.10 Build 2): seamless, NO-teleport loops ---- */
 /* Lapping waves: gentle ease-in-out ping-pong (alternate => returns to exact start). */
 @keyframes realmWaveDrift {
