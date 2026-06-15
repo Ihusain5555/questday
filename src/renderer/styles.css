@@ -171,6 +171,12 @@ body:not(.widget-body) {
   border-bottom: 1px solid var(--border);
   user-select: none;
 }
+/* macOS draws the traffic-light buttons in the top-left; with our custom title bar
+   (titleBarStyle: hiddenInset) they overlay this row, so pad content clear of them.
+   The platform-darwin class is set on <body> in App.tsx (IS_MAC). */
+.platform-darwin .titlebar {
+  padding-left: 78px;
+}
 .titlebar-brand {
   display: inline-flex;
   align-items: center;
@@ -3443,6 +3449,105 @@ code {
 }
 .realm-svg .realm-claimable:hover .realm-hit-claim {
   fill: rgba(244, 215, 122, 0.3);
+}
+
+/* ---- v1.10 Level-1 TOWN view (placeholder spine) ---- */
+/* A charted hero town is enterable: pointer cursor + a hover "enter →" hint. */
+.realm-svg .realm-enterable {
+  cursor: pointer;
+}
+.realm-svg .realm-enter-label {
+  fill: #9a7a2e;
+  font-family: Georgia, serif;
+  font-size: 11px;
+  font-style: italic;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  pointer-events: none;
+}
+.realm-svg .realm-enterable:hover .realm-enter-label {
+  opacity: 1;
+}
+
+/* The town overlay covers the MAP BOX (its position:relative anchor) and slides
+   in via framer-motion. Plain placeholder buildings on a soft-grass diamond. */
+.realm-map-wrap {
+  position: relative;
+}
+.town-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #f5ead2 0%, #efe1c2 100%);
+  border-radius: inherit;
+  overflow: hidden;
+}
+.town-topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px 4px;
+}
+.town-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px solid #6f5b39;
+  background: #efe0bf;
+  color: #5a4a2e;
+  border-radius: 9px;
+  padding: 7px 12px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.town-back:hover {
+  background: #e7d4ac;
+}
+.town-name {
+  font-family: var(--font-display), serif;
+  font-size: 18px;
+  color: #3a2d18;
+}
+.town-stage {
+  font-size: 12.5px;
+  color: #8a7a55;
+  font-style: italic;
+  margin-left: -8px;
+}
+.town-canvas {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+}
+.town-foot {
+  text-align: center;
+  color: #7a6a47;
+  font-size: 12px;
+  font-style: italic;
+  padding: 4px 0 12px;
+}
+@keyframes town-rise {
+  from {
+    opacity: 0;
+    transform: translateY(13px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.town-bldg {
+  animation: town-rise 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+  transform-box: fill-box;
+}
+@media (prefers-reduced-motion: reduce) {
+  /* one-shot entrance: appear instantly instead of rising (accessibility rule) */
+  .town-bldg {
+    animation: none;
+  }
 }
 
 /* ---- Living map animations (v1.10 Build 2): seamless, NO-teleport loops ---- */

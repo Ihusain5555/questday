@@ -5,6 +5,7 @@ import { FocusView } from './FocusView'
 import { EisenhowerView } from './EisenhowerView'
 import { ActiveModeSettings } from './ActiveModeSettings'
 import { Timer, Compass, Target } from '@phosphor-icons/react'
+import { IS_MAC } from '../platform'
 
 type Sub = 'focus' | 'matrix' | 'active'
 
@@ -25,10 +26,14 @@ const SUBS: { id: Sub; label: string; icon: JSX.Element; feature?: string }[] = 
 export function ProductivityView(): JSX.Element {
   const { db } = useStore()
   const enabled = db?.settings.enabledFeatures
-  const avail = SUBS.filter((s) => !s.feature || isFeatureEnabled(enabled, s.feature))
+  // Active mode is Windows-only (its detector is Win32/PowerShell), so hide it on
+  // macOS — the main process also never starts it there.
+  const avail = SUBS.filter(
+    (s) => (!s.feature || isFeatureEnabled(enabled, s.feature)) && !(s.id === 'active' && IS_MAC)
+  )
   const [sub, setSub] = useState<Sub>('focus')
-  // Fall back if the chosen sub-tool was just toggled off.
-  const active = avail.some((s) => s.id === sub) ? sub : avail[0]?.id ?? 'active'
+  // Fall back if the chosen sub-tool was just toggled off (never 'active' on Mac).
+  const active = avail.some((s) => s.id === sub) ? sub : avail[0]?.id ?? (IS_MAC ? 'focus' : 'active')
 
   return (
     <div className="view productivity-view">

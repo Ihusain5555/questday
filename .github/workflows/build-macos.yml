@@ -1,0 +1,57 @@
+name: Build macOS
+
+# Builds an UNSIGNED universal macOS .dmg (Intel + Apple Silicon) in GitHub's free
+# macOS cloud, and uploads it as a downloadable artifact. No Apple Developer account
+# is needed. Trigger it from the Actions tab ("Run workflow"), or by pushing a v* tag.
+#
+# How to get the file (no coding):
+#   1. github.com -> your QuestDay repo -> the "Actions" tab.
+#   2. Click "Build macOS" on the left, then the "Run workflow" button.
+#   3. Wait ~8-15 min. Open the finished run and scroll to "Artifacts".
+#   4. Download "questday-mac-dmg" (a .zip); inside is QuestDay-<version>-universal.dmg.
+#   5. Then follow docs/MAC-INSTALL.md to open it on your Mac (it's unsigned).
+
+on:
+  workflow_dispatch: # manual "Run workflow" button
+  push:
+    tags:
+      - 'v*' # also build when a version tag is pushed
+
+permissions:
+  contents: read
+
+jobs:
+  build-mac:
+    # macos-latest is Apple Silicon (arm64). We build a UNIVERSAL binary (see the
+    # mac.target arch in package.json) so the .dmg also runs natively on Intel Macs.
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22 # Electron 42 ecosystem needs Node >= 20; 22 is current LTS
+          cache: npm # caches ~/.npm keyed on the committed package-lock.json
+
+      - name: Install dependencies
+        run: npm ci # deterministic install from package-lock.json
+
+      - name: Build + package universal macOS .dmg (unsigned)
+        env:
+          # Belt-and-suspenders: never attempt code signing (no Apple certs in CI).
+          # dist:mac also sets this inline; electron-builder still applies a free
+          # ad-hoc signature to the universal build, which Apple Silicon REQUIRES to
+          # let the app launch.
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: npm run dist:mac # electron-vite build && electron-builder --mac (-> release/)
+
+      - name: Upload the .dmg as a downloadable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: questday-mac-dmg
+          path: release/*.dmg
+          if-no-files-found: error
+          retention-days: 14

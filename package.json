@@ -18,7 +18,9 @@
     "pw:realm": "node scripts/pw-realm.mjs",
     "pw:rewards": "node scripts/pw-rewards.mjs",
     "pw:rollover": "node scripts/pw-rollover.mjs",
-    "dist": "node scripts/with-app.mjs \"electron-vite build && electron-builder --win\"",
+    "pw:deck": "node scripts/pw-deck.mjs",
+    "dist": "node scripts/with-app.mjs \"electron-vite build && electron-builder --win -c.directories.output=C:/Users/ihusa/questday-release\"",
+    "dist:mac": "electron-vite build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac",
     "typecheck:node": "tsc -p tsconfig.node.json --noEmit",
     "typecheck:web": "tsc -p tsconfig.web.json --noEmit",
     "typecheck": "npm run typecheck:node && npm run typecheck:web"
@@ -27,7 +29,7 @@
     "appId": "com.questday.app",
     "productName": "QuestDay",
     "directories": {
-      "output": "C:/Users/ihusa/questday-release",
+      "output": "release",
       "buildResources": "resources"
     },
     "files": [
@@ -49,6 +51,24 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "QuestDay"
+    },
+    "mac": {
+      "target": [
+        { "target": "dmg", "arch": ["universal"] }
+      ],
+      "icon": "resources/icon.png",
+      "category": "public.app-category.productivity",
+      "identity": null,
+      "hardenedRuntime": false,
+      "darkModeSupport": true,
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "dmg": {
+      "title": "${productName} ${version}",
+      "contents": [
+        { "x": 130, "y": 220, "type": "file" },
+        { "x": 410, "y": 220, "type": "link", "path": "/Applications" }
+      ]
     }
   },
   "dependencies": {

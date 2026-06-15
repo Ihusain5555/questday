@@ -30,11 +30,19 @@ let isQuitting = false
 
 const preload = join(__dirname, '../preload/index.mjs')
 
+// Platform flag for the handful of macOS-specific window/tray tweaks below.
+// (Windows behaviour is the default everywhere isMac is false.)
+const isMac = process.platform === 'darwin'
+
 // Active-mode background work (the 30s scheduler tick + the 2s foreground
 // detector) is the only always-on cost; gate it on the master switch so a
 // disabled feature uses zero idle CPU. Idempotent — safe to call on every change.
 let activeModeRunning = false
 function syncActiveMode(enabled: boolean): void {
+  // Active Mode is Windows-only — it relies on a Win32/PowerShell foreground-window
+  // detector. On macOS/Linux never start the scheduler/detector (they'd fail to
+  // spawn, and the UI hides the tab there too). Keeps the Mac build error-free.
+  if (process.platform !== 'win32') return
   if (enabled === activeModeRunning) return
   activeModeRunning = enabled
   if (enabled) {
@@ -107,6 +115,8 @@ function createWidgetWindow(): void {
     webPreferences: { preload, sandbox: false }
   })
   widgetWindow.setAlwaysOnTop(true, 'screen-saver')
+  // macOS: keep the floating widget visible across Spaces and over full-screen apps.
+  if (isMac) widgetWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
   loadRenderer(widgetWindow, 'widget.html')
 
   const persistBounds = () => {
@@ -138,10 +148,13 @@ function createMainWindow(): void {
     title: 'QuestDay',
     show: true,
     backgroundColor: '#0e1512',
-    // Custom deep-emerald title bar with native window buttons overlaid. The
-    // colour must match --titlebar in theme.css / the .titlebar rule in styles.css.
-    titleBarStyle: 'hidden',
-    titleBarOverlay: { color: '#10362a', symbolColor: '#dfeee6', height: 40 },
+    // Custom deep-emerald title bar with native window buttons overlaid on Windows.
+    // The colour must match --titlebar in theme.css / the .titlebar rule in styles.css.
+    // On macOS, titleBarOverlay is unsupported: use 'hiddenInset' so the OS draws the
+    // traffic-light buttons, and CSS (.platform-darwin .titlebar) pads the brand text
+    // clear of them.
+    titleBarStyle: isMac ? 'hiddenInset' : 'hidden',
+    ...(isMac ? {} : { titleBarOverlay: { color: '#10362a', symbolColor: '#dfeee6', height: 40 } }),
     // sandbox stays false: electron-vite emits the preload as an ES module
     // (index.mjs), and Electron's sandbox requires a CommonJS preload — enabling
     // it leaves window.questday undefined. contextIsolation (on) + nodeIntegration
@@ -214,6 +227,9 @@ function createTray(): void {
   const iconFile = resourcesPath('tray.png')
   let image = existsSync(iconFile) ? nativeImage.createFromPath(iconFile) : nativeImage.createEmpty()
   if (!image.isEmpty()) image = image.resize({ width: 16, height: 16 })
+  // macOS menu-bar icons should be monochrome "template" images (they adapt to a
+  // light/dark menu bar); the colored Windows icon would look wrong otherwise.
+  if (isMac) image.setTemplateImage(true)
   tray = new Tray(image)
   tray.setToolTip('QuestDay')
   const menu = Menu.buildFromTemplate([

@@ -15,6 +15,7 @@ import { RolloverBanner } from './RolloverBanner'
 import { PastDueReview } from './PastDueReview'
 import { ymd, encouragementMessage } from '@shared/engine/rollover'
 import { isCoreTab, isFeatureEnabled } from './features'
+import { IS_MAC } from '../platform'
 import { AnimatePresence, motion, MotionConfig } from 'framer-motion'
 import {
   Crown,
@@ -51,6 +52,12 @@ export function App(): JSX.Element {
   useEffect(() => {
     void connect()
   }, [connect])
+
+  // macOS draws the traffic-light buttons over the window's top-left; tag <body>
+  // so CSS can pad the custom title bar clear of them. No-op on Windows.
+  useEffect(() => {
+    if (IS_MAC) document.body.classList.add('platform-darwin')
+  }, [])
 
   // Run rollover once data is loaded, and again whenever the calendar day
   // changes while the app stays open (midnight crossing). Gate on `loading` so
