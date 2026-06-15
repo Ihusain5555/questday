@@ -4,8 +4,14 @@
 // Mirrors the geometry in RealmView.tsx (icon size + banner half-width formula).
 
 const ICON = 52
-const ICON_TOP = (ly) => ly - ICON * 0.86 // <use> y = y - size*0.86
-const ICON_BOT = (ly) => ly - ICON * 0.86 + ICON
+const TOWN = 76 // hero-town <symbol> footprint (vs 52px terrain icons)
+// Regions drawn as hand-authored hero TOWNS (76px) instead of a simple icon.
+// Must mirror TOWN_ART in RealmView.tsx — grow this as each batch ships.
+// Batch A (live): larkholt, goldfield, sunmeadow, greymoor. Batch B (pending):
+// tidesend, quietfens. Capital (embergreen) deferred — stays a forest for now.
+const TOWNS = new Set(['goldfield', 'sunmeadow', 'larkholt', 'greymoor'])
+const sizeOf = (r) => (TOWNS.has(r.id) ? TOWN : ICON)
+const ICON_TOP = (r) => r.ly - sizeOf(r) * 0.86 // <use> y = y - size*0.86
 const bannerHalf = (name) => Math.max(30, name.length * 4.2 + 10) + 11 // +11 swallowtail tip
 const LABEL_DY = 40 // ty = ly + 40
 const MARGIN = 6 // required clear gap (each box inflated by MARGIN)
@@ -15,7 +21,7 @@ const FRAME = 54 // gold inner frame inset (content should stay within [54, 1146
 // Candidate layout — edit (lx, ly) and re-run until "COLLISIONS: 0".
 const R = [
   { id: 'embergreen', name: 'Vale of Embergreen', lx: 360, ly: 350 },
-  { id: 'goldfield', name: 'Goldfield March', lx: 600, ly: 226 },
+  { id: 'goldfield', name: 'Goldfield March', lx: 600, ly: 240 },
   { id: 'sunmeadow', name: 'Sunmeadow Hold', lx: 815, ly: 210 },
   { id: 'larkholt', name: 'Larkholt', lx: 600, ly: 600 },
   { id: 'tidesend', name: "Tide's End", lx: 285, ly: 470 },
@@ -32,10 +38,11 @@ const R = [
 ]
 
 const box = (r) => {
+  const s = sizeOf(r)
   const hw = bannerHalf(r.name)
-  const x0 = Math.min(r.lx - ICON / 2, r.lx - hw) - MARGIN
-  const x1 = Math.max(r.lx + ICON / 2, r.lx + hw) + MARGIN
-  const y0 = ICON_TOP(r.ly) - MARGIN
+  const x0 = Math.min(r.lx - s / 2, r.lx - hw) - MARGIN
+  const x1 = Math.max(r.lx + s / 2, r.lx + hw) + MARGIN
+  const y0 = ICON_TOP(r) - MARGIN
   const ty = r.ly + LABEL_DY
   const y1 = ty + 12 + MARGIN
   return { x0, x1, y0, y1 }

@@ -308,7 +308,7 @@ export const balance = {
         name: 'Terra Questa',
         regions: [
           { id: 'embergreen', name: 'Vale of Embergreen', at: 0, path: 'M302 356 a58 54 0 1 0 116 0 a58 54 0 1 0 -116 0 Z', label: { x: 360, y: 390 }, landmark: { kind: 'forest', x: 360, y: 350 } },
-          { id: 'goldfield', name: 'Goldfield March', at: 0, path: 'M542 232 a58 54 0 1 0 116 0 a58 54 0 1 0 -116 0 Z', label: { x: 600, y: 266 }, landmark: { kind: 'town', x: 600, y: 226 } },
+          { id: 'goldfield', name: 'Goldfield March', at: 0, path: 'M542 246 a58 54 0 1 0 116 0 a58 54 0 1 0 -116 0 Z', label: { x: 600, y: 280 }, landmark: { kind: 'town', x: 600, y: 240 } },
           { id: 'sunmeadow', name: 'Sunmeadow Hold', at: 0, path: 'M757 216 a58 54 0 1 0 116 0 a58 54 0 1 0 -116 0 Z', label: { x: 815, y: 250 }, landmark: { kind: 'keep', x: 815, y: 210 } },
           { id: 'larkholt', name: 'Larkholt', at: 1, path: 'M542 606 a58 54 0 1 0 116 0 a58 54 0 1 0 -116 0 Z', label: { x: 600, y: 640 }, landmark: { kind: 'town', x: 600, y: 600 } },
           { id: 'tidesend', name: "Tide's End", at: 2, path: 'M227 476 a58 54 0 1 0 116 0 a58 54 0 1 0 -116 0 Z', label: { x: 285, y: 510 }, landmark: { kind: 'lighthouse', x: 285, y: 470 } },
