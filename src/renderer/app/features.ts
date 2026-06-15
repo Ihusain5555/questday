@@ -31,6 +31,14 @@ export const TOGGLEABLE_FEATURES: ToggleableFeature[] = [
     icon: 'Compass',
     label: 'Eisenhower matrix',
     blurb: 'Triage your quests in the urgent × important 2×2 — see where your effort should go.'
+  },
+  {
+    // The Realm reward world (tab id 'world'). Toggle hides the tab only — every
+    // charted discovery is kept (gains-only), so flipping it back restores them.
+    id: 'world',
+    icon: 'MapTrifold',
+    label: 'Realm',
+    blurb: 'Your reward world — an explorable map that charts a new region each time you finish a quest.'
   }
 ]
 

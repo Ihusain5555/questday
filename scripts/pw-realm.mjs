@@ -93,6 +93,8 @@ try {
   result('CHRONICLE_CODEX_TEST', (await main.locator('.rc-item').count()) === 4,
     `${await main.locator('.rc-item').count()} chronicle entries (want 4)`)
   await main.screenshot({ path: path.join(shots, 'realm-tab.png') })
+  // Full map element (captures the whole tall 1200x820 map, not just the viewport).
+  await main.locator('.realm-map-wrap').screenshot({ path: path.join(shots, 'realm-map-full.png') })
 
   // --- Tap a fog region => the "what to learn" modal opens ---
   await main.locator('.realm-claimable').first().click()

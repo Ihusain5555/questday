@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../state/store'
 import { balance } from '@shared/config/balance'
@@ -17,192 +17,528 @@ import { MapIconSymbols } from './storybookMapIcons'
 // knowledge in config/chronicle.
 const ATLAS = balance.realm.atlases[0]
 const VB = balance.realm.viewBox
-const LANDS = ['url(#realmLand)', 'url(#realmLandWarm)', 'url(#realmLandDeep)']
 
 /** Chronicle topic icon name -> Phosphor component. */
 const TOPIC_ICON: Record<string, Icon> = { Planet, Leaf, Scroll, Feather }
 
-/** Maps a region's landmark kind to a cozy storybook icon (drawn as <use> of a symbol). */
+/** A region's landmark kind -> storybook map symbol id (drawn as <use> of #sbm-*). */
 const KIND_ICON: Record<string, string> = {
   keep: 'castle',
   town: 'town',
   tower: 'tower',
   mountains: 'mountains',
   village: 'town',
-  forest: 'forest'
+  forest: 'forest',
+  lighthouse: 'lighthouse',
+  marsh: 'marsh',
+  mist: 'mist'
 }
 
-/** A cozy storybook landmark icon on a charted region (CC0-style stand-in art). */
-function Landmark({ kind, x, y }: { kind: string; x: number; y: number }): JSX.Element | null {
+/** A cozy storybook landmark icon, centered horizontally on a region's
+ *  settlement point and sitting just above it. */
+function Landmark({
+  kind,
+  x,
+  y,
+  size = 52
+}: {
+  kind: string
+  x: number
+  y: number
+  size?: number
+}): JSX.Element | null {
   const icon = KIND_ICON[kind]
   if (!icon) return null
-  const s = 40
-  return <use href={`#sbm-${icon}`} x={x - s / 2} y={y - s * 0.82} width={s} height={s} />
+  return <use href={`#sbm-${icon}`} x={x - size / 2} y={y - size * 0.86} width={size} height={size} />
 }
 
-/** The realm map SVG — charted regions glow (tap to re-read their discovery);
- *  unexplored regions are fog (tap to chart when expeditions are ready). */
+// Half-width of a region's name banner — kept in sync with scripts/_layout-check.mjs,
+// which packing-verifies that no two regions' (icon + banner) footprints overlap.
+const bannerHalf = (name: string): number => Math.max(30, name.length * 4.2 + 10)
+
+/** A swallowtail cartouche (name banner) path of half-width `h`, centered at 0,0. */
+function banner(h: number): string {
+  return `M${-h} -12 L${h} -12 L${h + 11} 0 L${h} 12 L${-h} 12 L${-h - 11} 0 Z`
+}
+
+/** True while the document is VISIBLE. Pauses map motion only when the window is
+ *  actually hidden/minimized — NOT on mere focus loss, so a visible-but-unfocused
+ *  map (e.g. while you read another window) keeps animating. `enabled` is false
+ *  for the still thumbnail so it never wires a listener. */
+function useDocumentVisible(enabled: boolean): boolean {
+  const [visible, setVisible] = useState(true)
+  useEffect(() => {
+    if (!enabled) return
+    const update = (): void => setVisible(document.visibilityState === 'visible')
+    update()
+    document.addEventListener('visibilitychange', update)
+    return () => document.removeEventListener('visibilitychange', update)
+  }, [enabled])
+  return visible
+}
+
+/**
+ * The realm map SVG — an antique "Inked Watercolor" world (v1.10). The sea,
+ * land, terrain and frame are static map art; each atlas region is a settlement
+ * marker on it: charted regions show their landmark + a banner name (tap to
+ * re-read their discovery), unexplored regions are a faded marker (tap to chart
+ * when an expedition is ready). Gains-only. `lite` (the Dashboard thumbnail)
+ * drops the costly watercolor filters + text for cheap, always-on rendering.
+ * (Living waves/boats/sea-creatures arrive in the next build.)
+ */
 function RealmMap({
   revealed,
   claimable = false,
   onClaim,
-  onRead
+  onRead,
+  lite = false
 }: {
   revealed: Set<string>
   claimable?: boolean
   onClaim?: (id: string) => void
   onRead?: (id: string) => void
+  lite?: boolean
 }): JSX.Element {
-  const indexed = ATLAS.regions.map((r, i) => ({ r, i }))
-  const fog = indexed.filter((x) => !revealed.has(x.r.id))
-  const lit = indexed.filter((x) => revealed.has(x.r.id))
+  const regions = ATLAS.regions
+  const litCount = regions.filter((r) => revealed.has(r.id)).length
   const canClaim = claimable && !!onClaim
+  // Live watercolor filters (turbulence + displacement) are one-time-costly; skip
+  // them entirely in `lite` so the always-on Dashboard thumbnail stays cheap.
+  const rough = lite ? undefined : 'url(#tqRough)'
+  const wc = lite ? undefined : 'url(#tqWc)'
+  const visible = useDocumentVisible(!lite)
   return (
     <svg
-      className="realm-svg"
+      className={`realm-svg${!visible ? ' realm-anim-paused' : ''}`}
       viewBox={`0 0 ${VB.w} ${VB.h}`}
       role="img"
-      aria-label={`A map of ${ATLAS.name}: ${lit.length} of ${indexed.length} regions charted; the rest are unexplored.`}
+      aria-label={`A map of ${ATLAS.name}: ${litCount} of ${regions.length} regions charted; the rest are unexplored.`}
     >
       <defs>
-        {/* Warm storybook parchment palette (re-skin of Terra Questa, 2026-06-13) */}
-        <radialGradient id="realmSea" cx="50%" cy="40%" r="82%">
-          <stop offset="0%" stopColor="#f7efd6" />
-          <stop offset="62%" stopColor="#efe3c4" />
-          <stop offset="100%" stopColor="#e3d4ac" />
+        {/* Antique inked-watercolor palette + textures (ported from the approved
+            mockups/world-map-final.html; ids prefixed `tq` to avoid collisions). */}
+        <radialGradient id="tqParch" cx="50%" cy="42%" r="78%">
+          <stop offset="0%" stopColor="#f6eed4" />
+          <stop offset="64%" stopColor="#ecdfba" />
+          <stop offset="100%" stopColor="#ddca9c" />
         </radialGradient>
-        <linearGradient id="realmLand" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#ecdcb0" />
-          <stop offset="55%" stopColor="#e0cf9c" />
-          <stop offset="100%" stopColor="#d2bd83" />
-        </linearGradient>
-        <linearGradient id="realmLandDeep" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#e6d4a4" />
-          <stop offset="100%" stopColor="#cbb578" />
-        </linearGradient>
-        <linearGradient id="realmLandWarm" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#efdfae" />
-          <stop offset="100%" stopColor="#d8c188" />
-        </linearGradient>
-        <linearGradient id="realmGold" x1="0" y1="0" x2="1" y2="1">
+        <radialGradient id="tqSea" cx="50%" cy="46%" r="74%">
+          <stop offset="0%" stopColor="#bfe0e0" />
+          <stop offset="55%" stopColor="#90c0c4" />
+          <stop offset="100%" stopColor="#6ba0a6" />
+        </radialGradient>
+        <linearGradient id="tqGold" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#fbeec0" />
-          <stop offset="45%" stopColor="#f4d77a" />
-          <stop offset="100%" stopColor="#c98a1e" />
+          <stop offset="50%" stopColor="#e6be63" />
+          <stop offset="100%" stopColor="#b98a2e" />
         </linearGradient>
-        <radialGradient id="realmVign" cx="50%" cy="50%" r="78%">
-          <stop offset="62%" stopColor="rgba(0,0,0,0)" />
-          <stop offset="100%" stopColor="rgba(80,58,24,0.26)" />
-        </radialGradient>
-        <filter id="realmGoldGlow" x="-25%" y="-25%" width="150%" height="150%">
-          <feGaussianBlur stdDeviation="3.2" result="b" />
-          <feMerge>
-            <feMergeNode in="b" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
+        <filter id="tqGrain">
+          <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch" result="n" />
+          <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.30  0 0 0 0 0.24 0 0 0 0 0.13  0 0 0 0.045 0" />
         </filter>
-        <filter id="realmSoftGlow" x="-40%" y="-40%" width="180%" height="180%">
+        <filter id="tqRough" x="-20%" y="-20%" width="140%" height="140%">
+          <feTurbulence type="turbulence" baseFrequency="0.018" numOctaves="2" seed="7" result="n" />
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="2.2" />
+        </filter>
+        <filter id="tqWc" x="-60%" y="-60%" width="220%" height="220%">
           <feGaussianBlur stdDeviation="4" result="b" />
+          <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="5" result="n" />
+          <feDisplacementMap in="b" in2="n" scale="16" />
+        </filter>
+        <filter id="tqSoftGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="5" result="b" />
           <feMerge>
             <feMergeNode in="b" />
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
-        <filter id="realmGrain">
-          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch" result="n" />
-          <feColorMatrix
-            in="n"
-            type="matrix"
-            values="0 0 0 0 0.29  0 0 0 0 0.22  0 0 0 0 0.10  0 0 0 0.05 0"
-          />
-        </filter>
+        {/* Soft underwater shadow for diving sea-creatures — a gradient ellipse,
+            NOT a live blur filter (a live filter re-blurs every frame). */}
+        <radialGradient id="tqShadow">
+          <stop offset="0%" stopColor="#2f5a5e" stopOpacity="0.55" />
+          <stop offset="70%" stopColor="#2f5a5e" stopOpacity="0.28" />
+          <stop offset="100%" stopColor="#2f5a5e" stopOpacity="0" />
+        </radialGradient>
+        <pattern id="tqHatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="7" stroke="#6b5236" strokeWidth="0.7" opacity="0.3" />
+        </pattern>
+        <pattern id="tqRingH" width="86" height="44" patternUnits="userSpaceOnUse">
+          <path d="M0 0 L20 38 L40 6 L60 42 L86 10 L86 0 Z" fill="#c08056" stroke="#a06642" strokeWidth="0.9" opacity="0.85" />
+          <path d="M0 0 L20 38 L40 6 L60 42 L86 10" fill="none" stroke="#a06642" strokeWidth="0.7" />
+        </pattern>
+        <radialGradient id="tqWForest">
+          <stop offset="0%" stopColor="#7aa552" />
+          <stop offset="100%" stopColor="#7aa552" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="tqWGold">
+          <stop offset="0%" stopColor="#e9cf6e" />
+          <stop offset="100%" stopColor="#e9cf6e" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="tqWMoor">
+          <stop offset="0%" stopColor="#b59ec0" />
+          <stop offset="100%" stopColor="#b59ec0" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="tqWFen">
+          <stop offset="0%" stopColor="#86c4a8" />
+          <stop offset="100%" stopColor="#86c4a8" stopOpacity="0" />
+        </radialGradient>
+        <symbol id="tqConifer" viewBox="0 0 24 30">
+          <path d="M12 30 v-6" stroke="#6a5a36" strokeWidth="1.6" />
+          <path d="M3 24 L12 3 L21 24 Z" fill="#74a84e" stroke="#4f7e3a" strokeWidth="0.8" />
+          <path d="M5 16 L12 4 L19 16 Z" fill="#86b85c" stroke="#4f7e3a" strokeWidth="0.6" />
+        </symbol>
+        <symbol id="tqDecid" viewBox="0 0 24 30">
+          <path d="M12 30 v-7" stroke="#6a5a36" strokeWidth="1.6" />
+          <circle cx="12" cy="13" r="9" fill="#83b257" stroke="#4f7e3a" strokeWidth="0.8" />
+        </symbol>
+        <clipPath id="tqLand">
+          <use href="#tqContinent" />
+        </clipPath>
         <MapIconSymbols />
       </defs>
 
-      <rect x={0} y={0} width={VB.w} height={VB.h} fill="url(#realmSea)" />
-      <g opacity={0.32} stroke="#a9b8b0" strokeWidth={1.1} fill="none" strokeLinecap="round">
-        <path d="M40 60 q30 -8 60 0 t60 0" />
-        <path d="M560 80 q26 -7 52 0 t52 0" />
-        <path d="M60 430 q26 -7 52 0 t52 0" />
-      </g>
-
-      {/* Unexplored (fog) regions — tappable to chart when expeditions are ready */}
-      {fog.map(({ r }) => (
-        <g
-          key={r.id}
-          className={canClaim ? 'realm-region realm-claimable' : 'realm-region'}
-          onClick={canClaim ? () => onClaim?.(r.id) : undefined}
-        >
-          <title>{canClaim ? `Chart ${r.name}` : `${r.name} — unexplored`}</title>
-          <path
-            className="realm-fog"
-            d={r.path}
-            style={{ fill: '#e7d8b0', stroke: '#a9967a', strokeWidth: 1, strokeDasharray: '5 4', opacity: 0.6 }}
-          />
-          <text
-            className="realm-label-fog"
-            x={r.label.x}
-            y={r.label.y}
-            style={{ fill: '#9c8a64', fontStyle: 'italic' }}
-          >
-            {r.name}
-          </text>
+      {/* ===== SEA ===== */}
+      <rect x={0} y={0} width={VB.w} height={VB.h} fill="url(#tqSea)" />
+      {!lite && (
+        <g opacity={0.4}>
+          <ellipse cx={150} cy={430} rx={120} ry={180} fill="#6ba0a6" filter={wc} />
+          <ellipse cx={1066} cy={430} rx={120} ry={220} fill="#6ba0a6" filter={wc} />
         </g>
-      ))}
-
-      {/* Charted regions — lit, with a gold border + landmark (tap to re-read) */}
-      {lit.map(({ r, i }) => (
-        <g
-          key={r.id}
-          className={onRead ? 'realm-region realm-charted' : 'realm-region'}
-          onClick={onRead ? () => onRead(r.id) : undefined}
-        >
-          {onRead && <title>{`${r.name} — re-read your discovery`}</title>}
-          <g filter="url(#realmSoftGlow)">
-            <path d={r.path} fill={LANDS[i % LANDS.length]} stroke="url(#realmGold)" strokeWidth={2.5} />
+      )}
+      {lite ? (
+        /* thumbnail: a few STILL wave ticks (no motion) */
+        <g stroke="#dcf0f0" strokeWidth={1.2} strokeLinecap="round" opacity={0.55} fill="none">
+          <path d="M150 150 q8 -5 16 0" />
+          <path d="M1020 160 q8 -5 16 0" />
+          <path d="M1050 540 q8 -5 16 0" />
+          <path d="M150 560 q8 -5 16 0" />
+          <path d="M520 118 q8 -5 16 0" />
+          <path d="M90 420 q8 -5 16 0" />
+        </g>
+      ) : (
+        <>
+          {/* lapping waves — gentle ease-in-out ping-pong (returns to exact start) */}
+          <g className="realm-wave" stroke="#dcf0f0" strokeWidth={1.3} strokeLinecap="round" opacity={0.6} fill="none">
+            <path d="M150 150 q8 -5 16 0" />
+            <path d="M120 300 q8 -5 16 0" />
+            <path d="M300 120 q8 -5 16 0" />
+            <path d="M1020 160 q8 -5 16 0" />
+            <path d="M1086 300 q8 -5 16 0" />
+            <path d="M1050 540 q8 -5 16 0" />
+            <path d="M150 560 q8 -5 16 0" />
+            <path d="M120 680 q8 -5 16 0" />
+            <path d="M980 700 q8 -5 16 0" />
+            <path d="M520 118 q8 -5 16 0" />
+            <path d="M1060 440 q8 -5 16 0" />
+            <path d="M90 420 q8 -5 16 0" />
+            <path d="M1095 600 q8 -5 16 0" />
+            <path d="M70 250 q8 -5 16 0" />
           </g>
-          <Landmark kind={r.landmark.kind} x={r.landmark.x} y={r.landmark.y} />
-          <text
-            className="realm-label"
-            x={r.label.x}
-            y={r.label.y}
-            style={{ fill: '#3a2c18', paintOrder: 'stroke', stroke: '#f7efd8', strokeWidth: 3, strokeLinejoin: 'round' }}
+          <g className="realm-wave" style={{ animationDelay: '-3.5s' }} stroke="#cfe6e6" strokeWidth={1.1} strokeLinecap="round" opacity={0.5} fill="none">
+            <path d="M200 200 q7 -4 14 0" />
+            <path d="M1010 240 q7 -4 14 0" />
+            <path d="M1040 660 q7 -4 14 0" />
+            <path d="M210 640 q7 -4 14 0" />
+            <path d="M110 540 q7 -4 14 0" />
+            <path d="M1100 500 q7 -4 14 0" />
+          </g>
+          {/* wind streaks — fade in then out so the position reset is invisible */}
+          <g fill="none" stroke="#f3ead2" strokeLinecap="round" strokeWidth={1.6}>
+            <path className="realm-wind" d="M120 110 q40 -10 80 0 q30 8 60 0" opacity={0.5} />
+            <path className="realm-wind" style={{ animationDelay: '-4s' }} d="M780 96 q40 -10 80 0 q30 8 60 0" opacity={0.45} />
+            <path className="realm-wind" style={{ animationDelay: '-7s' }} d="M250 730 q40 -10 80 0 q30 8 60 0" opacity={0.4} />
+            <path className="realm-wind" style={{ animationDelay: '-2.5s' }} d="M860 720 q40 -10 80 0 q30 8 60 0" opacity={0.4} />
+          </g>
+        </>
+      )}
+
+      {/* ===== LANDMASS ===== */}
+      <g filter={rough}>
+        <path
+          id="tqContinent"
+          d="M250 300 C 210 250 250 200 330 190 C 410 178 470 150 560 158 C 660 166 700 140 790 162 C 880 184 940 180 980 250 C 1010 300 980 360 940 400 C 980 450 960 520 900 560 C 850 595 820 640 740 650 C 660 660 600 700 520 690 C 440 680 380 700 320 660 C 250 612 230 560 240 500 C 200 470 210 400 250 360 C 232 338 236 318 250 300 Z"
+          fill="url(#tqParch)"
+          stroke="#9c7e4a"
+          strokeWidth={1.8}
+        />
+        <path d="M958 330 C 985 312 1020 320 1030 350 C 1040 380 1018 405 988 400 C 960 396 944 360 958 330 Z" fill="url(#tqParch)" stroke="#9c7e4a" strokeWidth={1.5} />
+        <path d="M165 645 C 150 622 185 600 220 612 C 258 624 262 668 232 686 C 200 704 178 678 165 645 Z" fill="url(#tqParch)" stroke="#9c7e4a" strokeWidth={1.5} opacity={0.95} />
+        <path d="M1010 620 C 1000 598 1035 585 1066 600 C 1096 615 1090 656 1058 666 C 1028 675 1016 648 1010 620 Z" fill="url(#tqParch)" stroke="#9c7e4a" strokeWidth={1.5} opacity={0.9} />
+      </g>
+      {!lite && (
+        <rect x={0} y={0} width={VB.w} height={VB.h} fill="#fff" filter="url(#tqGrain)" opacity={0.32} style={{ mixBlendMode: 'overlay' }} pointerEvents="none" />
+      )}
+      {!lite && (
+        <g filter={rough} fill="none" stroke="#7fb0b4" strokeLinecap="round" opacity={0.5}>
+          <use href="#tqContinent" transform="translate(610 425) scale(1.03) translate(-610 -425)" strokeWidth={1} />
+          <use href="#tqContinent" transform="translate(610 425) scale(1.06) translate(-610 -425)" strokeWidth={0.8} opacity={0.6} />
+        </g>
+      )}
+
+      {/* ===== TERRAIN (clipped to the main continent) ===== */}
+      <g clipPath="url(#tqLand)">
+        <g opacity={0.55}>
+          <ellipse cx={330} cy={278} rx={118} ry={92} fill="url(#tqWForest)" filter={wc} />
+          <ellipse cx={600} cy={430} rx={155} ry={115} fill="url(#tqWGold)" filter={wc} />
+          <ellipse cx={610} cy={232} rx={160} ry={86} fill="url(#tqWGold)" filter={wc} />
+          <ellipse cx={772} cy={250} rx={110} ry={78} fill="url(#tqWGold)" filter={wc} />
+          <ellipse cx={838} cy={460} rx={126} ry={96} fill="url(#tqWMoor)" filter={wc} />
+          <ellipse cx={470} cy={648} rx={140} ry={92} fill="url(#tqWFen)" filter={wc} />
+          <ellipse cx={650} cy={600} rx={120} ry={80} fill="url(#tqWForest)" filter={wc} opacity={0.5} />
+        </g>
+        {/* rivers */}
+        <g filter={rough} fill="none" stroke="#5f9aa0" strokeLinecap="round" opacity={0.9}>
+          <path d="M898 322 C 860 360 840 392 800 430 C 760 468 700 492 648 508" strokeWidth={2.4} />
+          <path d="M516 502 C 460 526 400 556 340 586 C 308 602 280 616 252 632" strokeWidth={3} />
+          <path d="M330 304 C 366 352 430 410 500 466 C 516 478 528 486 540 492" strokeWidth={2} />
+          <path d="M712 612 C 690 580 660 540 560 510" strokeWidth={1.8} />
+        </g>
+        {/* Heartmere — the central lake */}
+        <path d="M474 498 q24 -20 58 -14 q26 6 24 22 q-4 22 -44 24 q-40 2 -46 -16 q-4 -14 8 -16 Z" fill="#8fc0c4" stroke="#5f9aa0" strokeWidth={1.4} filter={wc} opacity={0.9} />
+        {/* Vale of Embergreen — a dense wood */}
+        <g>
+          <use href="#tqConifer" x={298} y={232} width={26} height={32} />
+          <use href="#tqDecid" x={330} y={240} width={26} height={32} />
+          <use href="#tqConifer" x={274} y={252} width={24} height={30} />
+          <use href="#tqDecid" x={356} y={256} width={24} height={30} />
+          <use href="#tqConifer" x={320} y={270} width={26} height={32} />
+          <use href="#tqDecid" x={286} y={288} width={26} height={32} />
+          <use href="#tqConifer" x={344} y={296} width={24} height={30} />
+          <use href="#tqDecid" x={262} y={276} width={22} height={28} />
+        </g>
+        {/* scattered groves for life */}
+        <g opacity={0.85}>
+          <use href="#tqConifer" x={452} y={356} width={20} height={26} />
+          <use href="#tqDecid" x={470} y={362} width={18} height={24} />
+          <use href="#tqDecid" x={700} y={500} width={20} height={26} />
+          <use href="#tqConifer" x={486} y={430} width={18} height={24} />
+          <use href="#tqDecid" x={612} y={560} width={20} height={26} />
+          <use href="#tqConifer" x={636} y={566} width={18} height={24} />
+        </g>
+      </g>
+
+      {/* Crownspire mountain range (on top of the land) */}
+      <g filter={rough} stroke="#6b5236" strokeWidth={1} strokeLinejoin="round">
+        <path d="M788 360 L838 282 L876 360 Z" fill="#c8b48a" />
+        <path d="M834 360 L900 258 L956 360 Z" fill="#b89e74" />
+        <path d="M916 360 L956 300 L996 360 Z" fill="#c8b48a" />
+        <path d="M900 258 L884 286 L916 286 Z" fill="#f4efe1" stroke="none" />
+        <path d="M838 282 L826 304 L852 304 Z" fill="#f4efe1" stroke="none" />
+        <path d="M956 300 L946 320 L968 320 Z" fill="#f4efe1" stroke="none" />
+        <path d="M900 260 L956 358 L902 360 Z" fill="url(#tqHatch)" opacity={0.5} />
+        <path d="M838 284 L876 358 L840 360 Z" fill="url(#tqHatch)" opacity={0.4} />
+      </g>
+
+      {/* ===== REGION MARKERS (data-driven; charted vs unexplored) ===== */}
+      {regions.map((r) => {
+        if (revealed.has(r.id)) {
+          const h = bannerHalf(r.name)
+          return (
+            <g
+              key={r.id}
+              className={onRead ? 'realm-region realm-charted' : 'realm-region'}
+              onClick={onRead ? () => onRead(r.id) : undefined}
+            >
+              {onRead && <title>{`${r.name} — re-read your discovery`}</title>}
+              {!lite && (
+                <ellipse cx={r.landmark.x} cy={r.landmark.y - 6} rx={34} ry={26} fill="#f4d77a" opacity={0.18} filter="url(#tqSoftGlow)" />
+              )}
+              <Landmark kind={r.landmark.kind} x={r.landmark.x} y={r.landmark.y} />
+              {!lite && (
+                <g transform={`translate(${r.label.x} ${r.label.y})`}>
+                  <path d={banner(h)} fill="#f5ebcb" stroke="#b98a2e" strokeWidth={1} />
+                  <text className="realm-blabel" x={0} y={4} textAnchor="middle">
+                    {r.name}
+                  </text>
+                </g>
+              )}
+            </g>
+          )
+        }
+        return (
+          <g
+            key={r.id}
+            className={canClaim ? 'realm-region realm-claimable' : 'realm-region'}
+            onClick={canClaim ? () => onClaim?.(r.id) : undefined}
           >
-            {r.name}
+            <title>{canClaim ? `Chart ${r.name}` : `${r.name} — unexplored`}</title>
+            <circle
+              className="realm-fogdot"
+              cx={r.landmark.x}
+              cy={r.landmark.y}
+              r={16}
+              fill={canClaim ? 'rgba(244,215,122,0.10)' : 'rgba(120,100,70,0.05)'}
+              stroke={canClaim ? '#cf9a3a' : '#9c8a64'}
+              strokeWidth={1.4}
+              strokeDasharray="4 4"
+              opacity={canClaim ? 0.9 : 0.5}
+            />
+            {!lite && (
+              <text
+                className="realm-label-fog"
+                x={r.label.x}
+                y={r.label.y}
+                textAnchor="middle"
+                style={{ fill: canClaim ? '#9c5b3f' : '#8a7a5a', fontStyle: 'italic' }}
+              >
+                {r.name}
+              </text>
+            )}
+          </g>
+        )
+      })}
+
+      {/* ===== OCEAN LIFE (animated; pauses when the window is hidden/blurred) ===== */}
+      {!lite && (
+        <g>
+          {/* sea-serpent (E): swims, breaches, dives under (fading) while its
+              underwater shadow glides, then resurfaces — back to the exact start */}
+          <g transform="translate(1006 486)">
+            <ellipse className="realm-dive-shadow" cx={0} cy={0} rx={30} ry={9} fill="url(#tqShadow)" opacity={0} />
+            <g className="realm-dive-body">
+              <g fill="none" stroke="#4f7e3a">
+                <path d="M-4 26 q10 -20 24 -6 q12 14 26 -4 q12 -16 24 2 q9 12 5 24" stroke="#74a84e" strokeWidth={6} strokeLinecap="round" />
+                <path d="M80 46 q10 -7 4 -20 q-9 -5 -14 2 q4 9 10 18 Z" fill="#86b85c" stroke="#4f7e3a" strokeWidth={1.3} />
+              </g>
+              <circle cx={76} cy={34} r={1.8} fill="#3e3326" />
+            </g>
+          </g>
+          {/* whale (SW): breaches & dives, offset phase */}
+          <g transform="translate(150 560)">
+            <ellipse className="realm-dive-shadow" cx={0} cy={0} rx={34} ry={10} fill="url(#tqShadow)" opacity={0} style={{ animationDelay: '-7.5s' }} />
+            <g className="realm-dive-body" style={{ animationDelay: '-7.5s' }}>
+              <path d="M-30 6 q18 -22 54 -12 q16 5 22 0 q-2 11 -14 12 q-28 11 -62 4 q-5 -4 0 -8 Z" fill="#7fb1b4" stroke="#5e9298" strokeWidth={1.3} />
+              <path d="M26 -4 q9 4 11 10" fill="none" stroke="#5e9298" strokeWidth={1.3} />
+              <circle cx={-18} cy={2} r={1.8} fill="#3e3326" />
+            </g>
+          </g>
+          {/* a small fish-school (E) that dives too */}
+          <g transform="translate(1060 360)">
+            <g className="realm-dive-body" style={{ animationDelay: '-4s' }} stroke="#5f9aa0" strokeWidth={1.5} fill="none" opacity={0.8}>
+              <path d="M0 0 q7 -5 14 0 q-7 5 -14 0 Z M14 0 l7 -3 v6 Z" />
+            </g>
+          </g>
+          {/* boats: long slow sail back & forth (outer) + a gentle bob (inner) */}
+          <g transform="translate(150 150)">
+            <g className="realm-boat-sail">
+              <g className="realm-boat-bob">
+                <g stroke="#5a4a2e" strokeWidth={1.1} strokeLinejoin="round">
+                  <path d="M-20 8 H20 L13 19 H-13 Z" fill="#cf7f50" />
+                  <path d="M0 8 V-24 M-9 8 V-16 M9 8 V-16" strokeWidth={1.3} />
+                  <path d="M0 -22 q13 4 13 12 q-7 -2 -13 0 Z" fill="#f6ead0" />
+                  <path d="M0 -18 q-11 3 -11 11 q6 -2 11 0 Z" fill="#f0e3bc" />
+                </g>
+              </g>
+            </g>
+          </g>
+          <g transform="translate(1030 210)">
+            <g className="realm-boat-sail" style={{ animationDelay: '-12s' }}>
+              <g className="realm-boat-bob" style={{ animationDelay: '-2s' }}>
+                <g stroke="#5a4a2e" strokeWidth={1.1} strokeLinejoin="round">
+                  <path d="M-18 8 H18 L12 18 H-12 Z" fill="#cf7f50" />
+                  <path d="M0 8 V-22 M9 8 V-14" strokeWidth={1.2} />
+                  <path d="M0 -20 q-12 4 -12 11 q7 -2 12 0 Z" fill="#f6ead0" />
+                </g>
+              </g>
+            </g>
+          </g>
+          <g transform="translate(440 742)">
+            <g className="realm-boat-sail" style={{ animationDelay: '-20s' }}>
+              <g className="realm-boat-bob" style={{ animationDelay: '-3.5s' }}>
+                <g stroke="#5a4a2e" strokeWidth={1} strokeLinejoin="round">
+                  <path d="M-16 7 H16 L11 16 H-11 Z" fill="#cf7f50" />
+                  <path d="M0 7 V-20 M-8 7 V-13" strokeWidth={1.1} />
+                  <path d="M0 -18 q11 4 11 10 q-6 -2 -11 0 Z" fill="#f6ead0" />
+                </g>
+              </g>
+            </g>
+          </g>
+          <g transform="translate(1090 560)">
+            <g className="realm-boat-sail" style={{ animationDelay: '-6s' }}>
+              <g className="realm-boat-bob" style={{ animationDelay: '-1s' }}>
+                <g stroke="#5a4a2e" strokeWidth={1} strokeLinejoin="round">
+                  <path d="M-15 7 H15 L10 16 H-10 Z" fill="#cf7f50" />
+                  <path d="M0 7 V-20 M8 7 V-13" strokeWidth={1.1} />
+                  <path d="M0 -18 q-11 4 -11 10 q6 -2 11 0 Z" fill="#f6ead0" />
+                </g>
+              </g>
+            </g>
+          </g>
+        </g>
+      )}
+
+      {/* ===== FRAME · COMPASS · TITLE ===== */}
+      {/* Mountain-ring border: peaks face INWARD on all four sides (top→down,
+          bottom→up, left→right, right→left), with solid corner medallions drawn
+          last to cleanly cap where the strips overlap. */}
+      <g opacity={0.9} pointerEvents="none">
+        <rect x={0} y={0} width={1200} height={46} fill="url(#tqRingH)" />
+        <g transform="translate(0 820) scale(1 -1)">
+          <rect x={0} y={0} width={1200} height={46} fill="url(#tqRingH)" />
+        </g>
+        <g transform="translate(0 820) rotate(-90)">
+          <rect x={0} y={0} width={820} height={46} fill="url(#tqRingH)" />
+        </g>
+        <g transform="translate(1200 0) rotate(90)">
+          <rect x={0} y={0} width={820} height={46} fill="url(#tqRingH)" />
+        </g>
+        {[
+          [0, 0],
+          [1154, 0],
+          [0, 774],
+          [1154, 774]
+        ].map(([cx, cy]) => (
+          <g key={`corner-${cx}-${cy}`} transform={`translate(${cx} ${cy})`}>
+            <rect width={46} height={46} fill="#b9774e" stroke="#a06642" strokeWidth={1} />
+            <path d="M23 9 L32 23 L23 37 L14 23 Z" fill="url(#tqGold)" stroke="#9c6a14" strokeWidth={0.8} />
+            <circle cx={23} cy={23} r={3} fill="#7a4a1e" />
+          </g>
+        ))}
+      </g>
+      <rect x={54} y={54} width={1092} height={712} rx={8} fill="none" stroke="url(#tqGold)" strokeWidth={5} pointerEvents="none" />
+
+      {!lite && (
+        <g transform="translate(600 126)" pointerEvents="none">
+          <circle r={34} fill="#f6eed4" stroke="#b98a2e" strokeWidth={1.3} opacity={0.85} />
+          <circle r={26} fill="none" stroke="#cf9a3a" strokeWidth={1.1} />
+          <path d="M0 -34 L6 0 L0 34 L-6 0 Z" fill="#f6eed4" stroke="#b98a2e" strokeWidth={0.9} />
+          <path d="M-34 0 L0 -6 L34 0 L0 6 Z" fill="#f6eed4" stroke="#b98a2e" strokeWidth={0.9} />
+          <path d="M0 -34 L4 0 L0 34 Z" fill="#c0532b" />
+          <path d="M-34 0 L0 4 L34 0 Z" fill="#cf9a3a" />
+          <path d="M0 0 L16 -16 L6 -6 Z M0 0 L16 16 L6 6 Z M0 0 L-16 16 L-6 6 Z M0 0 L-16 -16 L-6 -6 Z" fill="#cf9a3a" stroke="#b98a2e" strokeWidth={0.5} />
+          <circle r={4.5} fill="#c0532b" stroke="#b98a2e" strokeWidth={1} />
+        </g>
+      )}
+
+      {!lite && (
+        <g transform="translate(600 56)" pointerEvents="none">
+          <path d="M-148 -22 L148 -22 L166 0 L148 22 L-148 22 L-166 0 Z" fill="#f6eed4" stroke="#b98a2e" strokeWidth={1.4} />
+          <path d="M-148 -22 L-136 0 L-148 22 M148 -22 L136 0 L148 22" fill="none" stroke="#b98a2e" strokeWidth={0.9} />
+          <text x={0} y={2} textAnchor="middle" style={{ fontFamily: 'Georgia, serif', fontSize: 26, letterSpacing: '3px', fontWeight: 'bold', fill: '#43381f' }}>
+            {ATLAS.name.toUpperCase()}
+          </text>
+          <text x={0} y={16} textAnchor="middle" style={{ fontFamily: 'Georgia, serif', fontSize: 10, fontStyle: 'italic', fill: '#9c5b3f' }}>
+            An Atlas of Your Realm
           </text>
         </g>
-      ))}
+      )}
 
-      <g transform="translate(82,392)" opacity={0.95}>
-        <circle r={32} fill="none" stroke="#c9a24a" strokeWidth={1} opacity={0.5} />
-        <circle r={25} fill="none" stroke="#c9a24a" strokeWidth={0.6} opacity={0.38} />
-        <g filter="url(#realmGoldGlow)">
-          <path d="M0 -30 L6 0 L0 6 L-6 0 Z" fill="url(#realmGold)" />
-          <path d="M0 30 L6 0 L0 -6 L-6 0 Z" fill="#9a7a2e" />
-          <path d="M30 0 L0 6 L-6 0 L0 -6 Z" fill="#b78c34" />
-          <path d="M-30 0 L0 6 L6 0 L0 -6 Z" fill="#b78c34" />
+      {!lite && (
+        <g pointerEvents="none">
+          <text className="realm-sealabel" x={160} y={300} textAnchor="middle">
+            THE TIDES
+          </text>
+          <text className="realm-sealabel" x={1050} y={700} textAnchor="middle">
+            here be wonders
+          </text>
+          <text x={540} y={494} textAnchor="middle" style={{ fontFamily: 'Georgia, serif', fontSize: 11, fontStyle: 'italic', fill: '#46707a' }}>
+            Heartmere
+          </text>
+          <g stroke="#3e3326" strokeWidth={1.2} fill="none" strokeLinecap="round" opacity={0.5}>
+            <path d="M470 120 q5 -4 10 0 q5 -4 10 0 M496 130 q4 -3 8 0 q4 -3 8 0 M452 132 q4 -3 8 0 q4 -3 8 0" />
+          </g>
         </g>
-        <text x={0} y={-36} textAnchor="middle" fill="#f4d77a" style={{ fontFamily: 'Georgia, serif', fontSize: 10 }}>
-          N
-        </text>
-      </g>
-
-      <g transform="translate(712,402)" opacity={0.28} stroke="#c9a24a" strokeWidth={1.1} fill="none">
-        <path d="M0 0 q10 -12 22 -4 q8 6 2 14 q-6 8 -16 4" />
-        <path d="M22 -4 q6 -6 12 -2" />
-      </g>
-
-      <g transform="translate(40,42)">
-        <rect x={-6} y={-22} width={206} height={34} rx={6} fill="#efe3c4" stroke="url(#realmGold)" strokeWidth={1.6} />
-        <text x={98} y={0} textAnchor="middle" fill="#3a2c18" style={{ fontFamily: 'Georgia, serif', fontSize: 15, letterSpacing: '2px' }}>
-          {ATLAS.name.toUpperCase()}
-        </text>
-      </g>
-
-      {/* paper grain + gold-leaf frame */}
-      <rect x={0} y={0} width={VB.w} height={VB.h} fill="#fff" filter="url(#realmGrain)" opacity={0.4} pointerEvents="none" />
-      <rect x={6} y={6} width={VB.w - 12} height={VB.h - 12} rx={6} fill="none" stroke="url(#realmGold)" strokeWidth={6} pointerEvents="none" />
-      <rect x={12} y={12} width={VB.w - 24} height={VB.h - 24} rx={4} fill="none" stroke="#9c6a14" strokeWidth={1} opacity={0.55} pointerEvents="none" />
-      <rect x={0} y={0} width={VB.w} height={VB.h} fill="url(#realmVign)" pointerEvents="none" />
+      )}
     </svg>
   )
 }
@@ -512,7 +848,7 @@ export function RealmPeek(): JSX.Element {
   return (
     <div className="realm-peek">
       <div className="realm-peek-map">
-        <RealmMap revealed={revealed} />
+        <RealmMap revealed={revealed} lite />
       </div>
       <div className="realm-peek-info">
         <div className="realm-peek-title">{ATLAS.name}</div>

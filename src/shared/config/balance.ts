@@ -295,29 +295,33 @@ export const balance = {
   // sanctioned correction (↩ Restore) hides the most recent region exactly.
   // `at` = completions required to reveal. Endowed-progress: 3 regions at 0 so a
   // brand-new realm is already a connected heartland. Endless growth later = add
-  // another atlas (data only). Geometry is on an 820×470 viewBox.
+  // another atlas (data only). Geometry is on a 1200×820 viewBox (v1.10 "Inked
+  // Watercolor" world-map look). FROZEN SAVE KEY: each region `id` below is the
+  // durable join key for a user's charted discoveries (settings.realmChronicle
+  // stores {region: id}); NEVER rename/remove an id or change `at` — that orphans
+  // saved progress / shifts unlocks. Re-skins change path/label/landmark only.
   realm: {
-    viewBox: { w: 820, h: 470 },
+    viewBox: { w: 1200, h: 820 },
     atlases: [
       {
         key: 'terra-questa',
         name: 'Terra Questa',
         regions: [
-          { id: 'embergreen', name: 'Vale of Embergreen', at: 0, path: 'M300 150 q60 -34 132 -16 q44 12 58 56 q12 38 -14 70 q-20 24 -56 30 q-50 8 -96 -6 q-44 -14 -56 -52 q-14 -44 4 -72 q12 -18 28 -10 Z', label: { x: 306, y: 262 }, landmark: { kind: 'keep', x: 380, y: 160 } },
-          { id: 'goldfield', name: 'Goldfield March', at: 0, path: 'M150 168 q46 -26 92 -8 q30 14 30 50 q0 38 -34 54 q-44 20 -86 4 q-32 -12 -34 -50 q-2 -36 32 -50 Z', label: { x: 158, y: 226 }, landmark: { kind: 'tower', x: 170, y: 196 } },
-          { id: 'sunmeadow', name: 'Sunmeadow Hold', at: 0, path: 'M300 296 q56 -22 108 -4 q34 14 32 52 q-2 38 -44 50 q-56 16 -104 -4 q-34 -14 -34 -52 q2 -34 42 -42 Z', label: { x: 306, y: 372 }, landmark: { kind: 'town', x: 388, y: 316 } },
-          { id: 'larkholt', name: 'Larkholt', at: 1, path: 'M196 110 q30 -16 58 -2 q20 12 16 36 q-6 26 -38 28 q-32 2 -44 -20 q-10 -26 8 -42 Z', label: { x: 200, y: 152 }, landmark: { kind: 'tower', x: 224, y: 128 } },
-          { id: 'tidesend', name: "Tide's End", at: 2, path: 'M212 300 q28 -12 50 0 q18 10 14 32 q-6 24 -36 26 q-30 2 -42 -16 q-10 -24 14 -42 Z', label: { x: 216, y: 356 }, landmark: { kind: 'village', x: 240, y: 324 } },
-          { id: 'crownspire', name: 'Crownspire Peaks', at: 4, path: 'M448 96 q44 -24 92 -6 q30 14 28 48 q-2 34 -38 46 q-44 14 -82 -6 q-28 -16 -24 -50 q3 -24 24 -32 Z', label: { x: 456, y: 166 }, landmark: { kind: 'mountains', x: 496, y: 128 } },
-          { id: 'rivenwood', name: 'Rivenwood Reach', at: 6, path: 'M512 248 q44 -20 84 0 q28 14 24 50 q-4 36 -42 48 q-44 12 -78 -10 q-26 -18 -22 -52 q3 -26 34 -34 Z', label: { x: 520, y: 338 }, landmark: { kind: 'village', x: 540, y: 280 } },
-          { id: 'palevale', name: 'Pale Vale', at: 9, path: 'M70 220 q34 -10 52 12 q14 20 0 42 q-16 24 -46 18 q-30 -6 -32 -34 q-2 -28 26 -38 Z', label: { x: 74, y: 270 }, landmark: { kind: 'forest', x: 96, y: 248 } },
-          { id: 'greymoor', name: 'Greymoor', at: 12, path: 'M96 360 q40 -12 66 8 q22 16 12 42 q-12 28 -52 26 q-44 -2 -50 -32 q-4 -32 24 -44 Z', label: { x: 104, y: 404 }, landmark: { kind: 'village', x: 130, y: 388 } },
-          { id: 'quietfens', name: 'Quiet Fens', at: 16, path: 'M320 372 q44 -14 74 6 q24 16 14 44 q-12 30 -56 28 q-48 -2 -56 -34 q-6 -34 24 -44 Z', label: { x: 330, y: 416 }, landmark: { kind: 'forest', x: 357, y: 400 } },
-          { id: 'mistisles', name: 'Mist Isles', at: 21, path: 'M300 46 q34 -14 64 4 q22 14 14 40 q-8 26 -42 28 q-40 2 -52 -24 q-10 -32 16 -48 Z', label: { x: 312, y: 86 }, landmark: { kind: 'village', x: 332, y: 74 } },
-          { id: 'hollowreach', name: 'Hollow Reach', at: 28, path: 'M70 70 q40 -22 92 -10 q34 8 40 40 q5 30 -22 44 q-40 20 -82 4 q-34 -14 -34 -44 q0 -22 6 -34 Z', label: { x: 92, y: 118 }, landmark: { kind: 'tower', x: 116, y: 104 } },
-          { id: 'sunkenmarsh', name: 'Sunken Marsh', at: 36, path: 'M652 210 q40 -10 60 18 q16 24 0 50 q-18 28 -54 22 q-34 -6 -40 -38 q-6 -34 34 -52 Z', label: { x: 650, y: 262 }, landmark: { kind: 'forest', x: 682, y: 240 } },
-          { id: 'ashlands', name: 'The Ashlands', at: 48, path: 'M560 360 q48 -16 86 8 q26 18 16 46 q-12 30 -56 30 q-52 0 -64 -32 q-10 -34 18 -52 Z', label: { x: 566, y: 408 }, landmark: { kind: 'mountains', x: 600, y: 392 } },
-          { id: 'beyondveil', name: 'Beyond the Veil', at: 64, path: 'M648 96 q44 -18 92 0 q30 12 28 52 q-2 40 -42 52 q-46 14 -78 -12 q-26 -22 -22 -60 q3 -22 22 -32 Z', label: { x: 664, y: 148 }, landmark: { kind: 'keep', x: 694, y: 148 } }
+          { id: 'embergreen', name: 'Vale of Embergreen', at: 0, path: 'M302 356 a58 54 0 1 0 116 0 a58 54 0 1 0 -116 0 Z', label: { x: 360, y: 390 }, landmark: { kind: 'forest', x: 360, y: 350 } },
+          { id: 'goldfield', name: 'Goldfield March', at: 0, path: 'M542 232 a58 54 0 1 0 116 0 a58 54 0 1 0 -116 0 Z', label: { x: 600, y: 266 }, landmark: { kind: 'town', x: 600, y: 226 } },
+          { id: 'sunmeadow', name: 'Sunmeadow Hold', at: 0, path: 'M757 216 a58 54 0 1 0 116 0 a58 54 0 1 0 -116 0 Z', label: { x: 815, y: 250 }, landmark: { kind: 'keep', x: 815, y: 210 } },
+          { id: 'larkholt', name: 'Larkholt', at: 1, path: 'M542 606 a58 54 0 1 0 116 0 a58 54 0 1 0 -116 0 Z', label: { x: 600, y: 640 }, landmark: { kind: 'town', x: 600, y: 600 } },
+          { id: 'tidesend', name: "Tide's End", at: 2, path: 'M227 476 a58 54 0 1 0 116 0 a58 54 0 1 0 -116 0 Z', label: { x: 285, y: 510 }, landmark: { kind: 'lighthouse', x: 285, y: 470 } },
+          { id: 'crownspire', name: 'Crownspire Peaks', at: 4, path: 'M762 351 a58 54 0 1 0 116 0 a58 54 0 1 0 -116 0 Z', label: { x: 820, y: 385 }, landmark: { kind: 'mountains', x: 820, y: 345 } },
+          { id: 'rivenwood', name: 'Rivenwood Reach', at: 6, path: 'M542 366 a58 54 0 1 0 116 0 a58 54 0 1 0 -116 0 Z', label: { x: 600, y: 400 }, landmark: { kind: 'forest', x: 600, y: 360 } },
+          { id: 'palevale', name: 'Pale Vale', at: 9, path: 'M352 221 a58 54 0 1 0 116 0 a58 54 0 1 0 -116 0 Z', label: { x: 410, y: 255 }, landmark: { kind: 'forest', x: 410, y: 215 } },
+          { id: 'greymoor', name: 'Greymoor', at: 12, path: 'M712 486 a58 54 0 1 0 116 0 a58 54 0 1 0 -116 0 Z', label: { x: 770, y: 520 }, landmark: { kind: 'tower', x: 770, y: 480 } },
+          { id: 'quietfens', name: 'Quiet Fens', at: 16, path: 'M362 606 a58 54 0 1 0 116 0 a58 54 0 1 0 -116 0 Z', label: { x: 420, y: 640 }, landmark: { kind: 'marsh', x: 420, y: 600 } },
+          { id: 'mistisles', name: 'Mist Isles', at: 21, path: 'M937 366 a58 54 0 1 0 116 0 a58 54 0 1 0 -116 0 Z', label: { x: 995, y: 400 }, landmark: { kind: 'mist', x: 995, y: 360 } },
+          { id: 'hollowreach', name: 'Hollow Reach', at: 28, path: 'M152 654 a58 54 0 1 0 116 0 a58 54 0 1 0 -116 0 Z', label: { x: 210, y: 688 }, landmark: { kind: 'tower', x: 210, y: 648 } },
+          { id: 'sunkenmarsh', name: 'Sunken Marsh', at: 36, path: 'M732 606 a58 54 0 1 0 116 0 a58 54 0 1 0 -116 0 Z', label: { x: 790, y: 640 }, landmark: { kind: 'marsh', x: 790, y: 600 } },
+          { id: 'ashlands', name: 'The Ashlands', at: 48, path: 'M412 476 a58 54 0 1 0 116 0 a58 54 0 1 0 -116 0 Z', label: { x: 470, y: 510 }, landmark: { kind: 'mountains', x: 470, y: 470 } },
+          { id: 'beyondveil', name: 'Beyond the Veil', at: 64, path: 'M994 616 a58 54 0 1 0 116 0 a58 54 0 1 0 -116 0 Z', label: { x: 1052, y: 650 }, landmark: { kind: 'keep', x: 1052, y: 610 } }
         ]
       }
     ]

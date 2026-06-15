@@ -3381,6 +3381,217 @@ code {
   fill: var(--gold-bright);
 }
 
+/* ---- Inked-watercolor world map (v1.10): markers, banners, sea labels ---- */
+/* A charted region's swallowtail name banner. */
+.realm-svg .realm-blabel {
+  font-family: Georgia, 'Times New Roman', serif;
+  fill: #43381f;
+  font-size: 13px;
+  font-variant: small-caps;
+  letter-spacing: 0.4px;
+  font-weight: bold;
+}
+.realm-svg .realm-charted:hover .realm-blabel {
+  fill: #7a4a1e;
+}
+/* Decorative sea text (THE TIDES / here be wonders). */
+.realm-svg .realm-sealabel {
+  font-family: Georgia, serif;
+  fill: #3f7e84;
+  font-size: 13px;
+  font-style: italic;
+  letter-spacing: 2px;
+  opacity: 0.7;
+}
+/* The dashed marker for an unexplored region; brightens on hover when claimable. */
+.realm-svg .realm-fogdot {
+  transition: fill 0.18s ease, stroke 0.18s ease;
+}
+.realm-svg .realm-claimable:hover .realm-fogdot {
+  fill: rgba(244, 215, 122, 0.24);
+  stroke: #f4d77a;
+}
+.realm-svg .realm-claimable:hover .realm-label-fog {
+  fill: #cf9a3a !important;
+  font-style: normal;
+}
+
+/* ---- Living map animations (v1.10 Build 2): seamless, NO-teleport loops ---- */
+/* Lapping waves: gentle ease-in-out ping-pong (alternate => returns to exact start). */
+@keyframes realmWaveDrift {
+  from {
+    transform: translateX(-9px);
+  }
+  to {
+    transform: translateX(11px);
+  }
+}
+.realm-svg .realm-wave {
+  animation: realmWaveDrift 5s ease-in-out infinite alternate;
+}
+/* Wind streaks: drift across while fading in then out, so the position reset is at opacity 0. */
+@keyframes realmWindGust {
+  0% {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  22% {
+    opacity: 0.62;
+  }
+  72% {
+    opacity: 0.62;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(96px);
+  }
+}
+.realm-svg .realm-wind {
+  animation: realmWindGust 8s linear infinite;
+}
+/* Boats: long slow sail back-and-forth (outer) + a short gentle bob (inner). */
+@keyframes realmBoatSail {
+  from {
+    transform: translateX(-26px);
+  }
+  to {
+    transform: translateX(42px);
+  }
+}
+.realm-svg .realm-boat-sail {
+  animation: realmBoatSail 13s ease-in-out infinite alternate;
+}
+@keyframes realmBoatBob {
+  0% {
+    transform: translateY(0) rotate(-3deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(3deg);
+  }
+  100% {
+    transform: translateY(0) rotate(-3deg);
+  }
+}
+.realm-svg .realm-boat-bob {
+  animation: realmBoatBob 4s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+/* Sea-creatures: swim -> breach -> dive under (fade) -> shadow glides -> resurface -> exact start. */
+@keyframes realmDiveBody {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 1;
+  }
+  14% {
+    transform: translate(20px, 0) rotate(3deg);
+    opacity: 1;
+  }
+  22% {
+    transform: translate(32px, -28px) rotate(-15deg);
+    opacity: 1;
+  }
+  30% {
+    transform: translate(35px, 2px) rotate(10deg);
+    opacity: 0.78;
+  }
+  37% {
+    transform: translate(35px, 12px) rotate(6deg);
+    opacity: 0;
+  }
+  63% {
+    transform: translate(-9px, 12px) rotate(0deg);
+    opacity: 0;
+  }
+  71% {
+    transform: translate(-13px, 0) rotate(-3deg);
+    opacity: 0.9;
+  }
+  88% {
+    transform: translate(-4px, 0) rotate(1deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 1;
+  }
+}
+.realm-svg .realm-dive-body {
+  animation: realmDiveBody 10s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes realmDiveShadow {
+  0%,
+  37% {
+    opacity: 0;
+    transform: translate(33px, 20px) scale(1);
+  }
+  46% {
+    opacity: 0.32;
+    transform: translate(23px, 20px) scale(1.05);
+  }
+  60% {
+    opacity: 0.32;
+    transform: translate(-9px, 20px) scale(1);
+  }
+  66% {
+    opacity: 0;
+    transform: translate(-13px, 20px) scale(0.95);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(33px, 20px) scale(1);
+  }
+}
+.realm-svg .realm-dive-shadow {
+  animation: realmDiveShadow 10s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+/* Pause ALL map motion when the app window is hidden or blurred (saves CPU/battery). */
+.realm-svg.realm-anim-paused .realm-wave,
+.realm-svg.realm-anim-paused .realm-wind,
+.realm-svg.realm-anim-paused .realm-boat-sail,
+.realm-svg.realm-anim-paused .realm-boat-bob,
+.realm-svg.realm-anim-paused .realm-dive-body,
+.realm-svg.realm-anim-paused .realm-dive-shadow {
+  animation-play-state: paused;
+}
+/* The gentle map motion ALWAYS animates — even when the OS "reduce motion" setting
+   is on (user's choice, 2026-06-15). The global `* { animation-duration: 0.01ms;
+   animation-iteration-count: 1 }` reduce-motion rule would otherwise freeze these
+   loops at their end frame, so we re-assert each loop's real duration + infinite
+   count (higher specificity + !important beats the global `*`). We override ONLY
+   duration/iteration — never animation-name or play-state — so the hide/minimize
+   pause (.realm-anim-paused) still works. Durations must match the base rules above. */
+@media (prefers-reduced-motion: reduce) {
+  .realm-svg .realm-wave {
+    animation-duration: 5s !important;
+    animation-iteration-count: infinite !important;
+  }
+  .realm-svg .realm-wind {
+    animation-duration: 8s !important;
+    animation-iteration-count: infinite !important;
+  }
+  .realm-svg .realm-boat-sail {
+    animation-duration: 13s !important;
+    animation-iteration-count: infinite !important;
+  }
+  .realm-svg .realm-boat-bob {
+    animation-duration: 4s !important;
+    animation-iteration-count: infinite !important;
+  }
+  .realm-svg .realm-dive-body {
+    animation-duration: 10s !important;
+    animation-iteration-count: infinite !important;
+  }
+  .realm-svg .realm-dive-shadow {
+    animation-duration: 10s !important;
+    animation-iteration-count: infinite !important;
+  }
+}
+
 /* ---- Expedition-returns modal + re-read ---- */
 .realm-modal-backdrop {
   position: fixed;
