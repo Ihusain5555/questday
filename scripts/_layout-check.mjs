@@ -5,12 +5,12 @@
 
 const ICON = 52
 const TOWN = 76 // hero-town <symbol> footprint (vs 52px terrain icons)
-// Regions drawn as hand-authored hero TOWNS (76px) instead of a simple icon.
-// Must mirror TOWN_ART in RealmView.tsx — grow this as each batch ships.
-// Live: larkholt, goldfield, sunmeadow, greymoor, tidesend, quietfens.
-// Capital (embergreen) deferred — stays a forest for now.
+const CAPITAL = 100 // the Greenhaven citadel renders larger as the showpiece
+// Regions drawn as hand-authored hero TOWNS instead of a simple icon.
+// Must mirror TOWN_ART + TOWN_SIZE_BY_ID in RealmView.tsx.
+// Live: larkholt, goldfield, sunmeadow, greymoor, tidesend, quietfens + capital embergreen(100).
 const TOWNS = new Set(['goldfield', 'sunmeadow', 'larkholt', 'greymoor', 'tidesend', 'quietfens'])
-const sizeOf = (r) => (TOWNS.has(r.id) ? TOWN : ICON)
+const sizeOf = (r) => (r.id === 'embergreen' ? CAPITAL : TOWNS.has(r.id) ? TOWN : ICON)
 const ICON_TOP = (r) => r.ly - sizeOf(r) * 0.86 // <use> y = y - size*0.86
 const bannerHalf = (name) => Math.max(30, name.length * 4.2 + 10) + 11 // +11 swallowtail tip
 const LABEL_DY = 40 // ty = ly + 40
@@ -20,13 +20,13 @@ const FRAME = 54 // gold inner frame inset (content should stay within [54, 1146
 
 // Candidate layout — edit (lx, ly) and re-run until "COLLISIONS: 0".
 const R = [
-  { id: 'embergreen', name: 'Vale of Embergreen', lx: 360, ly: 350 },
+  { id: 'embergreen', name: 'Greenhaven', lx: 620, ly: 420 },
   { id: 'goldfield', name: 'Goldfield March', lx: 600, ly: 240 },
   { id: 'sunmeadow', name: 'Sunmeadow Hold', lx: 815, ly: 210 },
   { id: 'larkholt', name: 'Larkholt', lx: 600, ly: 600 },
   { id: 'tidesend', name: "Tide's End", lx: 270, ly: 485 },
   { id: 'crownspire', name: 'Crownspire Peaks', lx: 820, ly: 345 },
-  { id: 'rivenwood', name: 'Rivenwood Reach', lx: 600, ly: 360 },
+  { id: 'rivenwood', name: 'Rivenwood Reach', lx: 430, ly: 360 },
   { id: 'palevale', name: 'Pale Vale', lx: 410, ly: 215 },
   { id: 'greymoor', name: 'Greymoor', lx: 770, ly: 480 },
   { id: 'quietfens', name: 'Quiet Fens', lx: 420, ly: 600 },

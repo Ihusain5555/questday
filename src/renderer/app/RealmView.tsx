@@ -72,19 +72,23 @@ const TOWN_ART: Record<string, string> = {
   greymoor: 'town-greymoor',
   tidesend: 'town-tidesend',
   quietfens: 'town-quietfens',
+  embergreen: 'town-greenhaven',
 }
 const TOWN_SIZE = 76
+/** Per-symbol size override (the capital citadel renders larger as the showpiece). Keyed by symbol id. */
+const TOWN_SIZE_BY_ID: Record<string, number> = { 'town-greenhaven': 100 }
 
 /** A hand-drawn town placed at a region's spot (sits like Landmark, but is the
  *  full town cluster). `ghost` renders the faded unexplored state. */
 function Town({ id, x, y, ghost }: { id: string; x: number; y: number; ghost?: boolean }): JSX.Element {
+  const size = TOWN_SIZE_BY_ID[id] ?? TOWN_SIZE
   return (
     <use
       href={`#${id}`}
-      x={x - TOWN_SIZE / 2}
-      y={y - TOWN_SIZE * 0.86}
-      width={TOWN_SIZE}
-      height={TOWN_SIZE}
+      x={x - size / 2}
+      y={y - size * 0.86}
+      width={size}
+      height={size}
       className={ghost ? 'realm-town realm-town-ghost' : 'realm-town'}
     />
   )
@@ -283,6 +287,9 @@ function RealmMap({
         </symbol>
         <symbol id="town-quietfens" viewBox="411 603 118 118">
           <g fill="none" stroke="#5a4a2e" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"><path d="M440 690 Q462 686 486 691" stroke="#8fc0c4" strokeWidth="6"/><path d="M448 700 Q478 695 510 701" stroke="#8fc0c4" strokeWidth="6"/><ellipse cx="430" cy="697" rx="15" ry="8" fill="#8fc0c4" stroke="#5f9aa0" strokeWidth="1.4"/><path d="M427 695 a3 3 0 1 0 6 1" fill="#76a455" stroke="#4f7e3a" strokeWidth="1.2"/><ellipse cx="512" cy="688" rx="13" ry="7" fill="#8fc0c4" stroke="#5f9aa0" strokeWidth="1.4"/><path d="M510 686 a2.6 2.6 0 1 0 5 1" fill="#76a455" stroke="#4f7e3a" strokeWidth="1.2"/><path d="M449 678 L468 674 M450 685 L469 681" stroke="#b09a6e" strokeWidth="2"/><path d="M449 678 L450 685 M455 677 L456 684 M461 676 L462 683 M468 674 L469 681" stroke="#b09a6e" strokeWidth="1.4"/><path d="M479 670 L496 668 M480 677 L497 675" stroke="#b09a6e" strokeWidth="2"/><path d="M479 670 L480 677 M485 669 L486 676 M491 669 L492 675 M496 668 L497 674" stroke="#b09a6e" strokeWidth="1.4"/><path d="M460 656 L461 674 M474 654 L475 672" stroke="#6a5a36" strokeWidth="1.6"/><path d="M438 657 V638 L455 626 L471 637 V657 Z" fill="#f0e3bc"/><path d="M436 638 L455 624 L473 638 Z" fill="#f7d98a"/><rect x="450" y="645" width="8" height="12" rx="1" fill="#cf9a3a"/><path d="M442 657 L443 692 M453 657 L454 690 M466 657 L467 691" stroke="#6a5a36" strokeWidth="1.6"/><path d="M474 650 V632 L490 621 L505 633 V650 Z" fill="#ecdfba"/><path d="M472 632 L490 619 L507 633 Z" fill="#cf7f50"/><rect x="484" y="639" width="7" height="11" rx="1" fill="#cf9a3a"/><path d="M477 650 L478 687 M489 650 L490 686 M501 650 L502 688" stroke="#6a5a36" strokeWidth="1.6"/><path d="M488 678 V662 L502 652 L515 663 V678 Z" fill="#f0e3bc"/><path d="M486 662 L502 650 L517 663 Z" fill="#f7d98a"/><rect x="497" y="668" width="6" height="10" rx="1" fill="#cf9a3a"/><path d="M491 678 L492 703 M503 678 L504 703 M513 678 L514 701" stroke="#6a5a36" strokeWidth="1.6"/><path d="M428 668 q-3 -16 1 -26 M431 668 q3 -14 0 -24 M425 642 q4 6 6 0 M429 644 q5 4 4 -2" stroke="#86b85c" strokeWidth="1.4"/><path d="M519 660 q-3 -15 1 -24 M522 660 q3 -13 0 -22 M516 638 q4 5 6 0" stroke="#86b85c" strokeWidth="1.4"/><path d="M467 700 q-2 -12 1 -20 M470 700 q3 -10 0 -18 M464 681 q4 4 6 0" stroke="#74a84e" strokeWidth="1.4"/><circle cx="453" cy="623" r="5" fill="#83b257" stroke="#4f7e3a" strokeWidth="1.4"/></g>
+        </symbol>
+        <symbol id="town-greenhaven" viewBox="511 350 165 165">
+          <g fill="none" stroke="#5a4a2e" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"><path d="M558 458 C572 449 632 449 648 459 C641 470 566 471 558 458 Z" fill="#8fc0c4" stroke="#5f9aa0"/><path d="M572 408 L600 420 L640 410" stroke="#b09a6e" strokeWidth="2" strokeDasharray="1 6"/><path d="M600 420 L588 452" stroke="#b09a6e" strokeWidth="2" strokeDasharray="1 6"/><path d="M548 442 L552 446 M650 440 L654 444 M556 408 L552 404" stroke="#5a4a2e" strokeWidth="1.4"/><path d="M547 444 L547 432 L555 432 L555 444 M563 444 L563 432 L571 432 L571 444 M579 444 L579 432 L587 432 L587 444" fill="#ddd2bb"/><path d="M547 432 L547 426 L551 426 L551 432 M559 432 L559 426 L563 426 L563 432 M571 432 L571 426 L575 426 L575 432 M583 432 L583 426 L587 426 L587 432" fill="#ddd2bb"/><path d="M541 444 V412 L546 412 V408 L552 408 V412 L557 412 V444 Z" fill="#ddd2bb"/><path d="M541 412 L549 405 L557 412" fill="#cf7f50"/><path d="M549 405 V392" stroke="#5a4a2e" strokeWidth="1.4"/><path d="M549 392 L561 396 L549 401 Z" fill="#76a455"/><rect x="546" y="426" width="6" height="10" rx="1" fill="#cf9a3a"/><path d="M570 460 V424 L576 424 V418 L584 418 V424 L590 424 V460 Z" fill="#ecdfba"/><path d="M570 424 L580 414 L590 424" fill="#f7d98a"/><path d="M580 414 V402" stroke="#5a4a2e" strokeWidth="1.4"/><path d="M580 402 L594 407 L580 412 Z" fill="#76a455"/><rect x="576" y="446" width="8" height="14" rx="1.5" fill="#cf9a3a"/><rect x="572" y="430" width="5" height="6" fill="#cf9a3a"/><rect x="583" y="430" width="5" height="6" fill="#cf9a3a"/><path d="M604 460 V428 C604 414 626 414 626 428 V460 Z" fill="#f0e3bc"/><path d="M615 414 V382" stroke="#5a4a2e" strokeWidth="2"/><path d="M615 382 L605 408 L625 408 Z" fill="#cf7f50"/><path d="M610 460 V438 C610 430 620 430 620 438 V460 Z" fill="#cf9a3a"/><circle cx="615" cy="424" r="4" fill="#8fc0c4" stroke="#5f9aa0" strokeWidth="1.4"/><path d="M612 388 L621 388 M613 393 L620 393" stroke="#5a4a2e" strokeWidth="1.4"/><path d="M555 459 V426 L569 416 L583 426 V459 Z" fill="#f0e3bc"/><path d="M555 426 L569 416 L583 426" fill="#f7d98a"/><rect x="562" y="442" width="8" height="17" rx="1.5" fill="#cf9a3a"/><rect x="572" y="438" width="6" height="6" fill="#cf9a3a"/><path d="M634 460 V430 L646 421 L658 430 V460 Z" fill="#ecdfba"/><path d="M634 430 L646 421 L658 430" fill="#cf7f50"/><rect x="641" y="446" width="7" height="14" rx="1.5" fill="#cf9a3a"/><rect x="650" y="436" width="5" height="6" fill="#cf9a3a"/><path d="M527 461 V436 L538 428 L549 436 V461 Z" fill="#f0e3bc"/><path d="M527 436 L538 428 L549 436" fill="#f7d98a"/><rect x="533" y="448" width="7" height="13" rx="1.5" fill="#cf9a3a"/><path d="M591 462 V440 L601 433 L611 440 V462 Z" fill="#ecdfba"/><path d="M591 440 L601 433 L611 440" fill="#f7d98a"/><rect x="597" y="450" width="6" height="12" rx="1.5" fill="#cf9a3a"/><path d="M540 470 H666" stroke="#5a4a2e" strokeWidth="2"/><path d="M540 470 V456 M548 470 V462 M556 470 V456 M564 470 V462 M572 470 V456 M580 470 V462 M588 470 V456 M596 470 V462 M604 470 V456 M612 470 V462 M620 470 V456 M628 470 V462 M636 470 V456 M644 470 V462 M652 470 V456 M660 470 V462 M666 470 V456" stroke="#5a4a2e" strokeWidth="1.4"/><circle cx="630" cy="448" r="5" fill="#ddd2bb"/><path d="M627 448 V442 M633 448 V442 M627 442 H633" stroke="#5a4a2e" strokeWidth="1.4"/><path d="M628 440 L632 440" stroke="#5a4a2e" strokeWidth="1.4"/><path d="M662 449 L666 447 L670 449 V456 H662 Z" fill="#f7d98a"/><path d="M662 449 H670" stroke="#5a4a2e" strokeWidth="1.4"/><g stroke="#4f7e3a"><path d="M538 476 C530 476 530 466 538 466 C546 466 546 476 538 476 Z" fill="#83b257"/><path d="M538 476 V482" stroke="#6a5a36"/></g><g stroke="#4f7e3a"><path d="M660 432 L666 420 L672 432 Z" fill="#74a84e"/><path d="M666 432 V438" stroke="#6a5a36"/></g><g stroke="#4f7e3a"><path d="M520 452 C513 452 513 444 520 444 C527 444 527 452 520 452 Z" fill="#86b85c"/><path d="M520 452 V457" stroke="#6a5a36"/></g></g>
         </symbol>
       </defs>
 
