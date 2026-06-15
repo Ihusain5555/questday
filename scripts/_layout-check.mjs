@@ -7,9 +7,9 @@ const ICON = 52
 const TOWN = 76 // hero-town <symbol> footprint (vs 52px terrain icons)
 // Regions drawn as hand-authored hero TOWNS (76px) instead of a simple icon.
 // Must mirror TOWN_ART in RealmView.tsx — grow this as each batch ships.
-// Batch A (live): larkholt, goldfield, sunmeadow, greymoor. Batch B (pending):
-// tidesend, quietfens. Capital (embergreen) deferred — stays a forest for now.
-const TOWNS = new Set(['goldfield', 'sunmeadow', 'larkholt', 'greymoor'])
+// Live: larkholt, goldfield, sunmeadow, greymoor, tidesend, quietfens.
+// Capital (embergreen) deferred — stays a forest for now.
+const TOWNS = new Set(['goldfield', 'sunmeadow', 'larkholt', 'greymoor', 'tidesend', 'quietfens'])
 const sizeOf = (r) => (TOWNS.has(r.id) ? TOWN : ICON)
 const ICON_TOP = (r) => r.ly - sizeOf(r) * 0.86 // <use> y = y - size*0.86
 const bannerHalf = (name) => Math.max(30, name.length * 4.2 + 10) + 11 // +11 swallowtail tip
@@ -24,7 +24,7 @@ const R = [
   { id: 'goldfield', name: 'Goldfield March', lx: 600, ly: 240 },
   { id: 'sunmeadow', name: 'Sunmeadow Hold', lx: 815, ly: 210 },
   { id: 'larkholt', name: 'Larkholt', lx: 600, ly: 600 },
-  { id: 'tidesend', name: "Tide's End", lx: 285, ly: 470 },
+  { id: 'tidesend', name: "Tide's End", lx: 270, ly: 485 },
   { id: 'crownspire', name: 'Crownspire Peaks', lx: 820, ly: 345 },
   { id: 'rivenwood', name: 'Rivenwood Reach', lx: 600, ly: 360 },
   { id: 'palevale', name: 'Pale Vale', lx: 410, ly: 215 },
