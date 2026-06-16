@@ -4,10 +4,12 @@ import { useStore } from '../state/store'
 import { balance } from '@shared/config/balance'
 import { totalCompletions } from '@shared/engine/stats'
 import { realmProgress, claimableNow, chartedRegionIds } from '@shared/engine/realm'
+import { civProgress } from '@shared/engine/civilization'
 import { chronicleTopics, topicById, entryById, type ChronicleEntry } from '@shared/config/chronicle'
 import type { ChronicleRecord } from '@shared/types'
 import { MapTrifold, Flag, Planet, Leaf, Scroll, Feather, Sparkle, X, type Icon } from '@phosphor-icons/react'
 import { CivilizationPanel } from './CivilizationPanel'
+import { TownView } from './TownView'
 import { MapIconSymbols } from './storybookMapIcons'
 
 // The reward artifact: a fantasy realm charted YOUR way. Each completed quest
@@ -127,12 +129,14 @@ function RealmMap({
   claimable = false,
   onClaim,
   onRead,
+  onEnterTown,
   lite = false
 }: {
   revealed: Set<string>
   claimable?: boolean
   onClaim?: (id: string) => void
   onRead?: (id: string) => void
+  onEnterTown?: (id: string) => void
   lite?: boolean
 }): JSX.Element {
   const regions = ATLAS.regions
@@ -450,13 +454,25 @@ function RealmMap({
       {regions.map((r) => {
         if (revealed.has(r.id)) {
           const h = bannerHalf(r.name)
+          // A charted HERO TOWN is enterable (click -> zoom into its iso town).
+          // Re-reading its Chronicle fact stays available in the Chronicle list
+          // below the map; other charted regions keep the tap-to-re-read action.
+          const enterable = !!(onEnterTown && TOWN_ART[r.id])
           return (
             <g
               key={r.id}
-              className={onRead ? 'realm-region realm-charted' : 'realm-region'}
-              onClick={onRead ? () => onRead(r.id) : undefined}
+              className={
+                enterable
+                  ? 'realm-region realm-charted realm-enterable'
+                  : onRead
+                    ? 'realm-region realm-charted'
+                    : 'realm-region'
+              }
+              onClick={enterable ? () => onEnterTown!(r.id) : onRead ? () => onRead(r.id) : undefined}
             >
-              {onRead && <title>{`${r.name} — re-read your discovery`}</title>}
+              <title>
+                {enterable ? `Enter ${r.name}` : onRead ? `${r.name} — re-read your discovery` : r.name}
+              </title>
               {!lite && !ICONLESS.has(r.id) && (
                 <ellipse cx={r.landmark.x} cy={r.landmark.y - 6} rx={34} ry={26} fill="#f4d77a" opacity={0.18} filter="url(#tqSoftGlow)" />
               )}
@@ -474,6 +490,11 @@ function RealmMap({
                     {r.name}
                   </text>
                 </g>
+              )}
+              {enterable && !lite && (
+                <text className="realm-enter-label" x={r.label.x} y={r.label.y + 24} textAnchor="middle">
+                  enter →
+                </text>
               )}
             </g>
           )
@@ -684,10 +705,14 @@ export function RealmView(): JSX.Element {
   const [claiming, setClaiming] = useState<{ id: string; name: string } | null>(null)
   const [reveal, setReveal] = useState<Reveal | null>(null)
   const [reading, setReading] = useState<ChronicleRecord | null>(null)
+  // Which settled town the player is currently INSIDE (Level-1 view), or null on the map.
+  const [enteredTown, setEnteredTown] = useState<string | null>(null)
 
   if (!db) return <div />
   const chronicle = db.settings.realmChronicle ?? []
   const completions = totalCompletions(db.quests)
+  // World stage (Camp..Empire) drives how built-up the town looks; pure-derived.
+  const civ = civProgress(completions)
   const revealed = chartedRegionIds(chronicle)
   const claimable = claimableNow(completions, chronicle)
   const prog = realmProgress(chronicle)
@@ -783,7 +808,29 @@ export function RealmView(): JSX.Element {
         </div>
 
         <div className="realm-map-wrap">
-          <RealmMap revealed={revealed} claimable={claimable > 0} onClaim={openClaim} onRead={openRead} />
+          <RealmMap
+            revealed={revealed}
+            claimable={claimable > 0}
+            onClaim={openClaim}
+            onRead={openRead}
+            onEnterTown={(id) => setEnteredTown(id)}
+          />
+          {/* Level-1: zoom into a settled town (placeholder iso town for now). Lives
+              INSIDE the map box so it fills it cleanly instead of the tall frame. */}
+          <AnimatePresence>
+            {enteredTown &&
+              (() => {
+                const region = ATLAS.regions.find((r) => r.id === enteredTown)
+                return (
+                  <TownView
+                    townName={region?.name ?? 'Town'}
+                    stageName={civ.stageName}
+                    stageIndex={civ.stageIndex}
+                    onExit={() => setEnteredTown(null)}
+                  />
+                )
+              })()}
+          </AnimatePresence>
         </div>
 
         <div className="realm-meter">

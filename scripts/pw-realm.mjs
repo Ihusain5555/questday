@@ -116,14 +116,31 @@ try {
   result('CLAIM_TEST', (await text(main.locator('.realm-hint'))).includes('5 / 15'),
     `after claim: "${await text(main.locator('.realm-hint'))}"`)
 
-  // --- Re-read a charted region ---
-  await main.locator('.realm-charted').first().click()
+  // --- Re-read a charted region (a NON-town one — hero towns now ENTER instead) ---
+  await main.locator('.realm-charted:not(.realm-enterable)').first().click()
   await main.waitForSelector('.realm-modal.reading', { timeout: 4000 })
   result('REREAD_TEST', (await text(main.locator('.realm-modal.reading .rm-fact-text'))).length > 20,
     're-read shows the stored discovery')
   await main.screenshot({ path: path.join(shots, 'realm-reread.png') })
   await main.locator('.realm-modal.reading .rm-close').click()
   await main.waitForTimeout(300)
+
+  // --- Enter a charted hero town => Level-1 placeholder iso town overlay (v1.10) ---
+  await main.locator('.realm-enterable').first().click()
+  await main.waitForSelector('.town-overlay', { timeout: 4000 })
+  await main.waitForTimeout(500) // let the fade/scale settle before measuring + shooting
+  const townBldgs = await main.locator('.town-overlay .town-bldg').count()
+  result('TOWN_ENTER_TEST', townBldgs > 0, `${townBldgs} placeholder buildings rendered in the town`)
+  // The overlay must fully COVER the map (opaque) once settled, not bleed through.
+  const townOpacity = await main.locator('.town-overlay').evaluate((el) => getComputedStyle(el).opacity)
+  result('TOWN_OPAQUE_TEST', parseFloat(townOpacity) > 0.98, `overlay opacity ${townOpacity} (want ~1)`)
+  // Capture the map BOX element (now the town) for a clean framed shot, scroll-independent.
+  await main.locator('.realm-map-wrap').screenshot({ path: path.join(shots, 'realm-town.png') })
+  // --- Back to map => the town overlay closes ---
+  await main.locator('.town-back').click()
+  await main.waitForTimeout(600)
+  result('TOWN_EXIT_TEST', (await main.locator('.town-overlay').count()) === 0,
+    'Back returns to the map (overlay removed)')
 
   // --- Completing a quest earns another expedition (celebration prompt) ---
   await main.getByRole('button', { name: 'Dashboard', exact: true }).click()
