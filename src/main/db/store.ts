@@ -109,6 +109,13 @@ function migrate(db: Database): Database {
       activeModeTiers: { ...fresh.settings.activeModeTiers, ...db.settings?.activeModeTiers },
       enabledFeatures: { ...fresh.settings.enabledFeatures, ...db.settings?.enabledFeatures }
     },
+    // Town Editing override layer: tolerate old saves (missing) and corruption
+    // (non-object / array) by failing safe to {}. A plain object is kept as-is —
+    // per-town/per-override validation happens on the WRITE path (see validate()).
+    townLayouts:
+      db.townLayouts && typeof db.townLayouts === 'object' && !Array.isArray(db.townLayouts)
+        ? db.townLayouts
+        : fresh.townLayouts,
     lastSeenDate: db.lastSeenDate ?? fresh.lastSeenDate
   }
 }
@@ -176,6 +183,22 @@ function validate(db: Database): string | null {
   if (!Array.isArray(db.timeFrames)) return 'timeFrames must be an array'
   if (!db.player || typeof db.player !== 'object') return 'player must be an object'
   if (!db.settings || typeof db.settings !== 'object') return 'settings must be an object'
+  // townLayouts is optional-shaped on disk; if present it must be an object map
+  // of { overrides: object }. Reject anything malformed so a renderer bug can't
+  // persist a corrupt arrangement (the engine never reads it, but the save must
+  // stay structurally sound). Checked as `unknown` — runtime data may defy types.
+  const layouts = db.townLayouts as unknown
+  if (layouts != null) {
+    if (typeof layouts !== 'object' || Array.isArray(layouts)) {
+      return 'townLayouts must be an object'
+    }
+    for (const [townId, layout] of Object.entries(layouts as Record<string, unknown>)) {
+      const overrides = (layout as { overrides?: unknown } | null)?.overrides
+      if (!overrides || typeof overrides !== 'object' || Array.isArray(overrides)) {
+        return `townLayouts.${townId} must have an overrides object`
+      }
+    }
+  }
   return null
 }
 

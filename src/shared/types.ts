@@ -184,6 +184,29 @@ export interface Garden {
   bestStreak: number
 }
 
+/** The 4 building kinds a player may swap a plot to in Town Editing (v1).
+ *  Deliberately a NEW union (not the renderer's `BuildingKind`) — the shared
+ *  layer must not import renderer code. It omits 'hall': the center plot is
+ *  always the Hall and is never editable. */
+export type SwappableKind = 'keep' | 'tavern' | 'house' | 'cottage'
+
+/** One player edit to a single building in a town. Sparse — only the fields
+ *  the player actually changed are set; an absent field falls back to the
+ *  deterministic auto-layout. */
+export interface PlotOverride {
+  /** PLOTS index the building was moved to; omitted = its default cell. */
+  cell?: number
+  /** Chosen building type; omitted = the deterministic kind for that index. */
+  kind?: SwappableKind
+}
+
+/** A town's saved arrangement: ONLY the buildings the player touched, keyed by
+ *  the building's stable center-out index (string in JSON). An absent town =
+ *  pure auto-layout. */
+export interface TownLayout {
+  overrides: Record<number, PlotOverride>
+}
+
 export interface Database {
   version: number
   quests: Quest[]
@@ -192,6 +215,10 @@ export interface Database {
   garden: Garden
   arcade: ArcadeState
   settings: Settings
+  /** Per-town player arrangements (Town Editing v1). A SEALED override layer:
+   *  NEVER read by the rewards/civilization engine, so ↩ Restore stays exact.
+   *  Wholesale-replace on save; a reset simply omits the town. Old/absent = {}. */
+  townLayouts: Record<string, TownLayout>
   /** Last local date (YYYY-MM-DD) the app processed a daily rollover. */
   lastSeenDate: string | null
 }

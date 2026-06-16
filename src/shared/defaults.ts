@@ -57,6 +57,7 @@ export function createDefaultDatabase(): Database {
       enabledFeatures: { focus: true, matrix: true },
       realmChronicle: []
     },
+    townLayouts: {},
     lastSeenDate: null
   }
 }
