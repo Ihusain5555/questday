@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowLeft } from '@phosphor-icons/react'
+import { BUILDING_SVG, type BuildingKind } from './townBuildings'
 
 // ---------------------------------------------------------------------------
 // QuestDay v1.10 — Level-1 TOWN view (zoom into a settled town). This is the
@@ -12,8 +13,25 @@ import { ArrowLeft } from '@phosphor-icons/react'
 // ---------------------------------------------------------------------------
 
 // isometric tile + grid origin inside the 760x460 viewBox (2:1 iso).
-const TILE_W = 70
-const TILE_H = 35
+// Tile pitch is deliberately WIDER than a building's footprint so each building
+// sits in its plot with breathing room (grass) around it, instead of packing
+// shoulder-to-shoulder. Kept at the 2:1 iso ratio. The 7x7 town still fits the
+// 760x460 canvas at the stages players actually reach.
+const TILE_W = 100
+const TILE_H = 50
+// Each building is drawn slightly smaller than its plot so grass shows around it
+// (buildings are ~tile-sized; without this they pack shoulder-to-shoulder).
+const BUILDING_SCALE = 0.72
+// Organic placement: nudge each building off its exact grid centre + vary its size
+// a touch, so the town reads as a natural village, not a grid. Deterministic hash
+// (no Math.random) keyed on the plot → reproducible, so ↩ Restore stays exact.
+const JITTER_X = 16
+const JITTER_Y = 9
+const hash = (a: number, b: number): number => {
+  let h = Math.imul(a | 0, 73856093) ^ Math.imul(b | 0, 19349663)
+  h = Math.imul(h ^ (h >>> 13), 1274126177)
+  return ((h >>> 0) % 10000) / 10000
+}
 const OX = 380
 const OY = 210
 const iso = (gx: number, gy: number): { x: number; y: number } => ({
@@ -37,49 +55,38 @@ const PLOTS: Array<[number, number]> = (() => {
   return cells.sort((a, b) => cheb(a) - cheb(b) || euc(a) - euc(b) || ang(a) - ang(b))
 })()
 
-type BType = 'small' | 'medium' | 'large'
-const SIZE: Record<BType, { f: number; h: number }> = {
-  small: { f: 0.52, h: 22 },
-  medium: { f: 0.66, h: 38 },
-  large: { f: 0.82, h: 58 }
-}
-// The centre plot is the landmark (large); the rest mix cottages + houses
-// deterministically (previews "buildings scale by difficulty").
-const typeFor = (i: number): BType =>
-  i === 0 ? 'large' : [3, 6, 9, 12, 15, 19, 24].includes(i) ? 'medium' : 'small'
+// Which building stands on each plot. Plot 0 (the centre, the heart of the town)
+// is always the grand Hall; the rest cycle through the village kinds
+// deterministically — so the town is varied but fully reproducible, keeping
+// ↩ Restore exact (nothing here is stored; it's a pure function of the index).
+const KIND_CYCLE: BuildingKind[] = [
+  'tavern', 'house', 'cottage', 'house', 'keep', 'cottage', 'house',
+  'tavern', 'cottage', 'house', 'cottage', 'keep', 'house', 'cottage'
+]
+const kindFor = (i: number): BuildingKind =>
+  i === 0 ? 'hall' : KIND_CYCLE[(i - 1) % KIND_CYCLE.length]
 
-/** One placeholder cuboid sitting on tile (gx,gy): a shaded box (top + two
- *  sides) + a soft drop-shadow; the landmark also flies a little flag. */
-function Building({ gx, gy, type, idx }: { gx: number; gy: number; type: BType; idx: number }): JSX.Element {
+/** One real inked building (approved hand-authored SVG, drawn around its own
+ *  local origin = tile centre) dropped onto tile (gx,gy). The SVG already carries
+ *  its own iso footprint, shading and drop-shadow, so we just translate it into
+ *  place; the caller depth-sorts so nearer buildings paint over farther ones.
+ *  NOTE: positioning lives on the OUTER <g>; the rise animation lives on the inner
+ *  `.town-bldg` <g>. They must be separate elements — the animation sets `transform`
+ *  (translateY), and a CSS transform overrides an SVG transform attribute, so putting
+ *  both on one element would wipe the positioning and stack every building at 0,0. */
+function Building({ gx, gy, kind, idx }: { gx: number; gy: number; kind: BuildingKind; idx: number }): JSX.Element {
   const { x: cx, y: cy } = iso(gx, gy)
-  const { f, h } = SIZE[type]
-  const a = (TILE_W / 2) * f
-  const b = (TILE_H / 2) * f
-  const pts = (arr: Array<[number, number]>): string => arr.map((p) => p.join(',')).join(' ')
-  const L: [number, number] = [cx - a, cy]
-  const B: [number, number] = [cx, cy + b]
-  const R: [number, number] = [cx + a, cy]
-  const Lt: [number, number] = [cx - a, cy - h]
-  const Bt: [number, number] = [cx, cy + b - h]
-  const Rt: [number, number] = [cx + a, cy - h]
-  const Tt: [number, number] = [cx, cy - b - h]
+  const isHall = gx === 0 && gy === 0 // landmark stays anchored, dead centre
+  const jx = isHall ? 0 : (hash(gx, gy) * 2 - 1) * JITTER_X
+  const jy = isHall ? 0 : (hash(gx * 7 + 1, gy * 13 + 5) * 2 - 1) * JITTER_Y
+  const sc = isHall ? BUILDING_SCALE : BUILDING_SCALE * (0.9 + hash(gx * 3 + 2, gy * 5 + 9) * 0.2)
   return (
-    <g className="town-bldg" style={{ animationDelay: `${(idx * 0.04).toFixed(2)}s` }}>
-      <ellipse cx={cx} cy={cy + b * 0.35} rx={a * 1.18} ry={b * 1.18} fill="rgba(60,46,20,0.16)" />
-      <polygon points={pts([L, B, Bt, Lt])} fill="#b6a67f" stroke="#5a4a2e" strokeWidth={1.3} />
-      <polygon points={pts([B, R, Rt, Bt])} fill="#8d7d5d" stroke="#5a4a2e" strokeWidth={1.3} />
-      <polygon points={pts([Tt, Rt, Bt, Lt])} fill="#d8ccab" stroke="#5a4a2e" strokeWidth={1.3} />
-      {type === 'large' && (
-        <>
-          <line x1={cx} y1={cy - b - h} x2={cx} y2={cy - b - h - 22} stroke="#5a4a2e" strokeWidth={2} />
-          <path
-            d={`M${cx} ${cy - b - h - 22} L ${cx + 16} ${cy - b - h - 17} L ${cx} ${cy - b - h - 12} Z`}
-            fill="#caa24a"
-            stroke="#5a4a2e"
-            strokeWidth={1}
-          />
-        </>
-      )}
+    <g transform={`translate(${(cx + jx).toFixed(1)}, ${(cy + jy).toFixed(1)}) scale(${sc.toFixed(3)})`}>
+      <g
+        className="town-bldg"
+        style={{ animationDelay: `${(idx * 0.04).toFixed(2)}s` }}
+        dangerouslySetInnerHTML={{ __html: BUILDING_SVG[kind] }}
+      />
     </g>
   )
 }
@@ -142,7 +149,7 @@ export function TownView({
   // Reveal the first `count` plots (center-out), then depth-sort back-to-front
   // (by gx+gy) so nearer buildings correctly paint over farther ones. The
   // animation delay uses the center-out index so the town rises from the middle.
-  const shown = PLOTS.slice(0, count).map(([gx, gy], i) => ({ gx, gy, type: typeFor(i), idx: i }))
+  const shown = PLOTS.slice(0, count).map(([gx, gy], i) => ({ gx, gy, kind: kindFor(i), idx: i }))
   shown.sort((m, n) => m.gx + m.gy - (n.gx + n.gy) || m.gx - n.gx)
 
   return (
@@ -165,14 +172,13 @@ export function TownView({
         viewBox="0 0 760 460"
         preserveAspectRatio="xMidYMid meet"
         role="img"
-        aria-label={`${townName}, a ${stageName} — ${count} buildings (placeholder art)`}
+        aria-label={`${townName}, a ${stageName} — ${count} buildings`}
       >
         <Ground />
         {shown.map((s) => (
-          <Building key={`${s.gx},${s.gy}`} gx={s.gx} gy={s.gy} type={s.type} idx={s.idx} />
+          <Building key={`${s.gx},${s.gy}`} gx={s.gx} gy={s.gy} kind={s.kind} idx={s.idx} />
         ))}
       </svg>
-      <div className="town-foot">Placeholder buildings — real hand-drawn art arrives next.</div>
     </motion.div>
   )
 }

@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inked Buildings v2 — precision pass</title>
+<style>
+  :root{
+    --parchment:#f4e8cf;
+    --parchment-deep:#ecdcbb;
+    --ink:#5a4a2e;
+    --gold:#c79a3b;
+    --shade:#a89568;
+    --card:#f7eed8;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 700px at 50% -8%, #f8efd8 0%, rgba(248,239,216,0) 60%),
+      radial-gradient(900px 600px at 100% 120%, #ecdcb6 0%, rgba(236,220,182,0) 55%),
+      #efe2c2;
+    color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua","Hoefler Text",Georgia,"Times New Roman",serif;
+    -webkit-font-smoothing:antialiased;
+    padding:40px 20px 70px;
+  }
+  .page{
+    max-width:1180px;
+    margin:0 auto;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.25), rgba(255,255,255,0) 30%),
+      var(--parchment);
+    border:1px solid rgba(90,74,46,0.35);
+    border-radius:18px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.55) inset,
+      0 30px 60px -28px rgba(60,46,20,0.45);
+    padding:46px 48px 54px;
+  }
+  header.title{
+    text-align:center;
+    margin-bottom:34px;
+  }
+  header.title h1{
+    font-size:clamp(28px,4vw,42px);
+    margin:0 0 10px;
+    letter-spacing:0.5px;
+    font-weight:600;
+    color:#4a3a22;
+    text-shadow:0 1px 0 rgba(255,255,255,0.5);
+  }
+  header.title .rule{
+    width:120px;height:2px;margin:14px auto 16px;
+    background:linear-gradient(90deg, rgba(199,154,59,0), var(--gold), rgba(199,154,59,0));
+    border-radius:2px;
+  }
+  header.title p.sub{
+    margin:0 auto;
+    max-width:680px;
+    font-style:italic;
+    font-size:clamp(14px,1.6vw,17px);
+    color:#6f5a36;
+    line-height:1.5;
+  }
+
+  .section-label{
+    text-align:center;
+    text-transform:uppercase;
+    letter-spacing:3px;
+    font-size:12px;
+    color:#8a7448;
+    margin:0 0 18px;
+  }
+
+  /* ---- panel shared look ---- */
+  .panel{
+    background:
+      radial-gradient(120% 120% at 30% 0%, rgba(255,255,255,0.4), rgba(255,255,255,0) 55%),
+      var(--card);
+    border:1px solid rgba(90,74,46,0.3);
+    border-radius:14px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.6) inset,
+      0 14px 28px -20px rgba(60,46,20,0.5);
+  }
+
+  /* ---- hero ---- */
+  .hero-wrap{
+    display:flex;
+    justify-content:center;
+    margin:0 0 50px;
+  }
+  .hero{
+    padding:18px 26px 22px;
+    text-align:center;
+    width:min(420px,100%);
+  }
+  .hero svg{display:block;margin:0 auto;width:300px;height:auto;}
+  .hero .cap{
+    margin-top:6px;
+    font-variant:small-caps;
+    letter-spacing:1.5px;
+    font-size:16px;
+    color:#5a4a2e;
+  }
+
+  /* ---- gallery ---- */
+  .gallery{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:22px;
+    margin:0 0 52px;
+  }
+  .cell{
+    padding:16px 14px 16px;
+    text-align:center;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  .cell .art{
+    height:200px;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+  }
+  .cell svg{display:block;height:190px;width:auto;}
+  .cell .nm{
+    margin-top:10px;
+    font-variant:small-caps;
+    letter-spacing:1px;
+    font-size:16px;
+    color:#4a3a22;
+  }
+  .cell .tier{
+    margin-top:2px;
+    text-transform:uppercase;
+    letter-spacing:2px;
+    font-size:10.5px;
+    color:#9a824f;
+  }
+
+  /* ---- scene ---- */
+  .scene-wrap{margin:0 0 50px;}
+  .scene{
+    padding:14px;
+  }
+  .scene svg{display:block;width:100%;height:auto;}
+
+  /* ---- palette ---- */
+  .palette-wrap{margin:0;}
+  .palette{
+    padding:20px 22px 22px;
+  }
+  .swatches{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    gap:12px;
+  }
+  .sw{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:12.5px;
+    color:#5a4a2e;
+  }
+  .sw .chip{
+    width:30px;height:30px;flex:0 0 30px;
+    border-radius:7px;
+    border:1px solid rgba(90,74,46,0.45);
+    box-shadow:0 1px 2px rgba(60,46,20,0.25) inset;
+  }
+  .sw .meta{display:flex;flex-direction:column;line-height:1.25;}
+  .sw .role{font-weight:600;color:#4a3a22;}
+  .sw .hex{font-size:10.5px;letter-spacing:0.5px;color:#9a824f;font-family:"Courier New",monospace;}
+  .sw .chip.ink-border{border-color:#5a4a2e;}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="title">
+    <h1>Inked Buildings v2 — precision pass</h1>
+    <div class="rule"></div>
+    <p class="sub">Same shapes & style — rebuilt on exact isometric geometry. Judge each one up close.</p>
+  </header>
+
+  <!-- ============ HERO ============ -->
+  <div class="hero-wrap">
+    <div class="panel hero">
+      <svg viewBox="-90 -150 180 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Great Hall center landmark">
+        <g>
+<ellipse cx="0" cy="5.04" rx="33.01" ry="15.84" fill="rgba(60,46,20,0.16)"/>
+<!-- WALLS: LEFT lit, RIGHT shade -->
+<polygon points="-28.7,0 0,14.4 0,-43.6 -28.7,-58" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="0,14.4 28.7,0 28.7,-58 0,-43.6" fill="#a89568" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+<!-- front corner accent (constant-x at 0) -->
+<line x1="0" y1="14.4" x2="0" y2="-43.6" stroke="#5a4a2e" stroke-width="1.2" stroke-linecap="round" opacity="0.55"/>
+<!-- LEFT face sill lines, slant along (+a,+b) -->
+<line x1="-28.7" y1="-19.14" x2="0" y2="-24.74" stroke="#5a4a2e" stroke-width="0.8" stroke-linecap="round" opacity="0.45"/>
+<line x1="-28.7" y1="-38.28" x2="0" y2="-43.88" stroke="#5a4a2e" stroke-width="0.8" stroke-linecap="round" opacity="0.45"/>
+<!-- RIGHT face sill line, slant along (+a,-b) -->
+<line x1="0" y1="-14.6" x2="28.7" y2="-29.0" stroke="#5a4a2e" stroke-width="0.8" stroke-linecap="round" opacity="0.4"/>
+<!-- ROOF gable, ridge centered over x=0: R_f(0,-72.6) R_b(0,-101.4) -->
+<polygon points="0,-43.6 28.7,-58 0,-101.4 0,-72.6" fill="#8f5a30" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="-28.7,-58 0,-43.6 0,-72.6 0,-101.4" fill="#b5743f" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+<!-- front gable triangle on both wall-tops, apex at R_f -->
+<polygon points="-28.7,-58 0,-43.6 28.7,-58 0,-72.6" fill="#8f5a30" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<!-- gable left half lit (snapped to roof-lit palette) -->
+<polygon points="-28.7,-58 0,-43.6 0,-72.6" fill="#b5743f" stroke="none"/>
+<!-- ridge line R_f -> R_b -->
+<line x1="0" y1="-72.6" x2="0" y2="-101.4" stroke="#6f4626" stroke-width="1.6" stroke-linecap="round"/>
+<!-- hip line accents -->
+<line x1="-28.7" y1="-58" x2="0" y2="-101.4" stroke="#6f4626" stroke-width="1.0" stroke-linecap="round" opacity="0.7"/>
+<line x1="28.7" y1="-58" x2="0" y2="-101.4" stroke="#6f4626" stroke-width="1.0" stroke-linecap="round" opacity="0.55"/>
+<!-- LEFT roof slope plank strokes (toward ridge) -->
+<line x1="-21.5" y1="-58.6" x2="0" y2="-79.4" stroke="#6f4626" stroke-width="0.7" stroke-linecap="round" opacity="0.3"/>
+<line x1="-14.3" y1="-51.4" x2="0" y2="-72.8" stroke="#6f4626" stroke-width="0.7" stroke-linecap="round" opacity="0.3"/>
+<!-- ARCHED DOUBLE DOOR on LEFT face, in-plane, verticals constant-x -->
+<path d="M -20.09,4.32 L -8.61,10.08 L -8.61,-22.0 Q -14.35,-31.0 -20.09,-28.12 Z" fill="#4a3a22" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="-14.35" y1="7.2" x2="-14.35" y2="-26.6" stroke="#6f4626" stroke-width="1.2" stroke-linecap="round"/>
+<path d="M -20.09,4.32 L -8.61,10.08 L -8.61,-22.0 Q -14.35,-31.0 -20.09,-28.12 Z" fill="none" stroke="#6f4626" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+<!-- door iron bands, slant along (+a,+b) -->
+<line x1="-19.4" y1="-9.5" x2="-9.3" y2="-4.4" stroke="#6f4626" stroke-width="0.7" stroke-linecap="round" opacity="0.5"/>
+<line x1="-19.4" y1="-19.0" x2="-9.3" y2="-13.9" stroke="#6f4626" stroke-width="0.7" stroke-linecap="round" opacity="0.5"/>
+<!-- WINDOW on LEFT face, in-plane parallelogram -->
+<polygon points="-26.98,-16.53 -22.39,-14.22 -22.39,-30.46 -26.98,-32.77" fill="#4a3a22" stroke="#6f4626" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="-26.2,-17.2 -23.2,-15.7 -23.2,-29.6 -26.2,-31.1" fill="#e6b15a" opacity="0.85"/>
+<!-- WINDOW on RIGHT face, in-plane parallelogram -->
+<polygon points="17.79,-11.95 23.53,-14.83 23.53,-29.91 17.79,-27.03" fill="#4a3a22" stroke="#6f4626" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="18.6,-12.7 22.7,-14.75 22.7,-29.0 18.6,-26.9" fill="#e6b15a" opacity="0.55"/>
+<!-- GOLD FLAG at ridge peak R_b, pole constant-x -->
+<line x1="0" y1="-101.4" x2="0" y2="-118.0" stroke="#5a4a2e" stroke-width="1.4" stroke-linecap="round"/>
+<path d="M 0,-117.0 L 14.0,-113.5 L 9.6,-111.3 L 14.0,-109.1 L 0,-107.5 Z" fill="#c79a3b" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="0" cy="-118.4" r="1.6" fill="#c79a3b" stroke="#5a4a2e" stroke-width="1.0"/>
+        </g>
+      </svg>
+      <div class="cap">Great Hall — center landmark</div>
+    </div>
+  </div>
+
+  <!-- ============ GALLERY ============ -->
+  <p class="section-label">The Settlement — four buildings, up close</p>
+  <div class="gallery">
+
+    <div class="panel cell">
+      <div class="art">
+        <svg viewBox="-70 -140 140 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Keep">
+          <g>
+<ellipse cx="0" cy="5.04" rx="33.0" ry="15.84" fill="rgba(60,46,20,0.16)"/>
+<!-- ===== WALLS (box: a=28.7 b=14.4 H=58) ===== -->
+<polygon points="-28.7,0 0,14.4 0,-43.6 -28.7,-58" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round"/>
+<polygon points="0,14.4 28.7,0 28.7,-58 0,-43.6" fill="#a89568" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round"/>
+<!-- stone course texture, LEFT face (slant +a,+b) -->
+<polyline points="-28.7,-14.5 0,-0.1" fill="none" stroke="#5a4a2e" stroke-width="0.7" opacity="0.35"/>
+<polyline points="-28.7,-29 0,-14.6" fill="none" stroke="#5a4a2e" stroke-width="0.7" opacity="0.35"/>
+<polyline points="-28.7,-43.5 0,-29.1" fill="none" stroke="#5a4a2e" stroke-width="0.7" opacity="0.35"/>
+<!-- stone course texture, RIGHT face (slant +a,-b) -->
+<polyline points="0,-0.1 28.7,-14.5" fill="none" stroke="#5a4a2e" stroke-width="0.7" opacity="0.3"/>
+<polyline points="0,-14.6 28.7,-29" fill="none" stroke="#5a4a2e" stroke-width="0.7" opacity="0.3"/>
+<polyline points="0,-29.1 28.7,-43.5" fill="none" stroke="#5a4a2e" stroke-width="0.7" opacity="0.3"/>
+<!-- ===== ARROW-SLIT WINDOWS, RIGHT face — in-plane parallelograms (constant-x verticals, slanted top/bottom) ===== -->
+<polygon points="9.59,-35.65 10.59,-36.15 10.59,-22.23 9.59,-21.73" fill="#4a3a22" stroke="#5a4a2e" stroke-width="0.9" stroke-linejoin="round"/>
+<polygon points="18.4,-33.11 19.4,-33.61 19.4,-19.69 18.4,-19.19" fill="#4a3a22" stroke="#5a4a2e" stroke-width="0.9" stroke-linejoin="round"/>
+<!-- ===== ARROW-SLIT, LEFT face — in-plane parallelogram ===== -->
+<polygon points="-14.84,-31.32 -13.86,-30.84 -13.86,-16.92 -14.84,-17.4" fill="#4a3a22" stroke="#5a4a2e" stroke-width="0.9" stroke-linejoin="round"/>
+<!-- ===== ARCHED DOOR, LEFT face (constant-x sides, base on L->B edge) ===== -->
+<path d="M -21.6,3.56 L -21.6,-13.5 Q -14.35,-22.0 -7.1,-13.5 L -7.1,10.84 Z" fill="#4a3a22" stroke="#5a4a2e" stroke-width="1.1" stroke-linejoin="round"/>
+<polyline points="-16.7,-7.9 -16.7,8.27" fill="none" stroke="#5a4a2e" stroke-width="0.6" opacity="0.5"/>
+<polyline points="-12.0,-9.0 -12.0,9.6" fill="none" stroke="#5a4a2e" stroke-width="0.6" opacity="0.5"/>
+<!-- ===== PARAPET FLOOR (top diamond L'B'R'T') ===== -->
+<polygon points="-28.7,-58 0,-43.6 28.7,-58 0,-72.4" fill="#6f4626" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round"/>
+<!-- inner walkway ring (centered, iso-consistent) -->
+<polygon points="-23.0,-58 0,-46.45 23.0,-58 0,-69.55" fill="#8f5a30" stroke="#5a4a2e" stroke-width="0.6" stroke-linejoin="round" opacity="0.7"/>
+<!-- ===== CRENELLATION TEETH — uniform iso boxes (constant-x verticals, lit-left/shade-right/pale-top) ===== -->
+<!-- LEFT-top edge L'->B', u=0.18 / 0.52 / 0.86 -->
+<g>
+<polygon points="-26.23,-55.41 -23.53,-54.06 -23.53,-62.06 -26.23,-63.41" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="-23.53,-54.06 -20.83,-55.41 -20.83,-63.41 -23.53,-62.06" fill="#a89568" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="-26.23,-63.41 -23.53,-62.06 -20.83,-63.41 -23.53,-64.76" fill="#d8ccab" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+</g>
+<g>
+<polygon points="-16.48,-50.51 -13.78,-49.16 -13.78,-57.16 -16.48,-58.51" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="-13.78,-49.16 -11.08,-50.51 -11.08,-58.51 -13.78,-57.16" fill="#a89568" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="-16.48,-58.51 -13.78,-57.16 -11.08,-58.51 -13.78,-59.86" fill="#d8ccab" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+</g>
+<g>
+<polygon points="-6.72,-45.62 -4.02,-44.27 -4.02,-52.27 -6.72,-53.62" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="-4.02,-44.27 -1.32,-45.62 -1.32,-53.62 -4.02,-52.27" fill="#a89568" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="-6.72,-53.62 -4.02,-52.27 -1.32,-53.62 -4.02,-54.97" fill="#d8ccab" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+</g>
+<!-- RIGHT-top edge B'->R', u=0.18 / 0.52 / 0.86 -->
+<g>
+<polygon points="2.47,-46.19 5.17,-44.84 5.17,-52.84 2.47,-54.19" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="5.17,-44.84 7.87,-46.19 7.87,-54.19 5.17,-52.84" fill="#a89568" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="2.47,-54.19 5.17,-52.84 7.87,-54.19 5.17,-55.54" fill="#d8ccab" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+</g>
+<g>
+<polygon points="12.22,-51.09 14.92,-49.74 14.92,-57.74 12.22,-59.09" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="14.92,-49.74 17.62,-51.09 17.62,-59.09 14.92,-57.74" fill="#a89568" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="12.22,-59.09 14.92,-57.74 17.62,-59.09 14.92,-60.44" fill="#d8ccab" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+</g>
+<g>
+<polygon points="21.98,-55.98 24.68,-54.63 24.68,-62.63 21.98,-63.98" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="24.68,-54.63 27.38,-55.98 27.38,-63.98 24.68,-62.63" fill="#a89568" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="21.98,-63.98 24.68,-62.63 27.38,-63.98 24.68,-65.33" fill="#d8ccab" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+</g>
+<!-- BACK teeth (T'->L' and T'->R', u=0.5) for a full crown -->
+<g opacity="0.92">
+<polygon points="-17.05,-65.2 -14.35,-63.85 -14.35,-71.85 -17.05,-73.2" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="-14.35,-63.85 -11.65,-65.2 -11.65,-73.2 -14.35,-71.85" fill="#a89568" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="-17.05,-73.2 -14.35,-71.85 -11.65,-73.2 -14.35,-74.55" fill="#d8ccab" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+</g>
+<g opacity="0.92">
+<polygon points="11.65,-65.2 14.35,-63.85 14.35,-71.85 11.65,-73.2" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="14.35,-63.85 17.05,-65.2 17.05,-73.2 14.35,-71.85" fill="#a89568" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="11.65,-73.2 14.35,-71.85 17.05,-73.2 14.35,-74.55" fill="#d8ccab" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+</g>
+<!-- ===== FLAGPOLE — base on parapet floor center (0,-58), constant x=0 ===== -->
+<line x1="0" y1="-58" x2="0" y2="-86" stroke="#5a4a2e" stroke-width="1.6" stroke-linecap="round"/>
+<circle cx="0" cy="-58" r="1.6" fill="#6f4626" stroke="#5a4a2e" stroke-width="0.8"/>
+<path d="M 0,-85 L 15,-82.5 L 9,-80.5 L 15,-78.5 L 0,-78 Z" fill="#c79a3b" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<path d="M 0,-85 L 7,-83.8 L 6,-79.5 L 0,-78 Z" fill="#e6b15a" opacity="0.55"/>
+          </g>
+        </svg>
+      </div>
+      <div class="nm">Keep</div>
+      <div class="tier">Large</div>
+    </div>
+
+    <div class="panel cell">
+      <div class="art">
+        <svg viewBox="-70 -140 140 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tavern">
+          <g>
+<ellipse cx="0" cy="4.06" rx="26.57" ry="12.76" fill="rgba(60,46,20,0.16)"/>
+
+<!-- ===== WALLS (medium: a=23.1 b=11.6 H=38) ===== -->
+<!-- FRONT-LEFT wall (LIT): L(-23.1,0) B(0,11.6) B'(0,-26.4) L'(-23.1,-38) -->
+<polygon points="-23.1,0 0,11.6 0,-26.4 -23.1,-38" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round"/>
+<!-- FRONT-RIGHT wall (SHADE): B(0,11.6) R(23.1,0) R'(23.1,-38) B'(0,-26.4) -->
+<polygon points="0,11.6 23.1,0 23.1,-38 0,-26.4" fill="#a89568" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round"/>
+
+<!-- plank texture, LEFT face (slant +a,+b ratio 0.502); verticals constant-x -->
+<line x1="-23.1" y1="-12.54" x2="0" y2="-0.94" stroke="#5a4a2e" stroke-width="0.6" stroke-linecap="round" opacity="0.4"/>
+<line x1="-23.1" y1="-25.08" x2="0" y2="-13.48" stroke="#5a4a2e" stroke-width="0.6" stroke-linecap="round" opacity="0.4"/>
+<!-- plank texture, RIGHT face (slant +a,-b ratio -0.502) -->
+<line x1="0" y1="-12.54" x2="23.1" y2="-24.14" stroke="#5a4a2e" stroke-width="0.6" stroke-linecap="round" opacity="0.3"/>
+<line x1="0" y1="-25.08" x2="23.1" y2="-36.68" stroke="#5a4a2e" stroke-width="0.6" stroke-linecap="round" opacity="0.3"/>
+
+<!-- corner post (front vertical, crisp, constant-x) -->
+<line x1="0" y1="11.6" x2="0" y2="-26.4" stroke="#5a4a2e" stroke-width="0.8" stroke-linecap="round" opacity="0.5"/>
+
+<!-- ===== DOOR on RIGHT face (in-plane: P=(u*a, b-u*b-v*H)), u[0.34,0.62] v[0,0.5] ===== -->
+<polygon points="7.85,7.66 14.32,4.41 14.32,-14.59 7.85,-11.34" fill="#4a3a22" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round"/>
+<!-- warm glow strip inside door (left half, in-plane right-face) -->
+<polygon points="8.78,7.19 11.09,6.03 11.09,-12.97 8.78,-11.81" fill="#e6b15a" opacity="0.85" stroke="none"/>
+
+<!-- ===== GLOWING WINDOW on LEFT face (in-plane: P=(-a+u*a, u*b-v*H)), u[0.30,0.62] v[0.30,0.62] ===== -->
+<polygon points="-16.17,-7.92 -8.78,-4.21 -8.78,-16.37 -16.17,-20.08" fill="#4a3a22" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round"/>
+<polygon points="-15.01,-9.15 -9.94,-6.61 -9.94,-15.14 -15.01,-17.68" fill="#e6b15a" stroke="none"/>
+<!-- window mullion: vertical (constant-x at u=0.46, v[0.30,0.62]) -->
+<line x1="-12.47" y1="-6.06" x2="-12.47" y2="-18.22" stroke="#5a4a2e" stroke-width="0.8" stroke-linecap="round"/>
+<!-- window mullion: horizontal-in-plane cross-bar (v=0.46, follows left-face slant 0.502) -->
+<line x1="-16.17" y1="-14" x2="-8.78" y2="-10.29" stroke="#5a4a2e" stroke-width="0.8" stroke-linecap="round"/>
+
+<!-- ===== GABLE ROOF (ridge over x=0, hr=19; slopes anchored to wall-top edges) ===== -->
+<!-- LEFT slope (LIT): L'(-23.1,-38) B'(0,-26.4) R_f(0,-45.4) R_b(0,-68.6) backL(-23.1,-57) -->
+<polygon points="-23.1,-38 0,-26.4 0,-45.4 0,-68.6 -23.1,-57" fill="#b5743f" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round"/>
+<!-- RIGHT slope (SHADE): B'(0,-26.4) R'(23.1,-38) backR(23.1,-57) R_b(0,-68.6) R_f(0,-45.4) -->
+<polygon points="0,-26.4 23.1,-38 23.1,-57 0,-68.6 0,-45.4" fill="#8f5a30" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round"/>
+
+<!-- roof texture (courses lie ON each slope, parallel to eave, ratio ±0.502) -->
+<line x1="-2.31" y1="-33.64" x2="-21.25" y2="-43.15" stroke="#6f4626" stroke-width="0.6" stroke-linecap="round" opacity="0.4"/>
+<line x1="-2.31" y1="-40.48" x2="-21.25" y2="-49.99" stroke="#6f4626" stroke-width="0.6" stroke-linecap="round" opacity="0.4"/>
+<line x1="2.31" y1="-33.64" x2="21.25" y2="-43.15" stroke="#6f4626" stroke-width="0.6" stroke-linecap="round" opacity="0.3"/>
+<line x1="2.31" y1="-40.48" x2="21.25" y2="-49.99" stroke="#6f4626" stroke-width="0.6" stroke-linecap="round" opacity="0.3"/>
+
+<!-- ridge line (centered over x=0) -->
+<line x1="0" y1="-45.4" x2="0" y2="-68.6" stroke="#6f4626" stroke-width="1.4" stroke-linecap="round"/>
+
+<!-- ===== CHIMNEY on LEFT slope (constant-x verticals; base seated on slope) ===== -->
+<polygon points="-11.5,-56.18 -7,-53.93 -7,-72 -11.5,-74.25" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round"/>
+<polygon points="-7,-53.93 -2.5,-56.18 -2.5,-74.25 -7,-72" fill="#8f5a30" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round"/>
+<polygon points="-11.5,-74.25 -7,-72 -2.5,-74.25 -7,-76.5" fill="#6f4626" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round"/>
+
+<!-- ===== HANGING SIGN off LEFT wall (mounts in left plane, projects along face slant up-left) ===== -->
+<!-- bracket root on left wall, projects out along iso (-2,-1) -->
+<line x1="-20.79" y1="-28.49" x2="-28.79" y2="-32.49" stroke="#6f4626" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="-20.79" y1="-21.49" x2="-28.79" y2="-32.49" stroke="#6f4626" stroke-width="1" stroke-linecap="round"/>
+<!-- hanging drop lines (constant-x) -->
+<line x1="-27.2" y1="-31.69" x2="-27.2" y2="-25.69" stroke="#5a4a2e" stroke-width="0.8" stroke-linecap="round"/>
+<line x1="-30.38" y1="-33.29" x2="-30.38" y2="-27.29" stroke="#5a4a2e" stroke-width="0.8" stroke-linecap="round"/>
+<!-- sign board: parallelogram parallel to left-face horizontal slant (+2,+1); verticals constant-x -->
+<polygon points="-31.18,-27.29 -26.4,-24.89 -26.4,-18.89 -31.18,-21.29" fill="#6f4626" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round"/>
+<circle cx="-28.79" cy="-22.09" r="1.8" fill="#c79a3b" stroke="none"/>
+          </g>
+        </svg>
+      </div>
+      <div class="nm">Tavern</div>
+      <div class="tier">Medium</div>
+    </div>
+
+    <div class="panel cell">
+      <div class="art">
+        <svg viewBox="-70 -140 140 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Townhouse">
+          <g>
+<ellipse cx="0" cy="4.06" rx="26.57" ry="12.76" fill="rgba(60,46,20,0.16)"/>
+<polygon points="-23.1,0 0,11.6 0,-26.4 -23.1,-38" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="0,11.6 23.1,0 23.1,-38 0,-26.4" fill="#a89568" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="-23.1" y1="-12.54" x2="0" y2="-0.94" stroke="#5a4a2e" stroke-width="0.8" stroke-opacity="0.28" stroke-linecap="round"/>
+<line x1="-23.1" y1="-25.08" x2="0" y2="-13.48" stroke="#5a4a2e" stroke-width="0.8" stroke-opacity="0.28" stroke-linecap="round"/>
+<line x1="0" y1="-12.54" x2="23.1" y2="-24.14" stroke="#5a4a2e" stroke-width="0.8" stroke-opacity="0.3" stroke-linecap="round"/>
+<line x1="0" y1="-25.08" x2="23.1" y2="-36.68" stroke="#5a4a2e" stroke-width="0.8" stroke-opacity="0.3" stroke-linecap="round"/>
+<polygon points="-14.32,4.41 -8.78,7.19 -8.78,-13.71 -14.32,-16.49" fill="#4a3a22" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="-14.32" y1="-16.49" x2="-8.78" y2="-13.71" stroke="#6f4626" stroke-width="1.2" stroke-linecap="round"/>
+<polygon points="-20.33,-17.61 -16.17,-15.52 -16.17,-26.16 -20.33,-28.25" fill="#4a3a22" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="-19.87,-18.90 -16.63,-17.27 -16.63,-24.87 -19.87,-26.50" fill="#e6b15a" stroke="none"/>
+<polygon points="10.40,-10.72 15.25,-13.16 15.25,-24.56 10.40,-22.12" fill="#4a3a22" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="10.86,-12.47 14.78,-14.44 14.78,-22.80 10.86,-20.83" fill="#e6b15a" stroke="none"/>
+<polygon points="9.47,-10.26 10.40,-10.72 10.40,-22.12 9.47,-21.66" fill="#d8ccab" stroke="#5a4a2e" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="15.25,-13.16 16.17,-13.62 16.17,-25.02 15.25,-24.56" fill="#a89568" stroke="#5a4a2e" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="-23.1,-38 0,-26.4 0,-45.4 0,-68.6" fill="#b5743f" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="23.1,-38 0,-26.4 0,-45.4 0,-68.6" fill="#8f5a30" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="0" y1="-45.4" x2="0" y2="-68.6" stroke="#6f4626" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="-23.1" y1="-38" x2="0" y2="-45.4" stroke="#6f4626" stroke-width="1.2" stroke-linecap="round"/>
+<line x1="23.1" y1="-38" x2="0" y2="-45.4" stroke="#6f4626" stroke-width="1.2" stroke-linecap="round"/>
+<line x1="-5" y1="-43.80" x2="-5" y2="-61.98" stroke="#5a4a2e" stroke-width="0.7" stroke-opacity="0.32" stroke-linecap="round"/>
+<line x1="-10" y1="-42.20" x2="-10" y2="-55.35" stroke="#5a4a2e" stroke-width="0.7" stroke-opacity="0.32" stroke-linecap="round"/>
+<line x1="-15" y1="-40.59" x2="-15" y2="-48.73" stroke="#5a4a2e" stroke-width="0.7" stroke-opacity="0.32" stroke-linecap="round"/>
+<line x1="5" y1="-43.80" x2="5" y2="-61.98" stroke="#5a4a2e" stroke-width="0.7" stroke-opacity="0.38" stroke-linecap="round"/>
+<line x1="10" y1="-42.20" x2="10" y2="-55.35" stroke="#5a4a2e" stroke-width="0.7" stroke-opacity="0.38" stroke-linecap="round"/>
+<line x1="15" y1="-40.59" x2="15" y2="-48.73" stroke="#5a4a2e" stroke-width="0.7" stroke-opacity="0.38" stroke-linecap="round"/>
+          </g>
+        </svg>
+      </div>
+      <div class="nm">Townhouse</div>
+      <div class="tier">Medium</div>
+    </div>
+
+    <div class="panel cell">
+      <div class="art">
+        <svg viewBox="-60 -120 120 155" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cottage">
+          <g>
+<ellipse cx="0" cy="3.185" rx="20.93" ry="10.01" fill="rgba(60,46,20,0.16)"/>
+<!-- FRONT-LEFT wall (LIT) : L B B' L' -->
+<polygon points="-18.2,0 0,9.1 0,-12.9 -18.2,-22" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+<!-- FRONT-RIGHT wall (SHADE) : B R R' B' -->
+<polygon points="0,9.1 18.2,0 18.2,-22 0,-12.9" fill="#a89568" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+<!-- front corner crease B->B' (constant x=0) -->
+<line x1="0" y1="9.1" x2="0" y2="-12.9" stroke="#5a4a2e" stroke-width="1.2" stroke-linecap="round" opacity="0.55"/>
+<!-- wall plank texture, in-plane (left face, along +a,+b) -->
+<line x1="-18.2" y1="-7.33" x2="0" y2="1.77" stroke="#5a4a2e" stroke-width="0.5" stroke-linecap="round" opacity="0.28"/>
+<line x1="-18.2" y1="-14.67" x2="0" y2="-5.57" stroke="#5a4a2e" stroke-width="0.5" stroke-linecap="round" opacity="0.28"/>
+<!-- wall plank texture, in-plane (right face, along +a,-b) -->
+<line x1="0" y1="1.77" x2="18.2" y2="-7.33" stroke="#5a4a2e" stroke-width="0.5" stroke-linecap="round" opacity="0.22"/>
+<line x1="0" y1="-5.57" x2="18.2" y2="-14.67" stroke="#5a4a2e" stroke-width="0.5" stroke-linecap="round" opacity="0.22"/>
+<!-- DOOR on LEFT face (parallelogram, follows slant; verticals constant-x). u in [0.30,0.62], v in [0,0.62] -->
+<polygon points="-12.74,2.73 -6.916,5.642 -6.916,-8.001 -12.74,-10.91" fill="#4a3a22" stroke="#5a4a2e" stroke-width="1" stroke-linejoin="round"/>
+<line x1="-9.828" y1="4.186" x2="-9.828" y2="-9.456" stroke="#6f4626" stroke-width="0.6" stroke-linecap="round" opacity="0.55"/>
+<!-- WINDOW on RIGHT face (parallelogram, follows slant). u in [0.30,0.58], v in [0.32,0.64] -->
+<polygon points="5.46,-0.23 10.556,-2.778 10.556,-9.818 5.46,-7.27" fill="#4a3a22" stroke="#5a4a2e" stroke-width="1" stroke-linejoin="round"/>
+<polygon points="6.31,-1.665 9.706,-3.363 9.706,-7.433 6.31,-5.735" fill="#e6b15a" stroke="none"/>
+<!-- window muntins, in-plane -->
+<line x1="8.008" y1="-1.004" x2="8.008" y2="-8.044" stroke="#4a3a22" stroke-width="0.7" stroke-linecap="round"/>
+<line x1="5.46" y1="-3.75" x2="10.556" y2="-6.298" stroke="#4a3a22" stroke-width="0.7" stroke-linecap="round"/>
+<!-- ROOF LEFT slope (LIT) : L' B' R_f R_b(over-left) -->
+<polygon points="-18.2,-22 0,-12.9 0,-23.9 -18.2,-33.1" fill="#b5743f" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+<!-- ROOF RIGHT slope (SHADE) : B' R' R_b(over-right) R_f -->
+<polygon points="0,-12.9 18.2,-22 18.2,-33.1 0,-23.9" fill="#8f5a30" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+<!-- ridge line over the corner x=0 (R_f -> R_b) -->
+<line x1="0" y1="-23.9" x2="0" y2="-42.1" stroke="#6f4626" stroke-width="1.4" stroke-linecap="round"/>
+<!-- back gable ridge segment over T' : R_f sits at x=0, ridge runs back to R_b -->
+<polygon points="-18.2,-33.1 0,-23.9 0,-42.1" fill="#8f5a30" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>
+<!-- thatch texture lines following left-slope slant (parallel to L'->B') -->
+<line x1="-18.2" y1="-25.67" x2="0" y2="-16.57" stroke="#6f4626" stroke-width="0.5" stroke-linecap="round" opacity="0.3"/>
+<line x1="-18.2" y1="-29.33" x2="0" y2="-20.23" stroke="#6f4626" stroke-width="0.5" stroke-linecap="round" opacity="0.3"/>
+<!-- CHIMNEY: small vertical box (constant-x sides) standing on left roof slope, near back. base on slope, top raised -->
+<polygon points="-9,-30.6 -5,-32.6 -5,-44.6 -9,-42.6" fill="#a89568" stroke="#5a4a2e" stroke-width="1.1" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="-13,-28.6 -9,-30.6 -9,-42.6 -13,-40.6" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.1" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="-13,-40.6 -9,-42.6 -5,-44.6 -9,-42.6" fill="#d8ccab" stroke="#5a4a2e" stroke-width="1.1" stroke-linejoin="round" stroke-linecap="round"/>
+          </g>
+        </svg>
+      </div>
+      <div class="nm">Cottage</div>
+      <div class="tier">Small</div>
+    </div>
+
+  </div>
+
+  <!-- ============ SCENE ============ -->
+  <p class="section-label">The village — depth-sorted on the tile grid</p>
+  <div class="scene-wrap">
+    <div class="panel scene">
+      <svg viewBox="0 0 760 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Isometric village scene">
+        <defs>
+          <clipPath id="groundClip">
+            <polygon points="380,35 745,217.5 380,400 15,217.5"/>
+          </clipPath>
+        </defs>
+        <!-- parchment ground diamond -->
+        <polygon points="380,35 745,217.5 380,400 15,217.5" fill="#ecdcb6" stroke="#cdb27e" stroke-width="1.5"/>
+        <!-- faint sage grid inside the diamond -->
+        <g clip-path="url(#groundClip)" stroke="#9aa878" stroke-width="0.8" opacity="0.45">
+          <!-- lines parallel to the gx axis (down-right): vary gy -->
+          <line x1="135" y1="-40" x2="500" y2="142.5"/>
+          <line x1="170" y1="-22.5" x2="535" y2="160"/>
+          <line x1="205" y1="-5" x2="570" y2="177.5"/>
+          <line x1="240" y1="12.5" x2="605" y2="195"/>
+          <line x1="275" y1="30" x2="640" y2="212.5"/>
+          <line x1="310" y1="47.5" x2="675" y2="230"/>
+          <line x1="345" y1="65" x2="710" y2="247.5"/>
+          <line x1="380" y1="82.5" x2="745" y2="265"/>
+          <line x1="415" y1="100" x2="780" y2="282.5"/>
+          <line x1="450" y1="117.5" x2="815" y2="300"/>
+          <line x1="485" y1="135" x2="850" y2="317.5"/>
+          <line x1="45" y1="142.5" x2="410" y2="325"/>
+          <line x1="10" y1="160" x2="375" y2="342.5"/>
+          <line x1="-25" y1="177.5" x2="340" y2="360"/>
+          <!-- lines parallel to the gy axis (down-left): vary gx -->
+          <line x1="625" y1="-40" x2="260" y2="142.5"/>
+          <line x1="590" y1="-22.5" x2="225" y2="160"/>
+          <line x1="555" y1="-5" x2="190" y2="177.5"/>
+          <line x1="520" y1="12.5" x2="155" y2="195"/>
+          <line x1="485" y1="30" x2="120" y2="212.5"/>
+          <line x1="450" y1="47.5" x2="85" y2="230"/>
+          <line x1="415" y1="65" x2="50" y2="247.5"/>
+          <line x1="380" y1="82.5" x2="15" y2="265"/>
+          <line x1="345" y1="100" x2="-20" y2="282.5"/>
+          <line x1="310" y1="117.5" x2="-55" y2="300"/>
+          <line x1="275" y1="135" x2="-90" y2="317.5"/>
+          <line x1="715" y1="142.5" x2="350" y2="325"/>
+          <line x1="750" y1="160" x2="385" y2="342.5"/>
+          <line x1="785" y1="177.5" x2="420" y2="360"/>
+        </g>
+
+        <!-- buildings: depth-sorted by (gx+gy) ascending. tile 70x35; origin (380,210).
+             cx=380+(gx-gy)*35 , cy=210+(gx+gy)*17.5 -->
+
+        <!-- cottage (-1,-1): gx+gy=-2 -> drawn FIRST (farthest back) ; cx=380, cy=175 -->
+        <g transform="translate(380,175)">
+<ellipse cx="0" cy="3.185" rx="20.93" ry="10.01" fill="rgba(60,46,20,0.16)"/>
+<polygon points="-18.2,0 0,9.1 0,-12.9 -18.2,-22" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="0,9.1 18.2,0 18.2,-22 0,-12.9" fill="#a89568" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="0" y1="9.1" x2="0" y2="-12.9" stroke="#5a4a2e" stroke-width="1.2" stroke-linecap="round" opacity="0.55"/>
+<line x1="-18.2" y1="-7.33" x2="0" y2="1.77" stroke="#5a4a2e" stroke-width="0.5" stroke-linecap="round" opacity="0.28"/>
+<line x1="-18.2" y1="-14.67" x2="0" y2="-5.57" stroke="#5a4a2e" stroke-width="0.5" stroke-linecap="round" opacity="0.28"/>
+<line x1="0" y1="1.77" x2="18.2" y2="-7.33" stroke="#5a4a2e" stroke-width="0.5" stroke-linecap="round" opacity="0.22"/>
+<line x1="0" y1="-5.57" x2="18.2" y2="-14.67" stroke="#5a4a2e" stroke-width="0.5" stroke-linecap="round" opacity="0.22"/>
+<polygon points="-12.74,2.73 -6.916,5.642 -6.916,-8.001 -12.74,-10.91" fill="#4a3a22" stroke="#5a4a2e" stroke-width="1" stroke-linejoin="round"/>
+<line x1="-9.828" y1="4.186" x2="-9.828" y2="-9.456" stroke="#6f4626" stroke-width="0.6" stroke-linecap="round" opacity="0.55"/>
+<polygon points="5.46,-0.23 10.556,-2.778 10.556,-9.818 5.46,-7.27" fill="#4a3a22" stroke="#5a4a2e" stroke-width="1" stroke-linejoin="round"/>
+<polygon points="6.31,-1.665 9.706,-3.363 9.706,-7.433 6.31,-5.735" fill="#e6b15a" stroke="none"/>
+<line x1="8.008" y1="-1.004" x2="8.008" y2="-8.044" stroke="#4a3a22" stroke-width="0.7" stroke-linecap="round"/>
+<line x1="5.46" y1="-3.75" x2="10.556" y2="-6.298" stroke="#4a3a22" stroke-width="0.7" stroke-linecap="round"/>
+<polygon points="-18.2,-22 0,-12.9 0,-23.9 -18.2,-33.1" fill="#b5743f" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="0,-12.9 18.2,-22 18.2,-33.1 0,-23.9" fill="#8f5a30" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="0" y1="-23.9" x2="0" y2="-42.1" stroke="#6f4626" stroke-width="1.4" stroke-linecap="round"/>
+<polygon points="-18.2,-33.1 0,-23.9 0,-42.1" fill="#8f5a30" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>
+<line x1="-18.2" y1="-25.67" x2="0" y2="-16.57" stroke="#6f4626" stroke-width="0.5" stroke-linecap="round" opacity="0.3"/>
+<line x1="-18.2" y1="-29.33" x2="0" y2="-20.23" stroke="#6f4626" stroke-width="0.5" stroke-linecap="round" opacity="0.3"/>
+<polygon points="-9,-30.6 -5,-32.6 -5,-44.6 -9,-42.6" fill="#a89568" stroke="#5a4a2e" stroke-width="1.1" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="-13,-28.6 -9,-30.6 -9,-42.6 -13,-40.6" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.1" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="-13,-40.6 -9,-42.6 -5,-44.6 -9,-42.6" fill="#d8ccab" stroke="#5a4a2e" stroke-width="1.1" stroke-linejoin="round" stroke-linecap="round"/>
+        </g>
+
+        <!-- keep (-1,1): gx+gy=0 ; cx=380-70=310, cy=210 -->
+        <g transform="translate(310,210)">
+<ellipse cx="0" cy="5.04" rx="33.0" ry="15.84" fill="rgba(60,46,20,0.16)"/>
+<polygon points="-28.7,0 0,14.4 0,-43.6 -28.7,-58" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round"/>
+<polygon points="0,14.4 28.7,0 28.7,-58 0,-43.6" fill="#a89568" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round"/>
+<polyline points="-28.7,-14.5 0,-0.1" fill="none" stroke="#5a4a2e" stroke-width="0.7" opacity="0.35"/>
+<polyline points="-28.7,-29 0,-14.6" fill="none" stroke="#5a4a2e" stroke-width="0.7" opacity="0.35"/>
+<polyline points="-28.7,-43.5 0,-29.1" fill="none" stroke="#5a4a2e" stroke-width="0.7" opacity="0.35"/>
+<polyline points="0,-0.1 28.7,-14.5" fill="none" stroke="#5a4a2e" stroke-width="0.7" opacity="0.3"/>
+<polyline points="0,-14.6 28.7,-29" fill="none" stroke="#5a4a2e" stroke-width="0.7" opacity="0.3"/>
+<polyline points="0,-29.1 28.7,-43.5" fill="none" stroke="#5a4a2e" stroke-width="0.7" opacity="0.3"/>
+<polygon points="9.59,-35.65 10.59,-36.15 10.59,-22.23 9.59,-21.73" fill="#4a3a22" stroke="#5a4a2e" stroke-width="0.9" stroke-linejoin="round"/>
+<polygon points="18.4,-33.11 19.4,-33.61 19.4,-19.69 18.4,-19.19" fill="#4a3a22" stroke="#5a4a2e" stroke-width="0.9" stroke-linejoin="round"/>
+<polygon points="-14.84,-31.32 -13.86,-30.84 -13.86,-16.92 -14.84,-17.4" fill="#4a3a22" stroke="#5a4a2e" stroke-width="0.9" stroke-linejoin="round"/>
+<path d="M -21.6,3.56 L -21.6,-13.5 Q -14.35,-22.0 -7.1,-13.5 L -7.1,10.84 Z" fill="#4a3a22" stroke="#5a4a2e" stroke-width="1.1" stroke-linejoin="round"/>
+<polyline points="-16.7,-7.9 -16.7,8.27" fill="none" stroke="#5a4a2e" stroke-width="0.6" opacity="0.5"/>
+<polyline points="-12.0,-9.0 -12.0,9.6" fill="none" stroke="#5a4a2e" stroke-width="0.6" opacity="0.5"/>
+<polygon points="-28.7,-58 0,-43.6 28.7,-58 0,-72.4" fill="#6f4626" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round"/>
+<polygon points="-23.0,-58 0,-46.45 23.0,-58 0,-69.55" fill="#8f5a30" stroke="#5a4a2e" stroke-width="0.6" stroke-linejoin="round" opacity="0.7"/>
+<g>
+<polygon points="-26.23,-55.41 -23.53,-54.06 -23.53,-62.06 -26.23,-63.41" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="-23.53,-54.06 -20.83,-55.41 -20.83,-63.41 -23.53,-62.06" fill="#a89568" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="-26.23,-63.41 -23.53,-62.06 -20.83,-63.41 -23.53,-64.76" fill="#d8ccab" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+</g>
+<g>
+<polygon points="-16.48,-50.51 -13.78,-49.16 -13.78,-57.16 -16.48,-58.51" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="-13.78,-49.16 -11.08,-50.51 -11.08,-58.51 -13.78,-57.16" fill="#a89568" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="-16.48,-58.51 -13.78,-57.16 -11.08,-58.51 -13.78,-59.86" fill="#d8ccab" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+</g>
+<g>
+<polygon points="-6.72,-45.62 -4.02,-44.27 -4.02,-52.27 -6.72,-53.62" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="-4.02,-44.27 -1.32,-45.62 -1.32,-53.62 -4.02,-52.27" fill="#a89568" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="-6.72,-53.62 -4.02,-52.27 -1.32,-53.62 -4.02,-54.97" fill="#d8ccab" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+</g>
+<g>
+<polygon points="2.47,-46.19 5.17,-44.84 5.17,-52.84 2.47,-54.19" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="5.17,-44.84 7.87,-46.19 7.87,-54.19 5.17,-52.84" fill="#a89568" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="2.47,-54.19 5.17,-52.84 7.87,-54.19 5.17,-55.54" fill="#d8ccab" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+</g>
+<g>
+<polygon points="12.22,-51.09 14.92,-49.74 14.92,-57.74 12.22,-59.09" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="14.92,-49.74 17.62,-51.09 17.62,-59.09 14.92,-57.74" fill="#a89568" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="12.22,-59.09 14.92,-57.74 17.62,-59.09 14.92,-60.44" fill="#d8ccab" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+</g>
+<g>
+<polygon points="21.98,-55.98 24.68,-54.63 24.68,-62.63 21.98,-63.98" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="24.68,-54.63 27.38,-55.98 27.38,-63.98 24.68,-62.63" fill="#a89568" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="21.98,-63.98 24.68,-62.63 27.38,-63.98 24.68,-65.33" fill="#d8ccab" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+</g>
+<g opacity="0.92">
+<polygon points="-17.05,-65.2 -14.35,-63.85 -14.35,-71.85 -17.05,-73.2" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="-14.35,-63.85 -11.65,-65.2 -11.65,-73.2 -14.35,-71.85" fill="#a89568" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="-17.05,-73.2 -14.35,-71.85 -11.65,-73.2 -14.35,-74.55" fill="#d8ccab" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+</g>
+<g opacity="0.92">
+<polygon points="11.65,-65.2 14.35,-63.85 14.35,-71.85 11.65,-73.2" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="14.35,-63.85 17.05,-65.2 17.05,-73.2 14.35,-71.85" fill="#a89568" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="11.65,-73.2 14.35,-71.85 17.05,-73.2 14.35,-74.55" fill="#d8ccab" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+</g>
+<line x1="0" y1="-58" x2="0" y2="-86" stroke="#5a4a2e" stroke-width="1.6" stroke-linecap="round"/>
+<circle cx="0" cy="-58" r="1.6" fill="#6f4626" stroke="#5a4a2e" stroke-width="0.8"/>
+<path d="M 0,-85 L 15,-82.5 L 9,-80.5 L 15,-78.5 L 0,-78 Z" fill="#c79a3b" stroke="#5a4a2e" stroke-width="1.0" stroke-linejoin="round"/>
+<path d="M 0,-85 L 7,-83.8 L 6,-79.5 L 0,-78 Z" fill="#e6b15a" opacity="0.55"/>
+        </g>
+
+        <!-- hall (0,0): gx+gy=0 ; cx=380, cy=210 -->
+        <g transform="translate(380,210)">
+<ellipse cx="0" cy="5.04" rx="33.01" ry="15.84" fill="rgba(60,46,20,0.16)"/>
+<polygon points="-28.7,0 0,14.4 0,-43.6 -28.7,-58" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="0,14.4 28.7,0 28.7,-58 0,-43.6" fill="#a89568" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="0" y1="14.4" x2="0" y2="-43.6" stroke="#5a4a2e" stroke-width="1.2" stroke-linecap="round" opacity="0.55"/>
+<line x1="-28.7" y1="-19.14" x2="0" y2="-24.74" stroke="#5a4a2e" stroke-width="0.8" stroke-linecap="round" opacity="0.45"/>
+<line x1="-28.7" y1="-38.28" x2="0" y2="-43.88" stroke="#5a4a2e" stroke-width="0.8" stroke-linecap="round" opacity="0.45"/>
+<line x1="0" y1="-14.6" x2="28.7" y2="-29.0" stroke="#5a4a2e" stroke-width="0.8" stroke-linecap="round" opacity="0.4"/>
+<polygon points="0,-43.6 28.7,-58 0,-101.4 0,-72.6" fill="#8f5a30" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="-28.7,-58 0,-43.6 0,-72.6 0,-101.4" fill="#b5743f" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="-28.7,-58 0,-43.6 28.7,-58 0,-72.6" fill="#8f5a30" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="-28.7,-58 0,-43.6 0,-72.6" fill="#b5743f" stroke="none"/>
+<line x1="0" y1="-72.6" x2="0" y2="-101.4" stroke="#6f4626" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="-28.7" y1="-58" x2="0" y2="-101.4" stroke="#6f4626" stroke-width="1.0" stroke-linecap="round" opacity="0.7"/>
+<line x1="28.7" y1="-58" x2="0" y2="-101.4" stroke="#6f4626" stroke-width="1.0" stroke-linecap="round" opacity="0.55"/>
+<line x1="-21.5" y1="-58.6" x2="0" y2="-79.4" stroke="#6f4626" stroke-width="0.7" stroke-linecap="round" opacity="0.3"/>
+<line x1="-14.3" y1="-51.4" x2="0" y2="-72.8" stroke="#6f4626" stroke-width="0.7" stroke-linecap="round" opacity="0.3"/>
+<path d="M -20.09,4.32 L -8.61,10.08 L -8.61,-22.0 Q -14.35,-31.0 -20.09,-28.12 Z" fill="#4a3a22" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="-14.35" y1="7.2" x2="-14.35" y2="-26.6" stroke="#6f4626" stroke-width="1.2" stroke-linecap="round"/>
+<path d="M -20.09,4.32 L -8.61,10.08 L -8.61,-22.0 Q -14.35,-31.0 -20.09,-28.12 Z" fill="none" stroke="#6f4626" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="-19.4" y1="-9.5" x2="-9.3" y2="-4.4" stroke="#6f4626" stroke-width="0.7" stroke-linecap="round" opacity="0.5"/>
+<line x1="-19.4" y1="-19.0" x2="-9.3" y2="-13.9" stroke="#6f4626" stroke-width="0.7" stroke-linecap="round" opacity="0.5"/>
+<polygon points="-26.98,-16.53 -22.39,-14.22 -22.39,-30.46 -26.98,-32.77" fill="#4a3a22" stroke="#6f4626" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="-26.2,-17.2 -23.2,-15.7 -23.2,-29.6 -26.2,-31.1" fill="#e6b15a" opacity="0.85"/>
+<polygon points="17.79,-11.95 23.53,-14.83 23.53,-29.91 17.79,-27.03" fill="#4a3a22" stroke="#6f4626" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="18.6,-12.7 22.7,-14.75 22.7,-29.0 18.6,-26.9" fill="#e6b15a" opacity="0.55"/>
+<line x1="0" y1="-101.4" x2="0" y2="-118.0" stroke="#5a4a2e" stroke-width="1.4" stroke-linecap="round"/>
+<path d="M 0,-117.0 L 14.0,-113.5 L 9.6,-111.3 L 14.0,-109.1 L 0,-107.5 Z" fill="#c79a3b" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="0" cy="-118.4" r="1.6" fill="#c79a3b" stroke="#5a4a2e" stroke-width="1.0"/>
+        </g>
+
+        <!-- house (1,1): gx+gy=2 ; cx=380, cy=245 -->
+        <g transform="translate(380,245)">
+<ellipse cx="0" cy="4.06" rx="26.57" ry="12.76" fill="rgba(60,46,20,0.16)"/>
+<polygon points="-23.1,0 0,11.6 0,-26.4 -23.1,-38" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="0,11.6 23.1,0 23.1,-38 0,-26.4" fill="#a89568" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="-23.1" y1="-12.54" x2="0" y2="-0.94" stroke="#5a4a2e" stroke-width="0.8" stroke-opacity="0.28" stroke-linecap="round"/>
+<line x1="-23.1" y1="-25.08" x2="0" y2="-13.48" stroke="#5a4a2e" stroke-width="0.8" stroke-opacity="0.28" stroke-linecap="round"/>
+<line x1="0" y1="-12.54" x2="23.1" y2="-24.14" stroke="#5a4a2e" stroke-width="0.8" stroke-opacity="0.3" stroke-linecap="round"/>
+<line x1="0" y1="-25.08" x2="23.1" y2="-36.68" stroke="#5a4a2e" stroke-width="0.8" stroke-opacity="0.3" stroke-linecap="round"/>
+<polygon points="-14.32,4.41 -8.78,7.19 -8.78,-13.71 -14.32,-16.49" fill="#4a3a22" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="-14.32" y1="-16.49" x2="-8.78" y2="-13.71" stroke="#6f4626" stroke-width="1.2" stroke-linecap="round"/>
+<polygon points="-20.33,-17.61 -16.17,-15.52 -16.17,-26.16 -20.33,-28.25" fill="#4a3a22" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="-19.87,-18.90 -16.63,-17.27 -16.63,-24.87 -19.87,-26.50" fill="#e6b15a" stroke="none"/>
+<polygon points="10.40,-10.72 15.25,-13.16 15.25,-24.56 10.40,-22.12" fill="#4a3a22" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="10.86,-12.47 14.78,-14.44 14.78,-22.80 10.86,-20.83" fill="#e6b15a" stroke="none"/>
+<polygon points="9.47,-10.26 10.40,-10.72 10.40,-22.12 9.47,-21.66" fill="#d8ccab" stroke="#5a4a2e" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="15.25,-13.16 16.17,-13.62 16.17,-25.02 15.25,-24.56" fill="#a89568" stroke="#5a4a2e" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="-23.1,-38 0,-26.4 0,-45.4 0,-68.6" fill="#b5743f" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="23.1,-38 0,-26.4 0,-45.4 0,-68.6" fill="#8f5a30" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="0" y1="-45.4" x2="0" y2="-68.6" stroke="#6f4626" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="-23.1" y1="-38" x2="0" y2="-45.4" stroke="#6f4626" stroke-width="1.2" stroke-linecap="round"/>
+<line x1="23.1" y1="-38" x2="0" y2="-45.4" stroke="#6f4626" stroke-width="1.2" stroke-linecap="round"/>
+<line x1="-5" y1="-43.80" x2="-5" y2="-61.98" stroke="#5a4a2e" stroke-width="0.7" stroke-opacity="0.32" stroke-linecap="round"/>
+<line x1="-10" y1="-42.20" x2="-10" y2="-55.35" stroke="#5a4a2e" stroke-width="0.7" stroke-opacity="0.32" stroke-linecap="round"/>
+<line x1="-15" y1="-40.59" x2="-15" y2="-48.73" stroke="#5a4a2e" stroke-width="0.7" stroke-opacity="0.32" stroke-linecap="round"/>
+<line x1="5" y1="-43.80" x2="5" y2="-61.98" stroke="#5a4a2e" stroke-width="0.7" stroke-opacity="0.38" stroke-linecap="round"/>
+<line x1="10" y1="-42.20" x2="10" y2="-55.35" stroke="#5a4a2e" stroke-width="0.7" stroke-opacity="0.38" stroke-linecap="round"/>
+<line x1="15" y1="-40.59" x2="15" y2="-48.73" stroke="#5a4a2e" stroke-width="0.7" stroke-opacity="0.38" stroke-linecap="round"/>
+        </g>
+
+        <!-- tavern (1,-1): gx+gy=0 ; cx=380+70=450, cy=210 -->
+        <g transform="translate(450,210)">
+<ellipse cx="0" cy="4.06" rx="26.57" ry="12.76" fill="rgba(60,46,20,0.16)"/>
+<polygon points="-23.1,0 0,11.6 0,-26.4 -23.1,-38" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round"/>
+<polygon points="0,11.6 23.1,0 23.1,-38 0,-26.4" fill="#a89568" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round"/>
+<line x1="-23.1" y1="-12.54" x2="0" y2="-0.94" stroke="#5a4a2e" stroke-width="0.6" stroke-linecap="round" opacity="0.4"/>
+<line x1="-23.1" y1="-25.08" x2="0" y2="-13.48" stroke="#5a4a2e" stroke-width="0.6" stroke-linecap="round" opacity="0.4"/>
+<line x1="0" y1="-12.54" x2="23.1" y2="-24.14" stroke="#5a4a2e" stroke-width="0.6" stroke-linecap="round" opacity="0.3"/>
+<line x1="0" y1="-25.08" x2="23.1" y2="-36.68" stroke="#5a4a2e" stroke-width="0.6" stroke-linecap="round" opacity="0.3"/>
+<line x1="0" y1="11.6" x2="0" y2="-26.4" stroke="#5a4a2e" stroke-width="0.8" stroke-linecap="round" opacity="0.5"/>
+<polygon points="7.85,7.66 14.32,4.41 14.32,-14.59 7.85,-11.34" fill="#4a3a22" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round"/>
+<polygon points="8.78,7.19 11.09,6.03 11.09,-12.97 8.78,-11.81" fill="#e6b15a" opacity="0.85" stroke="none"/>
+<polygon points="-16.17,-7.92 -8.78,-4.21 -8.78,-16.37 -16.17,-20.08" fill="#4a3a22" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round"/>
+<polygon points="-15.01,-9.15 -9.94,-6.61 -9.94,-15.14 -15.01,-17.68" fill="#e6b15a" stroke="none"/>
+<line x1="-12.47" y1="-6.06" x2="-12.47" y2="-18.22" stroke="#5a4a2e" stroke-width="0.8" stroke-linecap="round"/>
+<line x1="-16.17" y1="-14" x2="-8.78" y2="-10.29" stroke="#5a4a2e" stroke-width="0.8" stroke-linecap="round"/>
+<polygon points="-23.1,-38 0,-26.4 0,-45.4 0,-68.6 -23.1,-57" fill="#b5743f" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round"/>
+<polygon points="0,-26.4 23.1,-38 23.1,-57 0,-68.6 0,-45.4" fill="#8f5a30" stroke="#5a4a2e" stroke-width="1.4" stroke-linejoin="round"/>
+<line x1="-2.31" y1="-33.64" x2="-21.25" y2="-43.15" stroke="#6f4626" stroke-width="0.6" stroke-linecap="round" opacity="0.4"/>
+<line x1="-2.31" y1="-40.48" x2="-21.25" y2="-49.99" stroke="#6f4626" stroke-width="0.6" stroke-linecap="round" opacity="0.4"/>
+<line x1="2.31" y1="-33.64" x2="21.25" y2="-43.15" stroke="#6f4626" stroke-width="0.6" stroke-linecap="round" opacity="0.3"/>
+<line x1="2.31" y1="-40.48" x2="21.25" y2="-49.99" stroke="#6f4626" stroke-width="0.6" stroke-linecap="round" opacity="0.3"/>
+<line x1="0" y1="-45.4" x2="0" y2="-68.6" stroke="#6f4626" stroke-width="1.4" stroke-linecap="round"/>
+<polygon points="-11.5,-56.18 -7,-53.93 -7,-72 -11.5,-74.25" fill="#c8b890" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round"/>
+<polygon points="-7,-53.93 -2.5,-56.18 -2.5,-74.25 -7,-72" fill="#8f5a30" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round"/>
+<polygon points="-11.5,-74.25 -7,-72 -2.5,-74.25 -7,-76.5" fill="#6f4626" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round"/>
+<line x1="-20.79" y1="-28.49" x2="-28.79" y2="-32.49" stroke="#6f4626" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="-20.79" y1="-21.49" x2="-28.79" y2="-32.49" stroke="#6f4626" stroke-width="1" stroke-linecap="round"/>
+<line x1="-27.2" y1="-31.69" x2="-27.2" y2="-25.69" stroke="#5a4a2e" stroke-width="0.8" stroke-linecap="round"/>
+<line x1="-30.38" y1="-33.29" x2="-30.38" y2="-27.29" stroke="#5a4a2e" stroke-width="0.8" stroke-linecap="round"/>
+<polygon points="-31.18,-27.29 -26.4,-24.89 -26.4,-18.89 -31.18,-21.29" fill="#6f4626" stroke="#5a4a2e" stroke-width="1.2" stroke-linejoin="round"/>
+<circle cx="-28.79" cy="-22.09" r="1.8" fill="#c79a3b" stroke="none"/>
+        </g>
+
+        <!-- ink labels -->
+        <g font-family="Iowan Old Style, Palatino, Georgia, serif" font-size="11" fill="#5a4a2e" text-anchor="middle" font-style="italic">
+          <text x="380" y="186">Cottage</text>
+          <text x="310" y="228">Keep</text>
+          <text x="380" y="232">Great Hall</text>
+          <text x="450" y="228">Tavern</text>
+          <text x="380" y="263">Townhouse</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ============ PALETTE ============ -->
+  <p class="section-label">The contract palette — 11 fills</p>
+  <div class="palette-wrap">
+    <div class="panel palette">
+      <div class="swatches">
+        <div class="sw"><span class="chip" style="background:#f4e8cf"></span><span class="meta"><span class="role">Parchment ground</span><span class="hex">#f4e8cf</span></span></div>
+        <div class="sw"><span class="chip" style="background:#c8b890"></span><span class="meta"><span class="role">Wall lit (LEFT)</span><span class="hex">#c8b890</span></span></div>
+        <div class="sw"><span class="chip" style="background:#a89568"></span><span class="meta"><span class="role">Wall shade (RIGHT)</span><span class="hex">#a89568</span></span></div>
+        <div class="sw"><span class="chip" style="background:#d8ccab"></span><span class="meta"><span class="role">Wall pale</span><span class="hex">#d8ccab</span></span></div>
+        <div class="sw"><span class="chip" style="background:#b5743f"></span><span class="meta"><span class="role">Roof lit (LEFT)</span><span class="hex">#b5743f</span></span></div>
+        <div class="sw"><span class="chip" style="background:#8f5a30"></span><span class="meta"><span class="role">Roof shade (RIGHT)</span><span class="hex">#8f5a30</span></span></div>
+        <div class="sw"><span class="chip" style="background:#6f4626"></span><span class="meta"><span class="role">Roof ridge / trim</span><span class="hex">#6f4626</span></span></div>
+        <div class="sw"><span class="chip" style="background:#4a3a22"></span><span class="meta"><span class="role">Door / window dark</span><span class="hex">#4a3a22</span></span></div>
+        <div class="sw"><span class="chip" style="background:#e6b15a"></span><span class="meta"><span class="role">Warm window glow</span><span class="hex">#e6b15a</span></span></div>
+        <div class="sw"><span class="chip" style="background:#c79a3b"></span><span class="meta"><span class="role">Gold accent</span><span class="hex">#c79a3b</span></span></div>
+        <div class="sw"><span class="chip ink-border" style="background:#5a4a2e"></span><span class="meta"><span class="role">Ink (outline)</span><span class="hex">#5a4a2e</span></span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
