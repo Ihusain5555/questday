@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowLeft } from '@phosphor-icons/react'
 import { BUILDING_SVG, type BuildingKind } from './townBuildings'
+import { BIOME_GROUND, type BiomeKey } from './biomeDecor'
 
 // ---------------------------------------------------------------------------
 // QuestDay v1.10 — Level-1 TOWN view (zoom into a settled town). This is the
@@ -22,6 +23,9 @@ const TILE_H = 50
 // Each building is drawn slightly smaller than its plot so grass shows around it
 // (buildings are ~tile-sized; without this they pack shoulder-to-shoulder).
 const BUILDING_SCALE = 0.72
+// Ground decorations are drawn at preview size; this keeps even the tallest ones
+// (trees/pines) safely UNDER the houses so they read as ground cover, not giants.
+const DECORATION_SCALE = 0.45
 // Organic placement: nudge each building off its exact grid centre + vary its size
 // a touch, so the town reads as a natural village, not a grid. Deterministic hash
 // (no Math.random) keyed on the plot → reproducible, so ↩ Restore stays exact.
@@ -66,56 +70,71 @@ const KIND_CYCLE: BuildingKind[] = [
 const kindFor = (i: number): BuildingKind =>
   i === 0 ? 'hall' : KIND_CYCLE[(i - 1) % KIND_CYCLE.length]
 
-/** One real inked building (approved hand-authored SVG, drawn around its own
- *  local origin = tile centre) dropped onto tile (gx,gy). The SVG already carries
- *  its own iso footprint, shading and drop-shadow, so we just translate it into
- *  place; the caller depth-sorts so nearer buildings paint over farther ones.
- *  NOTE: positioning lives on the OUTER <g>; the rise animation lives on the inner
- *  `.town-bldg` <g>. They must be separate elements — the animation sets `transform`
- *  (translateY), and a CSS transform overrides an SVG transform attribute, so putting
- *  both on one element would wipe the positioning and stack every building at 0,0. */
-function Building({ gx, gy, kind, idx }: { gx: number; gy: number; kind: BuildingKind; idx: number }): JSX.Element {
-  const { x: cx, y: cy } = iso(gx, gy)
-  const isHall = gx === 0 && gy === 0 // landmark stays anchored, dead centre
+// A placed thing on the town floor — either a building or a decoration — carrying
+// its final screen position so buildings + decorations can be depth-sorted together.
+type Placed =
+  | { sort: number; x: number; y: number; sc: number; kind: 'bldg'; bk: BuildingKind; idx: number; key: string }
+  | { sort: number; x: number; y: number; sc: number; kind: 'deco'; svg: string; key: string }
+
+/** Building placement on tile (gx,gy): organic jitter + size variation; the centre
+ *  Hall stays anchored. Returns final position/scale (drawn around local origin). */
+function buildingAt(gx: number, gy: number, idx: number): Placed {
+  const { x, y } = iso(gx, gy)
+  const isHall = gx === 0 && gy === 0
   const jx = isHall ? 0 : (hash(gx, gy) * 2 - 1) * JITTER_X
   const jy = isHall ? 0 : (hash(gx * 7 + 1, gy * 13 + 5) * 2 - 1) * JITTER_Y
   const sc = isHall ? BUILDING_SCALE : BUILDING_SCALE * (0.9 + hash(gx * 3 + 2, gy * 5 + 9) * 0.2)
-  return (
-    <g transform={`translate(${(cx + jx).toFixed(1)}, ${(cy + jy).toFixed(1)}) scale(${sc.toFixed(3)})`}>
-      <g
-        className="town-bldg"
-        style={{ animationDelay: `${(idx * 0.04).toFixed(2)}s` }}
-        dangerouslySetInnerHTML={{ __html: BUILDING_SVG[kind] }}
-      />
-    </g>
-  )
+  return { sort: y + jy, x: x + jx, y: y + jy, sc, kind: 'bldg', bk: kindFor(idx), idx, key: `b${gx},${gy}` }
 }
 
-/** The soft town ground diamond + a faint tile grid, drawn once behind the buildings. */
-function Ground(): JSX.Element {
+/** Scatter biome decorations on the town's EMPTY tiles (0..2 per tile), themed by
+ *  biome, deterministic (no Math.random) so it never reshuffles → ↩ Restore exact.
+ *  Earlier decorations in the set (ground cover) are favoured over the bigger ones. */
+function decorationsFor(biome: BiomeKey, occupied: Set<string>): Placed[] {
+  const decos = BIOME_GROUND[biome].decorations
+  const out: Placed[] = []
+  for (let gx = -3; gx <= 3; gx++) {
+    for (let gy = -3; gy <= 3; gy++) {
+      if (occupied.has(`${gx},${gy}`)) continue
+      const n = Math.floor(hash(gx * 5 + 3, gy * 7 + 2) * 2.6) // 0..2
+      const { x, y } = iso(gx, gy)
+      for (let k = 0; k < n; k++) {
+        const ox = (hash(gx * 3 + k, gy * 2 + k * 9) * 2 - 1) * 30
+        const oy = (hash(gx * 9 + k * 3, gy * 4 + k) * 2 - 1) * 14
+        const wi = Math.min(Math.floor(Math.pow(hash(gx + k * 13, gy + k * 7), 1.6) * decos.length), decos.length - 1)
+        const sc = DECORATION_SCALE * (0.8 + hash(gx * 2 + k, gy * 3 + k) * 0.5)
+        out.push({ sort: y + oy, x: x + ox, y: y + oy, sc, kind: 'deco', svg: decos[wi], key: `d${gx},${gy},${k}` })
+      }
+    }
+  }
+  return out
+}
+
+/** The town ground diamond, tinted to the biome + a few soft accent patches for
+ *  texture (clipped to the diamond). The scattered decorations sit on top of this. */
+function Ground({ biome }: { biome: BiomeKey }): JSX.Element {
+  const g = BIOME_GROUND[biome]
   const c = (gx: number, gy: number): string => {
     const p = iso(gx, gy)
     return `${p.x},${p.y}`
   }
-  const lines: JSX.Element[] = []
-  for (let g = 0; g <= 7; g++) {
-    const gi = g - 3.5
-    const a1 = iso(gi, -3.5)
-    const a2 = iso(gi, 3.5)
-    const b1 = iso(-3.5, gi)
-    const b2 = iso(3.5, gi)
-    lines.push(<line key={`x${g}`} x1={a1.x} y1={a1.y} x2={a2.x} y2={a2.y} stroke="#bcc7a3" strokeWidth={1} opacity={0.5} />)
-    lines.push(<line key={`y${g}`} x1={b1.x} y1={b1.y} x2={b2.x} y2={b2.y} stroke="#bcc7a3" strokeWidth={1} opacity={0.5} />)
+  const dpts = `${c(-3.5, -3.5)} ${c(3.5, -3.5)} ${c(3.5, 3.5)} ${c(-3.5, 3.5)}`
+  const patches: JSX.Element[] = []
+  for (let i = 0; i < 8; i++) {
+    const r = hash(i * 11 + 1, i * 7 + 3)
+    const px = OX + (r - 0.5) * TILE_W * 5
+    const py = OY + (hash(i * 3 + 2, i * 5 + 1) - 0.5) * TILE_H * 5
+    patches.push(<ellipse key={i} cx={px} cy={py} rx={30 + r * 40} ry={14 + r * 18} fill={g.accent} opacity={0.5} />)
   }
   return (
     <g>
-      <polygon
-        points={`${c(-3.5, -3.5)} ${c(3.5, -3.5)} ${c(3.5, 3.5)} ${c(-3.5, 3.5)}`}
-        fill="#d9e3c4"
-        stroke="#a9b88a"
-        strokeWidth={2}
-      />
-      {lines}
+      <defs>
+        <clipPath id="town-ground-clip">
+          <polygon points={dpts} />
+        </clipPath>
+      </defs>
+      <polygon points={dpts} fill={g.base} stroke="#a9b88a" strokeWidth={2} />
+      <g clipPath="url(#town-ground-clip)">{patches}</g>
     </g>
   )
 }
@@ -130,11 +149,13 @@ export function TownView({
   townName,
   stageName,
   stageIndex,
+  biome,
   onExit
 }: {
   townName: string
   stageName: string
   stageIndex: number
+  biome: BiomeKey
   onExit: () => void
 }): JSX.Element {
   useEffect(() => {
@@ -146,11 +167,14 @@ export function TownView({
   }, [onExit])
 
   const count = COUNT_BY_STAGE[Math.max(0, Math.min(stageIndex, COUNT_BY_STAGE.length - 1))]
-  // Reveal the first `count` plots (center-out), then depth-sort back-to-front
-  // (by gx+gy) so nearer buildings correctly paint over farther ones. The
-  // animation delay uses the center-out index so the town rises from the middle.
-  const shown = PLOTS.slice(0, count).map(([gx, gy], i) => ({ gx, gy, kind: kindFor(i), idx: i }))
-  shown.sort((m, n) => m.gx + m.gy - (n.gx + n.gy) || m.gx - n.gx)
+  const plots = PLOTS.slice(0, count)
+  const occupied = new Set(plots.map(([gx, gy]) => `${gx},${gy}`))
+  // Buildings + biome decorations, merged and depth-sorted back-to-front by screen-y
+  // so nearer things (lower on screen) paint over farther ones.
+  const items: Placed[] = [
+    ...plots.map(([gx, gy], i) => buildingAt(gx, gy, i)),
+    ...decorationsFor(biome, occupied)
+  ].sort((m, n) => m.sort - n.sort)
 
   return (
     <motion.div
@@ -174,10 +198,25 @@ export function TownView({
         role="img"
         aria-label={`${townName}, a ${stageName} — ${count} buildings`}
       >
-        <Ground />
-        {shown.map((s) => (
-          <Building key={`${s.gx},${s.gy}`} gx={s.gx} gy={s.gy} kind={s.kind} idx={s.idx} />
-        ))}
+        <Ground biome={biome} />
+        {items.map((it) =>
+          it.kind === 'bldg' ? (
+            <g key={it.key} transform={`translate(${it.x.toFixed(1)}, ${it.y.toFixed(1)}) scale(${it.sc.toFixed(3)})`}>
+              <g
+                className="town-bldg"
+                style={{ animationDelay: `${(it.idx * 0.04).toFixed(2)}s` }}
+                dangerouslySetInnerHTML={{ __html: BUILDING_SVG[it.bk] }}
+              />
+            </g>
+          ) : (
+            <g
+              key={it.key}
+              className="town-deco"
+              transform={`translate(${it.x.toFixed(1)}, ${it.y.toFixed(1)}) scale(${it.sc.toFixed(3)})`}
+              dangerouslySetInnerHTML={{ __html: it.svg }}
+            />
+          )
+        )}
       </svg>
     </motion.div>
   )

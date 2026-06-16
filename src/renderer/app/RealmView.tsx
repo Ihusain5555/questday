@@ -10,6 +10,7 @@ import type { ChronicleRecord } from '@shared/types'
 import { MapTrifold, Flag, Planet, Leaf, Scroll, Feather, Sparkle, X, type Icon } from '@phosphor-icons/react'
 import { CivilizationPanel } from './CivilizationPanel'
 import { TownView } from './TownView'
+import { REGION_BIOME } from './biomeDecor'
 import { MapIconSymbols } from './storybookMapIcons'
 
 // The reward artifact: a fantasy realm charted YOUR way. Each completed quest
@@ -826,6 +827,7 @@ export function RealmView(): JSX.Element {
                     townName={region?.name ?? 'Town'}
                     stageName={civ.stageName}
                     stageIndex={civ.stageIndex}
+                    biome={REGION_BIOME[enteredTown] ?? 'meadow'}
                     onExit={() => setEnteredTown(null)}
                   />
                 )
