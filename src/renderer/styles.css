@@ -4618,10 +4618,44 @@ code {
 }
 .capacity-track {
   flex: 1;
-  height: 6px;
+  height: 8px;
   border-radius: var(--r-pill);
   background: var(--panel-3);
   overflow: hidden;
+  /* v1.12: a segment per quest (sized by its time) instead of one fill. The track
+     background shows through as the remaining free time; gaps form gentle dividers. */
+  display: flex;
+  gap: 1.5px;
+  position: relative;
+}
+/* One segment per quest, width ∝ its time estimate. Rotating calm tints; hover lifts. */
+.capacity-seg {
+  height: 100%;
+  min-width: 2px;
+  transition: width 0.4s var(--ease-spring), filter 0.12s ease;
+}
+.capacity-seg:hover {
+  filter: brightness(1.18);
+}
+.capacity-seg.s0 { background: linear-gradient(180deg, #6fcaa3, #4fae86); }
+.capacity-seg.s1 { background: linear-gradient(180deg, #d8b25e, #c39a44); }
+.capacity-seg.s2 { background: linear-gradient(180deg, #7fb9d8, #5f98ba); }
+.capacity-seg.s3 { background: linear-gradient(180deg, #c79bd0, #a87fb4); }
+.capacity-seg.s4 { background: linear-gradient(180deg, #d89a86, #ba7d6b); }
+/* Over-capacity: a soft gold hatch over the spill-over region — a calm heads-up, never red. */
+.capacity-over {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    45deg,
+    rgb(var(--gold-rgb) / 0.45),
+    rgb(var(--gold-rgb) / 0.45) 4px,
+    rgb(var(--gold-rgb) / 0.18) 4px,
+    rgb(var(--gold-rgb) / 0.18) 8px
+  );
 }
 .capacity-fill {
   height: 100%;

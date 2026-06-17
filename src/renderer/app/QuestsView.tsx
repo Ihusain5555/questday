@@ -268,9 +268,23 @@ export function QuestsView(): JSX.Element {
               </div>
 
               {usedMin > 0 && (
-                <div className="capacity" title="Planned time vs this frame's length — just a calm heads-up, never a limit">
+                <div className="capacity" title="Each quest's planned time, as a slice of this frame — just a calm heads-up, never a limit">
                   <div className={`capacity-track ${capPct > 0.9 ? 'full' : ''}`}>
-                    <div className="capacity-fill" style={{ width: `${Math.min(capPct, 1) * 100}%` }} />
+                    {[...activeInFrame]
+                      .sort((a, b) => a.sortOrder - b.sortOrder)
+                      .map((q, i) => (
+                        <div
+                          key={q.id}
+                          className={`capacity-seg s${i % 5}`}
+                          style={{
+                            width: `${(q.timeEstimateMinutes / Math.max(frameMin, usedMin)) * 100}%`
+                          }}
+                          title={`${q.title} · ${formatMinutes(q.timeEstimateMinutes)}`}
+                        />
+                      ))}
+                    {usedMin > frameMin && (
+                      <div className="capacity-over" style={{ left: `${(frameMin / usedMin) * 100}%` }} />
+                    )}
                   </div>
                   <span className="capacity-label">
                     {formatMinutes(usedMin)} planned · {Math.round(capPct * 100)}% of this frame
