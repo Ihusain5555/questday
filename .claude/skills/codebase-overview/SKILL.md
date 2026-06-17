@@ -54,6 +54,18 @@ ONLY writer of the data file. This is why edits in one window appear live in oth
 - `eisenhower.ts` — v1.6 read-only urgent×important classifier over existing fields
   (dueAt=urgent within `balance.eisenhower.urgentWithinHours`; skippability/priority=
   important). Triage only (Do/Schedule/Minimize/Later) — never mutates quests.
+- `prayerTimes.ts` — **v1.12 on-device prayer-time math (PURE, ZERO deps, NO network).**
+  Standard PrayTimes astronomy; method table (ISNA/MWL/Egyptian/Karachi/Umm al-Qura) + Asr
+  Standard/Hanafi. Caller passes `tzHours` (use `localTzHours(date)` — derives the DST-correct
+  system offset), so the bundled `src/shared/data/cities.ts` (~140 cities) needs only lat/lon.
+  `computePrayerDay()` returns the 5 prayer times + `due` (window-close per prayer; Isha = Islamic
+  midnight). Verified against NYC-solstice/equator references. **NEVER reaches rewards/civilization
+  → ↩ Restore exact.** Prayer feature wiring lives in `store.ts`: `FAITH_PRAYER_TITLES`,
+  `prayerDayInfo()` (raw time for frame placement + due), `frameForTime()`, `addFaithChecklist`
+  (seeds 5 timed quests, each in the frame containing its time, 10 min → 2 XP), `setPrayerSettings`
+  (persists + restamps existing quests on a city/method change), and the daily `dueAt` restamp in
+  the renew path (gated to all-7-day recurring quests so a user quest named "Asr" is never re-timed).
+  Settings UI = `PrayerSettings` in `DataView.tsx`. Driver: `scripts/pw-prayer.mjs` (12/12).
 
 ## Feature details
 - **Arcade** (`app/arcade/`): a **10-game brain-training set** (v1.8.3), high-score only — NO

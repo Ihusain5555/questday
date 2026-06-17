@@ -1,13 +1,34 @@
 # HANDOFF — QuestDay (resume kit)
-_Updated 2026-06-17 · branch `feature/civilization-world-map` · HEAD `6c4acf6` · NOT pushed._
+_Updated 2026-06-17 · branch `feature/civilization-world-map` · v1.12.0 · NOT pushed (until the release push)._
 
-## ▶ ACTIVE — RESUME HERE: Request A brainstorming, parked at 3 micro-confirms before the spec
+## ▶ ACTIVE — RESUME HERE: v1.12 shipped both new features; cutting the macOS installer
 
-Two new requests came after the batch (A = prayer-time Salah, B = capacity-bar markers). **Request A
-is mid-brainstorming** (using the `superpowers:brainstorming` skill). Interview done + design presented;
-**next action = get the 3 micro-confirms below, then WRITE THE SPEC** to
-`docs/superpowers/specs/2026-06-17-prayer-times-salah-design.md`, self-review, user-review, then invoke
-`writing-plans`. Do NOT code until the spec is approved. (Task list #1–#6 tracks this flow.)
+Both 2026-06-17 requests are **BUILT, audit-hardened, verified, and committed:**
+- **Request A — prayer-time Salah** (`e1bbe86` foundation + `f57709d` UI/store/audit-fixes): 5 separate
+  daily prayer quests, each due at its window-close time for the user's city (Isha = Islamic midnight),
+  on-device PrayTimes math (no API), city-list + manual coords, ISNA default + method/Asr picker,
+  `setPrayerSettings` restamps on change, each prayer placed in its real time frame, 10 min → 2 XP.
+  `pw-prayer.mjs` 12/12, `pw:rewards` 7/7 (↩ Restore exact).
+- **Request B — segmented capacity bar** (`f9449f8`): each quest a time-proportional segment + soft
+  over-capacity hatch. Pure-derived, no schema. `pw-capacity.mjs` 4/4. Mockup `mockups/capacity-segments.html`.
+- **Adversarial multi-agent audit** (workflow `wf_629ff235`, 39 agents): 25 confirmed / 7 refuted; the
+  9 actionable issues fixed in `f57709d`. Decisions DECIDED this round: add settings block · Isha =
+  Islamic midnight · keep 2 XP · Request B = Variant A.
+
+**Next action: cut the macOS installer for v1.12** — bump done (1.12.0); push branch + tag `v1.12.0`
+(fires `build-macos.yml`); `gh run watch` → `gh run download` → `gh release create v1.12.0 <dmg>`
+(see memory [[mac-build-pipeline]] for the exact clean flow).
+
+**Deferred enhancement (flagged, NOT built):** widget "due-soon" promotion — the current-quest scorer
+ignores `dueAt`, so a prayer doesn't auto-rise as its time nears (it surfaces within its frame by score).
+This matches the user's locked "due-times only" scope; adding a bounded due-soon urgency boost in
+`scoreQuest`/`balance.ts` is an available future option. Faith copy still wants Islamic-Center sign-off.
+
+---
+
+## (historical) Request A brainstorming — resolved
+The 3 micro-confirms below were answered (Isha=Islamic midnight, keep 2 XP, leave old quest untouched);
+the spec `docs/superpowers/specs/2026-06-17-prayer-times-salah-design.md` is written + implemented.
 
 ### Request A — Salah quests driven by REAL prayer times (supersedes the Salah half of `b0510b5`)
 **What the user wants:** drop the single "Salah (daily prayers)" subtask-checklist. Instead, **five
