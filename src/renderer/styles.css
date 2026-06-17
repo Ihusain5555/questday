@@ -4001,6 +4001,38 @@ code {
   min-width: 0;
 }
 
+/* Salah & Qur'an checklist setup card (opt-in faith feature) — calm, warm,
+   gold-accented; never loud. Mirrors the .card base, adds a gold left edge. */
+.faith-card {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  border-left: 3px solid var(--gold);
+  margin-bottom: 16px;
+}
+.faith-card-icon {
+  color: var(--gold);
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+.faith-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.faith-card-body strong {
+  font-size: 1.02rem;
+}
+.faith-card-body p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+  max-width: 62ch;
+}
+.faith-card-body .primary {
+  align-self: flex-start;
+}
+
 .library-rail {
   width: 308px;
   flex: 0 0 308px;

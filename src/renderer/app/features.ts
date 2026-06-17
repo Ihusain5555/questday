@@ -51,6 +51,18 @@ export const TOGGLEABLE_FEATURES: ToggleableFeature[] = [
     icon: 'Books',
     label: 'Quest Library',
     blurb: 'Save reusable quest templates (your work-day / gym-day things) and tap or drag them into today.'
+  },
+  {
+    // A faith feature — OFF by default (seeded false in defaults.ts; the generic
+    // "missing key = on" rule is deliberately overridden by that seed) so non-Muslim
+    // users never see it. Like questLibrary it's a SUB-SECTION, not a tab: a calm
+    // setup card inside the Quests tab, read via isFeatureEnabled — App.tsx's tab
+    // filter never matches this id.
+    id: 'faithChecklist',
+    icon: 'Mosque',
+    label: 'Salah & Qur’an checklist',
+    blurb:
+      'An optional, private daily checklist for the five prayers and Qur’an reading. You only ever tick what you’ve done — nothing is ever counted against you. Off by default.'
   }
 ]
 

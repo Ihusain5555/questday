@@ -103,6 +103,12 @@ function buildSubTasks(items: { id?: string; title: string; timeEstimateMinutes?
     }))
 }
 
+// Quest titles seeded by the Salah & Qur'an checklist preset (opt-in faith
+// feature). Exported so the Quests setup card can detect "already added" and so
+// the seed stays idempotent — tapping the button twice never duplicates.
+export const FAITH_SALAH_TITLE = 'Salah (daily prayers)'
+export const FAITH_QURAN_TITLE = 'Read Qur’an'
+
 interface AppStore {
   db: Database | null
   loading: boolean
@@ -141,6 +147,13 @@ interface AppStore {
   deleteTemplate: (id: string) => Promise<void>
   /** Copy an existing quest's blueprint into the Library. */
   saveQuestAsTemplate: (questId: string) => Promise<void>
+
+  // ---- Salah & Qur'an checklist preset (opt-in faith feature) ----
+  /** Seed the recurring daily Salah checklist + Qur'an quest into today's quests.
+   *  Idempotent by title (safe to tap twice). Built on the existing recurring-quest
+   *  mechanism — no schema; the quests are never read by reward/civilization math,
+   *  so ↩ Restore stays exact. Gains-only: a missed prayer is just an unticked box. */
+  addFaithChecklist: () => Promise<void>
 
   // ---- Daily rollover (§6) ----
   /** Process a transition into today (carry over + flag past-due). Idempotent per day. */
@@ -385,6 +398,70 @@ export const useStore = create<AppStore>((set, get) => ({
       createdAt: new Date().toISOString()
     }
     await get().save({ questTemplates: [...db.questTemplates, template] })
+  },
+
+  // ---- Salah & Qur'an checklist preset (opt-in faith feature) --------------
+  // A one-tap seed of recurring DAILY quests built on the existing recurring-quest
+  // mechanism (recurDays = all 7 days). No schema; just ordinary quests, so the
+  // reward/civilization engines never special-case them and ↩ Restore stays exact.
+  // Gentle by design: Easy/Medium/Low so it earns only a small XP and never outranks
+  // real tasks for the widget's "current quest". Idempotent by title.
+  addFaithChecklist: async () => {
+    const db = get().db
+    if (!db) return
+    const frameId = [...db.timeFrames].sort((a, b) => a.order - b.order)[0]?.id
+    if (!frameId) return
+    const everyDay = [0, 1, 2, 3, 4, 5, 6]
+    const createdAt = new Date().toISOString()
+    let order = db.quests.reduce((m, q) => Math.max(m, q.sortOrder), -1)
+    const has = (title: string): boolean => db.quests.some((q) => q.title === title)
+    const next: Quest[] = []
+    // The five prayers as ONE checklist quest — tick each as you pray it.
+    if (!has(FAITH_SALAH_TITLE)) {
+      next.push({
+        id: uid(),
+        title: FAITH_SALAH_TITLE,
+        subTasks: ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].map((title, i) => ({
+          id: uid(),
+          title,
+          order: i,
+          done: false
+        })),
+        difficulty: 'Easy',
+        importance: 'Medium',
+        urgency: 'Low',
+        timeEstimateMinutes: 10,
+        dueAt: null,
+        timeFrameId: frameId,
+        status: 'active',
+        createdAt,
+        completedAt: null,
+        sortOrder: ++order,
+        recurDays: everyDay
+      })
+    }
+    // Qur'an reading as its own optional daily quest (kept separate so neither
+    // forces the other — "keep Qur'an optional").
+    if (!has(FAITH_QURAN_TITLE)) {
+      next.push({
+        id: uid(),
+        title: FAITH_QURAN_TITLE,
+        subTasks: [],
+        difficulty: 'Easy',
+        importance: 'Medium',
+        urgency: 'Low',
+        timeEstimateMinutes: 10,
+        dueAt: null,
+        timeFrameId: frameId,
+        status: 'active',
+        createdAt,
+        completedAt: null,
+        sortOrder: ++order,
+        recurDays: everyDay
+      })
+    }
+    if (next.length === 0) return
+    await get().save({ quests: [...db.quests, ...next] })
   },
 
   /** Move a quest into another time frame (drag-and-drop); lands at the end. */

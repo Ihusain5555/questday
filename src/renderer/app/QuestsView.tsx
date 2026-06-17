@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Quest, QuestTemplate } from '@shared/types'
-import { useStore, type QuestInput } from '../state/store'
+import { useStore, type QuestInput, FAITH_SALAH_TITLE, FAITH_QURAN_TITLE } from '../state/store'
 import { useNow } from '../hooks/useNow'
 import { QuestForm, type QuestFormInitial } from './QuestForm'
 import { QuestLibraryRail } from './QuestLibraryRail'
@@ -19,7 +19,8 @@ import {
   Trophy,
   DotsSixVertical,
   FloppyDisk,
-  Copy
+  Copy,
+  Mosque
 } from '@phosphor-icons/react'
 
 export function QuestsView(): JSX.Element {
@@ -37,7 +38,8 @@ export function QuestsView(): JSX.Element {
     createTemplate,
     updateTemplate,
     deleteTemplate,
-    saveQuestAsTemplate
+    saveQuestAsTemplate,
+    addFaithChecklist
   } = useStore()
   const now = useNow(20000)
   const [showForm, setShowForm] = useState(false)
@@ -60,6 +62,12 @@ export function QuestsView(): JSX.Element {
 
   const frames = [...db.timeFrames].sort((a, b) => a.order - b.order)
   const libraryOn = isFeatureEnabled(db.settings.enabledFeatures, 'questLibrary')
+  // Salah & Qur'an checklist (opt-in, off by default). When on, a calm setup card
+  // sits atop the Quests tab; once the preset quests exist it flips to a quiet note.
+  const faithOn = isFeatureEnabled(db.settings.enabledFeatures, 'faithChecklist')
+  const faithAdded = db.quests.some(
+    (q) => q.title === FAITH_SALAH_TITLE || q.title === FAITH_QURAN_TITLE
+  )
 
   const openNew = () => {
     setEditing(null)
@@ -136,6 +144,33 @@ export function QuestsView(): JSX.Element {
             + New quest
           </button>
         </div>
+
+        {faithOn && (
+          <div className="card faith-card">
+            <div className="faith-card-icon">
+              <Mosque size={24} weight="fill" />
+            </div>
+            <div className="faith-card-body">
+              {faithAdded ? (
+                <>
+                  <strong>Salah &amp; Qur’an checklist</strong>
+                  <p>Added. It returns each day, ready and unticked.</p>
+                </>
+              ) : (
+                <>
+                  <strong>Your daily Salah &amp; Qur’an checklist</strong>
+                  <p>
+                    Add a gentle daily rhythm to your quests. Tick each prayer as you pray it; a day
+                    you miss one simply stays unticked — never a mark against you.
+                  </p>
+                  <button className="primary" onClick={() => void addFaithChecklist()}>
+                    Add to my quests
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
         {frames.map((frame) => {
           // Active first (manual order), then completed (latest win first — a

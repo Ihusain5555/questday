@@ -54,7 +54,11 @@ export function createDefaultDatabase(): Database {
       widgetExpanded: false,
       launchOnLogin: false,
       focusPreset: 'pomodoro',
-      enabledFeatures: { focus: true, matrix: true },
+      // faithChecklist seeded false: a faith feature must be OFF until opted in
+      // (the generic "missing key = on" rule is deliberately overridden by this
+      // seed, which migrate() merges fresh-first so existing saves inherit it too)
+      // so non-Muslim users never see it.
+      enabledFeatures: { focus: true, matrix: true, faithChecklist: false },
       realmChronicle: []
     },
     townLayouts: {},

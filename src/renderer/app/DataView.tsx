@@ -13,12 +13,13 @@ import {
   Compass,
   MapTrifold,
   Books,
+  Mosque,
   type Icon
 } from '@phosphor-icons/react'
 
 /** Feature icon name (from the registry) -> Phosphor component, mirroring the
  *  tab icons in App.tsx so the toggle list matches the tabs. */
-const FEATURE_ICON: Record<string, Icon> = { Timer, Compass, MapTrifold, Books }
+const FEATURE_ICON: Record<string, Icon> = { Timer, Compass, MapTrifold, Books, Mosque }
 
 /**
  * Data & backup (§10). Auto-backups run quietly in the background; here the user
