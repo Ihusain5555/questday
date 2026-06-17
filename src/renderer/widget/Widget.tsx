@@ -6,6 +6,7 @@ import {
   activeTimeFrame,
   rankCandidates
 } from '@shared/engine/selectCurrentQuest'
+import { ymd } from '@shared/engine/rollover'
 import { WidgetList } from './WidgetList'
 import { CompletionCelebration } from '../components/CompletionCelebration'
 import { ActiveModeToasts } from '../components/ActiveModeToasts'
@@ -13,6 +14,22 @@ import { PlayerBar } from '../components/PlayerBar'
 import { formatMinutes } from '@shared/format'
 import { CaretRight, CaretDown, GearSix, X, Check, SkipForward } from '@phosphor-icons/react'
 import { motion, MotionConfig } from 'framer-motion'
+
+/**
+ * Whether to show the warm "resting / welcome back" line: NO completion yet today
+ * AND the last win was 2+ calendar days ago (or never). Derived purely from
+ * player.lastCompletionDate — no stored state, and the user is never shown a
+ * day-count. Gains-only: it greets a return, never marks an absence.
+ */
+function isRealmResting(lastCompletionDate: string | null, now: Date): boolean {
+  if (lastCompletionDate === ymd(now)) return false // already a win today
+  if (!lastCompletionDate) return true // brand new — the realm is quietly resting
+  const [y, m, d] = lastCompletionDate.split('-').map(Number)
+  const last = new Date(y, m - 1, d)
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const gapDays = Math.round((today.getTime() - last.getTime()) / 86400000)
+  return gapDays >= 2
+}
 
 /**
  * Always-on-top widget (§9). Live-updates via the cross-window store sync and a
@@ -30,6 +47,8 @@ export function Widget(): JSX.Element {
   const expanded = db?.settings.widgetExpanded ?? false
   const frame = db ? activeTimeFrame(db.timeFrames, now) : null
   const current = db ? selectCurrentQuest(db.quests, db.timeFrames, now) : null
+  // Resting / welcome-back greeting on a genuine return (see isRealmResting).
+  const resting = db ? isRealmResting(db.player.lastCompletionDate, now) : false
 
   // "Not now" deferrals are session-only (this window's memory, never persisted,
   // never a penalty). The immediate sub-task is the first not-done step that
@@ -85,6 +104,11 @@ export function Widget(): JSX.Element {
       </div>
 
       <div className="widget-body-content">
+        {!loading && resting && (
+          <div className="widget-resting">
+            <span className="wr-moon">🌙</span> Welcome back — your realm’s been resting. No rush.
+          </div>
+        )}
         {loading ? (
           <div className="empty">Loading…</div>
         ) : current ? (

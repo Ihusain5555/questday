@@ -2320,6 +2320,25 @@ select:focus {
   text-align: center;
 }
 
+/* Resting / welcome-back greeting on a genuine return — warm, gold, never a
+   reproach. Sits above the inviting next quest. */
+.widget-resting {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--w-gold-bright);
+  background: rgb(var(--gold-rgb) / 0.08);
+  border: 1px solid var(--w-card-border);
+  border-radius: 10px;
+}
+.widget-resting .wr-moon {
+  flex: 0 0 auto;
+}
+
 /* ---- Expanded widget list ---- */
 .wlist {
   margin-top: 14px;
