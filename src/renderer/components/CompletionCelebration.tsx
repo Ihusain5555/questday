@@ -4,6 +4,10 @@ import { Star, Ticket, Flag } from '@phosphor-icons/react'
 import { useStore } from '../state/store'
 import { CountUp } from './CountUp'
 import { FlameIcon } from './RewardIcons'
+import { BUILDING_SVG } from '../app/townBuildings'
+
+// viewBox framing the 'hall' building art (drawn around local origin) as a small badge.
+const HALL_VIEWBOX = '-64 -116 128 144'
 
 // On-brand confetti (Clay Fantasy palette — no slop purple).
 const PARTICLE_COLORS = ['#2fb380', '#3fe0a8', '#f5b938', '#ffcf5c', '#ff6b6b', '#b566d6']
@@ -25,7 +29,7 @@ export function CompletionCelebration(): JSX.Element {
     // A mutation is a jackpot moment — let it land a beat longer.
     const id = setTimeout(
       clearCelebration,
-      celebration.expedition ? DISMISS_MS + 1200 : DISMISS_MS
+      celebration.expedition || celebration.civ?.grewBuildings ? DISMISS_MS + 1200 : DISMISS_MS
     )
     return () => clearTimeout(id)
   }, [celebration, clearCelebration])
@@ -133,6 +137,54 @@ export function CompletionCelebration(): JSX.Element {
                   <Flag size={16} weight="fill" /> Expedition earned — chart a region in your Realm
                 </motion.div>
               )}
+
+              {celebration.civ?.grewBuildings ? (
+                <motion.div
+                  className="celebrate-civ-grew"
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.52, type: 'spring', stiffness: 280, damping: 12 }}
+                >
+                  <span className="celebrate-building-sprite" aria-hidden>
+                    <svg viewBox={HALL_VIEWBOX} role="img">
+                      <g dangerouslySetInnerHTML={{ __html: BUILDING_SVG['hall'] }} />
+                    </svg>
+                  </span>
+                  Your {celebration.civ.stageName} grew —{' '}
+                  {celebration.civ.grewBuildings === 1
+                    ? 'a new building rose'
+                    : `${celebration.civ.grewBuildings} new buildings rose`}
+                </motion.div>
+              ) : celebration.civ?.atCap ? (
+                <motion.div
+                  className="celebrate-civ-full"
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.52, type: 'spring', stiffness: 280, damping: 12 }}
+                >
+                  <span className="celebrate-building-sprite" aria-hidden>
+                    <svg viewBox={HALL_VIEWBOX} role="img">
+                      <g dangerouslySetInnerHTML={{ __html: BUILDING_SVG['hall'] }} />
+                    </svg>
+                  </span>
+                  Your {celebration.civ.stageName} stands in full glory
+                </motion.div>
+              ) : celebration.civ && celebration.civ.toNext != null ? (
+                <motion.div
+                  className="celebrate-civ-progress"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.52 }}
+                >
+                  <span className="civ-progress-bar" aria-hidden>
+                    <span
+                      className="civ-progress-fill"
+                      style={{ width: `${celebration.civ.percent}%` }}
+                    />
+                  </span>
+                  {celebration.civ.toNext} to your next building
+                </motion.div>
+              ) : null}
 
               {celebration.ticket && (
                 <motion.div

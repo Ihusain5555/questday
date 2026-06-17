@@ -1,15 +1,17 @@
-import { useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { ArrowLeft } from '@phosphor-icons/react'
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
+import { ArrowLeft, ArrowCounterClockwise, PencilSimple, Check } from '@phosphor-icons/react'
 import { BUILDING_SVG, type BuildingKind } from './townBuildings'
 import { BIOME_GROUND, type BiomeKey } from './biomeDecor'
+import type { PlotOverride, SwappableKind } from '@shared/types'
 
 // ---------------------------------------------------------------------------
 // QuestDay v1.10 — Level-1 TOWN view (zoom into a settled town). This is the
 // SPINE build: a real isometric town rendered from PLACEHOLDER blocks. Real
 // hand-drawn buildings drop into these exact grid slots once the art is chosen
-// (see the civilization-redesign notes). Everything here is DERIVED from the
-// world stage — nothing is persisted, so ↩ Restore stays exact. Approved look:
+// (see the civilization-redesign notes). The town is DERIVED from the world stage;
+// an OPTIONAL saved arrangement (townLayouts overrides) is applied read-only on top
+// and never affects the building COUNT, so ↩ Restore stays exact. Approved look:
 // mockups/town-view-mockup.html.
 // ---------------------------------------------------------------------------
 
@@ -84,10 +86,6 @@ const DIAMOND_PTS: string = (() => {
   return `${c(-3.5, -3.5)} ${c(3.5, -3.5)} ${c(3.5, 3.5)} ${c(-3.5, 3.5)}`
 })()
 
-// Placeholder building count per world-stage index (Camp..Empire). Mirrors the
-// approved mockup; a pure function of the civ stage (NOT stored).
-const COUNT_BY_STAGE = [2, 4, 7, 11, 16, 22, 30]
-
 // Build plots: a 7x7 grid ordered center-out (Chebyshev ring, then distance,
 // then angle) so the town grows organically from the middle. Deterministic (no
 // randomness) → reproducible and ↩Restore-safe when wired to completions later.
@@ -100,6 +98,57 @@ const PLOTS: Array<[number, number]> = (() => {
   return cells.sort((a, b) => cheb(a) - cheb(b) || euc(a) - euc(b) || ang(a) - ang(b))
 })()
 
+// Inverse of iso(): map an SVG point back to the nearest grid cell's PLOTS index, or
+// -1 if it falls outside the 7x7 grid. (u,v) undo the iso projection; round to a cell.
+function nearestCell(x: number, y: number): number {
+  const u = (x - OX) / (TILE_W / 2)
+  const v = (y - OY) / (TILE_H / 2)
+  const gx = Math.round((u + v) / 2)
+  const gy = Math.round((v - u) / 2)
+  if (gx < -3 || gx > 3 || gy < -3 || gy > 3) return -1
+  return PLOTS.findIndex(([px, py]) => px === gx && py === gy)
+}
+
+// Faint tile outlines drawn in Edit mode so the player can see the grid (static). Each
+// cell is a full iso diamond around its centre.
+const GRID_CELLS: string[] = PLOTS.map(([gx, gy]) => {
+  const c = iso(gx, gy)
+  return `${c.x},${(c.y - TILE_H / 2).toFixed(1)} ${(c.x + TILE_W / 2).toFixed(1)},${c.y} ${c.x},${(c.y + TILE_H / 2).toFixed(1)} ${(c.x - TILE_W / 2).toFixed(1)},${c.y}`
+})
+
+// Honor the OS "reduce motion" setting (the spring-back becomes instant).
+const prefersReducedMotion = (): boolean =>
+  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+// Ease an SVG <g>'s transform from (fromX,fromY) back to (toX,toY) over ~170ms — used to
+// gently return a building after an invalid drop. (CSS transitions can't animate the SVG
+// transform ATTRIBUTE, so we hand-tween it via rAF; reduced-motion skips straight to the end.)
+function springTransform(
+  gEl: SVGGElement,
+  fromX: number,
+  fromY: number,
+  toX: number,
+  toY: number,
+  sc: number
+): void {
+  const set = (x: number, y: number): void =>
+    gEl.setAttribute('transform', `translate(${x.toFixed(1)}, ${y.toFixed(1)}) scale(${sc.toFixed(3)})`)
+  if (prefersReducedMotion()) {
+    set(toX, toY)
+    return
+  }
+  const dur = 170
+  const t0 = performance.now()
+  const ease = (t: number): number => 1 - Math.pow(1 - t, 3)
+  const step = (now: number): void => {
+    const t = Math.min(1, (now - t0) / dur)
+    const k = ease(t)
+    set(fromX + (toX - fromX) * k, fromY + (toY - fromY) * k)
+    if (t < 1) requestAnimationFrame(step)
+  }
+  requestAnimationFrame(step)
+}
+
 // Which building stands on each plot. Plot 0 (the centre, the heart of the town)
 // is always the grand Hall; the rest cycle through the village kinds
 // deterministically — so the town is varied but fully reproducible, keeping
@@ -110,6 +159,50 @@ const KIND_CYCLE: BuildingKind[] = [
 ]
 const kindFor = (i: number): BuildingKind =>
   i === 0 ? 'hall' : KIND_CYCLE[(i - 1) % KIND_CYCLE.length]
+
+/** Resolve which PLOTS cell each building index occupies, applying the player's
+ *  saved MOVE overrides on top of the deterministic auto-layout. Returns
+ *  { idx → cell } pairs (cell = a PLOTS index). Rules (spec §6.4):
+ *   • The Hall (index 0) is pinned to cell 0 and is never moved.
+ *   • A building with a valid `cell` override claims that cell (lower index wins
+ *     on the rare collision; an invalid/already-taken target falls back to auto).
+ *   • Every other building keeps its OWN default cell (index i) when free, else
+ *     reflows to the next free center-out cell — so untouched buildings never
+ *     shift, and new buildings flow around whatever the player placed.
+ *  An override on an index ≥ count is naturally ignored (that building isn't drawn). */
+function resolveLayout(
+  count: number,
+  overrides: Record<number, PlotOverride>
+): Array<{ idx: number; cell: number }> {
+  const cellOf = new Map<number, number>() // buildingIndex → cell (PLOTS index)
+  const claimed = new Map<number, number>() // cell → buildingIndex
+  const claim = (cell: number, i: number): void => {
+    claimed.set(cell, i)
+    cellOf.set(i, cell)
+  }
+  const validCell = (c: number): boolean => Number.isInteger(c) && c >= 1 && c < PLOTS.length
+
+  claim(0, 0) // Hall: fixed landmark at the town centre.
+
+  // Pass A — overridden buildings claim their target cell.
+  for (let i = 1; i < count; i++) {
+    const c = overrides[i]?.cell
+    if (c != null && validCell(c) && !claimed.has(c)) claim(c, i)
+  }
+  // Pass B — every still-unplaced building takes its own cell if free, else the next
+  // free center-out cell (covers no-override buildings AND overrides whose target was
+  // invalid or already taken).
+  const nextFree = (): number => {
+    for (let c = 1; c < PLOTS.length; c++) if (!claimed.has(c)) return c
+    return -1
+  }
+  for (let i = 1; i < count; i++) {
+    if (cellOf.has(i)) continue
+    const cell = !claimed.has(i) ? i : nextFree()
+    if (cell >= 0) claim(cell, i)
+  }
+  return Array.from(cellOf, ([idx, cell]) => ({ idx, cell }))
+}
 
 // A placed thing on the town floor — either a building or a decoration — carrying
 // its final screen position so buildings + decorations can be depth-sorted together.
@@ -228,40 +321,283 @@ function Ground({ biome }: { biome: BiomeKey }): JSX.Element {
   )
 }
 
+// The 4 building kinds the player may swap to (the Hall is never swappable).
+const SWAP_KINDS: SwappableKind[] = ['keep', 'tavern', 'house', 'cottage']
+const KIND_LABEL: Record<SwappableKind, string> = {
+  keep: 'Keep',
+  tavern: 'Tavern',
+  house: 'House',
+  cottage: 'Cottage'
+}
+const clamp = (v: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, v))
+
+/** The "Change type" popover (Edit mode). Drawn IN SVG near the tapped building so it
+ *  scales crisply with the town and needs no pixel-coordinate conversion. The 4 kinds
+ *  use the real building art as icons; the current kind is highlighted. */
+function TownEditPopover({
+  x,
+  y,
+  current,
+  onPick
+}: {
+  x: number
+  y: number
+  current: BuildingKind
+  onPick: (k: SwappableKind) => void
+}): JSX.Element {
+  const W = 178
+  const H = 152
+  // Flip to whichever side has room; clamp fully inside the 760x460 canvas.
+  const px = clamp(x < 380 ? x + 46 : x - 46 - W, 6, 760 - W - 6)
+  const py = clamp(y - H / 2, 6, 460 - H - 6)
+  return (
+    <g className="town-pop" transform={`translate(${px.toFixed(1)}, ${py.toFixed(1)})`}>
+      <rect className="town-pop-bg" x={0} y={0} width={W} height={H} rx={13} />
+      <text className="town-pop-title" x={14} y={23}>
+        Change type
+      </text>
+      {SWAP_KINDS.map((k, i) => {
+        const bx = 12 + (i % 2) * 81
+        const by = 36 + Math.floor(i / 2) * 56
+        return (
+          <g
+            key={k}
+            className={`town-pop-btn${k === current ? ' on' : ''}`}
+            onClick={() => onPick(k)}
+          >
+            <rect className="town-pop-cell" x={bx} y={by} width={77} height={50} rx={9} />
+            <g
+              transform={`translate(${bx + 38.5}, ${by + 31}) scale(0.22)`}
+              dangerouslySetInnerHTML={{ __html: BUILDING_SVG[k] }}
+            />
+            <text className="town-pop-label" x={bx + 38.5} y={by + 46} textAnchor="middle">
+              {KIND_LABEL[k]}
+            </text>
+          </g>
+        )
+      })}
+    </g>
+  )
+}
+
 /**
  * The town overlay: a back bar + an isometric town of placeholder buildings
- * whose count grows with the world stage. `stageIndex` (0=Camp .. 6=Empire) is
- * a pure function of all-time completions, so the town reflects real progress
- * with nothing stored. Esc or the back button returns to the map.
+ * whose count grows with all-time XP (effort-weighted), passed in as `buildingCount`
+ * by the caller — a pure function of XP, so the town reflects real progress with
+ * nothing stored. Esc or the back button returns to the map. An optional Edit mode
+ * (when `onEditLayout` is wired) lets the player tap a building to swap its type.
  */
 export function TownView({
   townName,
   stageName,
-  stageIndex,
+  buildingCount,
+  overrides = {},
+  onEditLayout,
   biome,
   onExit
 }: {
   townName: string
   stageName: string
-  stageIndex: number
+  /** How many buildings to render — derived from all-time XP by the caller. */
+  buildingCount: number
+  /** The player's saved arrangement for this town: a sparse map of building index
+   *  → { cell?, kind? }. A SEALED layer applied read-only here — it NEVER affects the
+   *  XP-derived count above, so ↩ Restore stays exact. Default {} = the auto-layout. */
+  overrides?: Record<number, PlotOverride>
+  /** Persist a new arrangement for this town. When provided, Edit mode is available
+   *  (a tap-to-swap popover). Receives the FULL overrides map for the town. */
+  onEditLayout?: (overrides: Record<number, PlotOverride>) => void
   biome: BiomeKey
   onExit: () => void
 }): JSX.Element {
+  const [editing, setEditing] = useState(false)
+  const [picker, setPicker] = useState<{ idx: number; x: number; y: number } | null>(null)
+  const [confirming, setConfirming] = useState(false)
+  const canEdit = !!onEditLayout
+  const hasEdits = Object.keys(overrides).length > 0
+  const reduce = useReducedMotion()
+
+  // Esc steps back out one level at a time: close the confirm, then the picker, then
+  // leave Edit mode, then exit the town.
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') onExit()
+      if (e.key !== 'Escape') return
+      if (confirming) setConfirming(false)
+      else if (picker) setPicker(null)
+      else if (editing) setEditing(false)
+      else onExit()
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [onExit])
+  }, [onExit, editing, picker, confirming])
 
-  const count = COUNT_BY_STAGE[Math.max(0, Math.min(stageIndex, COUNT_BY_STAGE.length - 1))]
-  const plots = PLOTS.slice(0, count)
-  const occupied = new Set(plots.map(([gx, gy]) => `${gx},${gy}`))
-  // Buildings + biome decorations, merged and depth-sorted back-to-front by screen-y
-  // so nearer things (lower on screen) paint over farther ones.
+  const openPicker = (idx: number, x: number, y: number): void => {
+    if (idx === 0) return // the Hall is the fixed landmark — never swappable
+    setPicker({ idx, x, y })
+  }
+  const swap = (idx: number, kind: SwappableKind): void => {
+    // Write only this building's kind override; everything else is preserved.
+    onEditLayout?.({ ...overrides, [idx]: { ...overrides[idx], kind } })
+    setPicker(null)
+  }
+  const toggleEdit = (): void => {
+    setPicker(null)
+    setConfirming(false)
+    setEditing((e) => !e)
+  }
+  const resetLayout = (): void => {
+    onEditLayout?.({}) // empty map → the town's entry is removed → back to the auto-layout
+    setConfirming(false)
+  }
+
+  // --- Drag-to-move (pointer events; imperative during the drag for smoothness) ------
+  const svgRef = useRef<SVGSVGElement>(null)
+  const hiRef = useRef<SVGPolygonElement>(null)
+  const dragRef = useRef<{
+    idx: number
+    gEl: SVGGElement
+    originX: number
+    originY: number
+    sc: number
+    downX: number
+    downY: number
+    downSvgX: number
+    downSvgY: number
+    lastX: number
+    lastY: number
+    moved: boolean
+  } | null>(null)
+
+  // Map a screen (client) point into the SVG's coordinate space via its live CTM.
+  const toSvg = (clientX: number, clientY: number): { x: number; y: number } | null => {
+    const svg = svgRef.current
+    const m = svg?.getScreenCTM()
+    if (!svg || !m) return null
+    const pt = svg.createSVGPoint()
+    pt.x = clientX
+    pt.y = clientY
+    const p = pt.matrixTransform(m.inverse())
+    return { x: p.x, y: p.y }
+  }
+
+  // The drop-target highlight diamond (driven imperatively so a drag never re-renders).
+  const setHighlight = (cell: number, valid: boolean): void => {
+    const hi = hiRef.current
+    if (!hi) return
+    if (cell < 1) {
+      hi.setAttribute('points', '')
+      hi.setAttribute('class', 'town-drop-hi')
+      return
+    }
+    const [gx, gy] = PLOTS[cell]
+    const c = iso(gx, gy)
+    hi.setAttribute(
+      'points',
+      `${c.x},${c.y - TILE_H / 2} ${c.x + TILE_W / 2},${c.y} ${c.x},${c.y + TILE_H / 2} ${c.x - TILE_W / 2},${c.y}`
+    )
+    hi.setAttribute('class', `town-drop-hi ${valid ? 'ok' : 'no'}`)
+  }
+
+  // A drop is valid on an empty in-grid cell that isn't the Hall (cell 0). The dragged
+  // building's own current cell counts as free.
+  const isValidDrop = (cell: number, idx: number): boolean =>
+    cell >= 1 && !layout.some((l) => l.idx !== idx && l.cell === cell)
+
+  const onBldgPointerDown = (
+    e: ReactPointerEvent<SVGRectElement>,
+    idx: number,
+    originX: number,
+    originY: number,
+    sc: number
+  ): void => {
+    if (!editing || idx === 0) return
+    e.stopPropagation()
+    const rect = e.currentTarget
+    rect.setPointerCapture(e.pointerId)
+    const p = toSvg(e.clientX, e.clientY)
+    dragRef.current = {
+      idx,
+      gEl: rect.parentNode as SVGGElement,
+      originX,
+      originY,
+      sc,
+      downX: e.clientX,
+      downY: e.clientY,
+      downSvgX: p ? p.x : originX,
+      downSvgY: p ? p.y : originY,
+      lastX: originX,
+      lastY: originY,
+      moved: false
+    }
+  }
+
+  const onBldgPointerMove = (e: ReactPointerEvent<SVGRectElement>): void => {
+    const d = dragRef.current
+    if (!d) return
+    if (!d.moved && Math.hypot(e.clientX - d.downX, e.clientY - d.downY) < 6) return // tap, not drag
+    d.moved = true
+    const p = toSvg(e.clientX, e.clientY)
+    if (!p) return
+    const nx = d.originX + (p.x - d.downSvgX)
+    const ny = d.originY + (p.y - d.downSvgY)
+    d.lastX = nx
+    d.lastY = ny
+    d.gEl.setAttribute('transform', `translate(${nx.toFixed(1)}, ${ny.toFixed(1)}) scale(${d.sc.toFixed(3)})`)
+    const cell = nearestCell(nx, ny)
+    setHighlight(cell, isValidDrop(cell, d.idx))
+  }
+
+  const onBldgPointerUp = (
+    e: ReactPointerEvent<SVGRectElement>,
+    idx: number,
+    ox: number,
+    oy: number
+  ): void => {
+    const d = dragRef.current
+    dragRef.current = null
+    setHighlight(-1, false)
+    if (!d) return
+    if (!d.moved) {
+      openPicker(idx, ox, oy) // a tap → the swap picker (step 4)
+      return
+    }
+    const cell = nearestCell(d.lastX, d.lastY)
+    if (isValidDrop(cell, d.idx)) {
+      // Snap onto the cell immediately, then persist (the async re-render confirms it).
+      const [gx, gy] = PLOTS[cell]
+      const s = buildingAt(gx, gy, d.idx)
+      d.gEl.setAttribute('transform', `translate(${s.x.toFixed(1)}, ${s.y.toFixed(1)}) scale(${d.sc.toFixed(3)})`)
+      onEditLayout?.({ ...overrides, [d.idx]: { ...overrides[d.idx], cell } })
+    } else {
+      // Invalid drop → gently spring back to where it was (no override written).
+      springTransform(d.gEl, d.lastX, d.lastY, d.originX, d.originY, d.sc)
+    }
+  }
+
+  const count = buildingCount
+  // Resolve each building's CELL from the auto-layout + the player's saved moves,
+  // then build the occupied-cell set from where buildings ACTUALLY land (so a cell a
+  // building was moved off of frees up for biome scenery automatically).
+  const layout = resolveLayout(count, overrides)
+  const occupied = new Set(
+    layout.map(({ cell }) => {
+      const [gx, gy] = PLOTS[cell]
+      return `${gx},${gy}`
+    })
+  )
+  // Buildings + biome decorations, merged and depth-sorted back-to-front by screen-y so
+  // nearer things (lower on screen) paint over farther ones. Position + organic look come
+  // from the resolved CELL (buildingAt seeds off gx,gy), so an untouched building is
+  // pixel-identical; a saved TYPE swap re-skins it in place (the Hall never swaps).
   const items: Placed[] = [
-    ...plots.map(([gx, gy], i) => buildingAt(gx, gy, i)),
+    ...layout.map(({ idx, cell }) => {
+      const [gx, gy] = PLOTS[cell]
+      const placed = buildingAt(gx, gy, idx)
+      if (placed.kind === 'bldg' && idx !== 0) {
+        placed.bk = overrides[idx]?.kind ?? placed.bk
+      }
+      return placed
+    }),
     ...decorationsFor(biome, occupied)
   ].sort((m, n) => m.sort - n.sort)
 
@@ -271,7 +607,7 @@ export function TownView({
       initial={{ opacity: 0, scale: 0.985 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.985 }}
-      transition={{ duration: 0.32, ease: 'easeOut' }}
+      transition={{ duration: reduce ? 0 : 0.32, ease: 'easeOut' }}
     >
       <div className="town-topbar">
         <button className="town-back" onClick={onExit}>
@@ -279,8 +615,30 @@ export function TownView({
         </button>
         <span className="town-name">{townName}</span>
         <span className="town-stage">{stageName}</span>
+        {canEdit && editing && hasEdits && (
+          <button className="town-reset-btn" onClick={() => setConfirming(true)}>
+            <ArrowCounterClockwise size={14} weight="bold" /> Reset
+          </button>
+        )}
+        {canEdit && (
+          <button className={`town-edit-btn${editing ? ' on' : ''}`} onClick={toggleEdit}>
+            {editing ? (
+              <>
+                <Check size={14} weight="bold" /> Done
+              </>
+            ) : (
+              <>
+                <PencilSimple size={14} weight="bold" /> Edit
+              </>
+            )}
+          </button>
+        )}
       </div>
+      {editing && (
+        <div className="town-edit-hint">Tap a building to change it · drag to move it</div>
+      )}
       <svg
+        ref={svgRef}
         className="town-canvas"
         viewBox="0 0 760 460"
         preserveAspectRatio="xMidYMid meet"
@@ -311,6 +669,15 @@ export function TownView({
         <Ground biome={biome} />
         {/* warm light on the land, under the buildings */}
         <rect x={0} y={0} width={760} height={460} fill="url(#town-warm-wash)" clipPath="url(#town-ground-clip)" />
+        {/* Edit mode: faint grid + the (initially empty) drop-target highlight, under buildings */}
+        {editing && (
+          <g className="town-grid">
+            {GRID_CELLS.map((pts, i) => (
+              <polygon key={i} points={pts} />
+            ))}
+          </g>
+        )}
+        {editing && <polygon ref={hiRef} className="town-drop-hi" points="" />}
         {items.map((it) =>
           it.kind === 'bldg' ? (
             <g key={it.key} transform={`translate(${it.x.toFixed(1)}, ${it.y.toFixed(1)}) scale(${it.sc.toFixed(3)})`}>
@@ -328,6 +695,20 @@ export function TownView({
                 style={{ animationDelay: `${(it.idx * 0.04).toFixed(2)}s`, filter: it.filter }}
                 dangerouslySetInnerHTML={{ __html: BUILDING_SVG[it.bk] }}
               />
+              {editing && it.idx !== 0 && (
+                <rect
+                  className="town-edit-hit"
+                  data-idx={it.idx}
+                  x={-40}
+                  y={-74}
+                  width={80}
+                  height={88}
+                  fill="transparent"
+                  onPointerDown={(e) => onBldgPointerDown(e, it.idx, it.x, it.y, it.sc)}
+                  onPointerMove={onBldgPointerMove}
+                  onPointerUp={(e) => onBldgPointerUp(e, it.idx, it.x, it.y)}
+                />
+              )}
             </g>
           ) : (
             <g
@@ -340,7 +721,43 @@ export function TownView({
         )}
         {/* frame + depth over everything */}
         <rect x={0} y={0} width={760} height={460} fill="url(#town-vignette)" pointerEvents="none" />
+        {editing && picker && (
+          <>
+            {/* click-away catcher closes the popover; the popover itself sits on top */}
+            <rect
+              className="town-pop-catcher"
+              x={0}
+              y={0}
+              width={760}
+              height={460}
+              fill="transparent"
+              onClick={() => setPicker(null)}
+            />
+            <TownEditPopover
+              x={picker.x}
+              y={picker.y}
+              current={overrides[picker.idx]?.kind ?? kindFor(picker.idx)}
+              onPick={(k) => swap(picker.idx, k)}
+            />
+          </>
+        )}
       </svg>
+      {confirming && (
+        <div className="town-confirm-backdrop" onClick={() => setConfirming(false)}>
+          <div className="town-confirm" onClick={(e) => e.stopPropagation()}>
+            <p className="town-confirm-title">Return this town to its natural layout?</p>
+            <p className="town-confirm-sub">Your arrangement will be cleared — nothing else changes.</p>
+            <div className="town-confirm-actions">
+              <button className="town-confirm-keep" onClick={() => setConfirming(false)}>
+                Keep my arrangement
+              </button>
+              <button className="town-confirm-reset" onClick={resetLayout}>
+                Reset to natural layout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   )
 }

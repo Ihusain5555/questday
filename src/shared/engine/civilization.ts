@@ -29,6 +29,39 @@ export function worldStage(completions: number): { stage: CivStage; index: numbe
   return { stage: stages[index], index }
 }
 
+// How many buildings a town shows, driven by ALL-TIME XP (v1.10 reward model).
+// XP is effort-weighted (a long/hard quest earns more), so towns grow with EFFORT,
+// not raw completion count — and because ↩ Restore claws XP back EXACTLY, a town
+// derived purely from XP walks back exactly with zero new bookkeeping. SINGLE SOURCE
+// OF TRUTH: both the town render (TownView) and the completion celebration read this.
+// The stage NAME (Camp..Empire) still labels the era; only the COUNT is XP-driven.
+export interface BuildingGrowth {
+  /** Buildings standing now (startCount..cap). */
+  count: number
+  /** XP still needed for the next building (0 once at the cap). */
+  toNextXp: number
+  /** 0..100 progress into the current building's XP band (100 at the cap). */
+  percent: number
+  /** True once the town has reached the building cap. */
+  atCap: boolean
+}
+
+/** Buildings standing for an all-time XP total — a pure function of XP, nothing
+ *  stored, so ↩ Restore stays exact. */
+export function buildingsForXp(totalXp: number): BuildingGrowth {
+  const { startCount, xpPerBuilding, cap } = balance.civilization.buildings
+  const xp = Math.max(0, totalXp)
+  const count = Math.min(cap, startCount + Math.floor(xp / xpPerBuilding))
+  if (count >= cap) return { count: cap, toNextXp: 0, percent: 100, atCap: true }
+  const into = xp % xpPerBuilding
+  return {
+    count,
+    toNextXp: xpPerBuilding - into,
+    percent: Math.min(100, Math.round((into / xpPerBuilding) * 100)),
+    atCap: false
+  }
+}
+
 export interface CivProgress {
   stageKey: WorldStageKey
   stageName: string

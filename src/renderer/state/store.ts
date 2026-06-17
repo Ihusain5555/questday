@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import type {
   Database,
   DatabasePatch,
+  PlotOverride,
   Quest,
   Settings,
   SubTask,
@@ -28,8 +29,9 @@ import {
   itemEmoji
 } from '@shared/engine/garden'
 import { balance } from '@shared/config/balance'
-import { totalCompletions } from '@shared/engine/stats'
+import { totalCompletions, totalXpEarned } from '@shared/engine/stats'
 import { claimableNow, normalizeChronicle, claimsAvailable, allRegions } from '@shared/engine/realm'
+import { buildingsForXp, civProgress } from '@shared/engine/civilization'
 
 /** Transient celebration payload (local to the window that completed a quest). */
 export interface Celebration {
@@ -44,6 +46,20 @@ export interface Celebration {
   /** Expeditions (region claims) ready to spend after this completion — the reward
    *  artifact prompt — or null when none are available / the realm is fully charted. */
   expedition?: number | null
+  /** Civilization growth surfaced from the DEFAULT view (v1.10). `grewBuildings` is set
+   *  only when this completion's XP raised the town's building count (the gains-only
+   *  milestone beat); otherwise `toNext` (XP) / `percent` drive a "progress to your next
+   *  building" line. Purely DERIVED from before/after all-time XP — never persisted, so
+   *  ↩ Restore (exact XP claw-back) stays exact. null when the `world` feature is off. */
+  civ?: {
+    stageName: string
+    grewBuildings: number | null
+    toNext: number | null
+    percent: number
+    /** True once the town is at its building cap — surfaces a "stands in full glory"
+     *  beat instead of growth/progress (gains-only: a maxed town still celebrates). */
+    atCap: boolean
+  } | null
 }
 
 /** Transient harvest payout flash (local to the harvesting window). */
@@ -124,6 +140,13 @@ interface AppStore {
 
   // ---- Settings ----
   updateSettings: (patch: Partial<Settings>) => Promise<void>
+
+  // ---- Town editing (v1.10) ----
+  /** Persist a town's arrangement (the sealed override layer). Pass the FULL
+   *  overrides map for that town; an EMPTY map removes the town's entry (= reset to
+   *  auto-layout). townLayouts is a wholesale-replace key, so the whole map is sent.
+   *  Never feeds the XP-derived building count, so ↩ Restore stays exact. */
+  saveTownLayout: (townId: string, overrides: Record<number, PlotOverride>) => Promise<void>
 
   // ---- Reward world (garden) ----
   /** Buy a catalog species with currency and plant it on a free tile. */
@@ -388,6 +411,28 @@ export const useStore = create<AppStore>((set, get) => ({
     // trims the newest claim to match.
     const expeditions = claimableNow(totalCompletions(quests), db.settings.realmChronicle ?? [])
 
+    // Civilization (v1.10): finishing a quest grows the town, surfaced right here in the
+    // default-view celebration. Buildings track ALL-TIME XP (effort-weighted), not raw
+    // completion count: `before` = buildings from XP PRE-this-completion (db.player),
+    // `after` = POST (award.newPlayer already includes this XP). A delta > 0 is the
+    // gains-only milestone beat ("a new building rose"); otherwise we show XP remaining to
+    // the next building. The stage NAME still labels the era. PURE-DERIVED from XP + gated
+    // by the `world` toggle + nothing persisted, so the town (and this line) walk back
+    // exactly on ↩ Restore (which claws XP back exactly).
+    const worldOn = db.settings.enabledFeatures?.world !== false
+    const before = buildingsForXp(totalXpEarned(db.player))
+    const after = buildingsForXp(totalXpEarned(award.newPlayer))
+    const prog = civProgress(totalCompletions(quests))
+    const civ = worldOn
+      ? {
+          stageName: prog.stageName,
+          grewBuildings: after.count > before.count ? after.count - before.count : null,
+          toNext: after.atCap ? null : after.toNextXp,
+          percent: after.percent,
+          atCap: after.atCap
+        }
+      : null
+
     await get().save({ quests, player, garden, arcade })
     set({
       celebration: {
@@ -396,7 +441,8 @@ export const useStore = create<AppStore>((set, get) => ({
         grew,
         mutation,
         ticket,
-        expedition: expeditions > 0 ? expeditions : null
+        expedition: expeditions > 0 ? expeditions : null,
+        civ
       }
     })
   },
@@ -576,6 +622,18 @@ export const useStore = create<AppStore>((set, get) => ({
     // Send ONLY the changed fields; saveDatabase deep-merges settings, so this can't
     // clobber a sibling (e.g. widgetBounds written by the main process) from a stale snapshot.
     await get().save({ settings: patch })
+  },
+
+  // ---- Town editing (v1.10) -------------------------------------------------
+  saveTownLayout: async (townId, overrides) => {
+    const db = get().db
+    if (!db) return
+    // townLayouts is a wholesale-replace key — send the FULL map. An empty overrides
+    // map removes the town (reset to auto-layout); deep-merge couldn't delete a key.
+    const next = { ...db.townLayouts }
+    if (Object.keys(overrides).length > 0) next[townId] = { overrides }
+    else delete next[townId]
+    await get().save({ townLayouts: next })
   },
 
   // ---- Reward world (garden) -------------------------------------------------

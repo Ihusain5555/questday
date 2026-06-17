@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../state/store'
 import { balance } from '@shared/config/balance'
-import { totalCompletions } from '@shared/engine/stats'
+import { totalCompletions, totalXpEarned } from '@shared/engine/stats'
 import { realmProgress, claimableNow, chartedRegionIds } from '@shared/engine/realm'
-import { civProgress } from '@shared/engine/civilization'
+import { civProgress, buildingsForXp } from '@shared/engine/civilization'
 import { chronicleTopics, topicById, entryById, type ChronicleEntry } from '@shared/config/chronicle'
 import type { ChronicleRecord } from '@shared/types'
 import { MapTrifold, Flag, Planet, Leaf, Scroll, Feather, Sparkle, X, type Icon } from '@phosphor-icons/react'
@@ -702,7 +702,7 @@ type Reveal = { topicId: string; picked: string; entry: ChronicleEntry; stage: '
  * piece of knowledge they pick. Gains-only (tone rule).
  */
 export function RealmView(): JSX.Element {
-  const { db, claimRegion, updateSettings } = useStore()
+  const { db, claimRegion, updateSettings, saveTownLayout } = useStore()
   const [claiming, setClaiming] = useState<{ id: string; name: string } | null>(null)
   const [reveal, setReveal] = useState<Reveal | null>(null)
   const [reading, setReading] = useState<ChronicleRecord | null>(null)
@@ -712,8 +712,10 @@ export function RealmView(): JSX.Element {
   if (!db) return <div />
   const chronicle = db.settings.realmChronicle ?? []
   const completions = totalCompletions(db.quests)
-  // World stage (Camp..Empire) drives how built-up the town looks; pure-derived.
+  // The stage NAME (Camp..Empire) labels the era; the building COUNT is XP-driven
+  // (effort-weighted) — both pure-derived, so ↩ Restore walks the town back exactly.
   const civ = civProgress(completions)
+  const townBuildingCount = buildingsForXp(totalXpEarned(db.player)).count
   const revealed = chartedRegionIds(chronicle)
   const claimable = claimableNow(completions, chronicle)
   const prog = realmProgress(chronicle)
@@ -822,12 +824,18 @@ export function RealmView(): JSX.Element {
             {enteredTown &&
               (() => {
                 const region = ATLAS.regions.find((r) => r.id === enteredTown)
+                // The player's saved arrangement for THIS town (a sealed override
+                // layer — never feeds the XP-derived count above, so ↩ Restore stays
+                // exact). Absent town = pure auto-layout.
+                const overrides = db.townLayouts?.[enteredTown]?.overrides ?? {}
                 return (
                   <TownView
                     townName={region?.name ?? 'Town'}
                     stageName={civ.stageName}
-                    stageIndex={civ.stageIndex}
+                    buildingCount={townBuildingCount}
+                    overrides={overrides}
                     biome={REGION_BIOME[enteredTown] ?? 'meadow'}
+                    onEditLayout={(next) => void saveTownLayout(enteredTown, next)}
                     onExit={() => setEnteredTown(null)}
                   />
                 )

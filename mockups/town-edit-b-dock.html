@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<!--
+  QuestDay v1.10 — TOWN EDITING ("Arrange your town") — VISUAL-APPROVAL MOCKUP.
+  ===========================================================================
+  This is a THROWAWAY, offline, fully self-contained mockup (inline SVG/CSS/JS
+  only — no deps, no network, no build step). Double-click the file to view.
+
+  PURPOSE: let the user feel the Edit-mode interaction before any real code:
+    • Edit toggle: normal static view ↔ dedicated Edit mode (grid + affordances).
+    • Drag a building → snaps to the nearest grid cell (inverse-iso math).
+    • Invalid drop (occupied / Hall cell / off-grid) → springs back, no change.
+    • Tap a building (move < 6px) → SELECTS it and raises a BOTTOM DOCK BAR to
+      swap its kind; the dock stays open for further tweaks.
+    • The Hall (center) is fixed: no grab, never drags, rejects drops on its cell.
+    • Reset to auto-layout (gentle, non-punishing confirm) + Done.
+    • Honors prefers-reduced-motion (no spring/rise; instant state changes).
+
+  >>> THIS IS THE *BOTTOM DOCK* PICKER VARIANT <<<  (a sibling mockup explores a
+  floating popover picker). Type swapping happens in a fixed dock bar that slides
+  up from the bottom edge of the town view: tap a non-Hall building to select it
+  (it gets a subtle highlight in the town), pick a kind from the dock to re-skin
+  the SELECTED building, and the dock STAYS OPEN for more tweaks until you tap
+  empty space or press Done.
+
+  Visual style reuses the PROVEN scaffold from mockups/town-view-mockup.html:
+  warm parchment palette, 2:1 isometric tiles, soft grass ground + faint grid,
+  far→near depth sort, ink #5a4a2e outlines, grounding-shadow ellipses.
+  Buildings here are 5 distinct inked iso glyphs (hall/keep/tavern/house/cottage).
+
+  TONE (hard rule): never punishing — Edit mode is an invitation, never a chore.
+  No quotas, no scores, no loss, no decay, no "you haven't arranged this yet".
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>QuestDay — Arrange your town (dock variant)</title>
+<style>
+  :root {
+    --parch: #f4e8cf;        /* parchment ground */
+    --parch-2: #ecdcbb;
+    --ink: #5a4a2e;          /* hand-ink brown (matches the map) */
+    --ink-soft: #7a6a47;
+    --gold: #c79a3b;
+    --gold-deep: #a07d2a;
+    --grass: #d9e3c4;        /* soft town ground */
+    --grass-edge: #a9b88a;
+    --grid: #bcc7a3;
+    /* generic lit/shade pair used as a base by some glyphs */
+    --side-l: #b6a67f;
+    --side-r: #8d7d5d;
+    /* drop-target tints */
+    --ok: #6fae57;
+    --ok-fill: rgba(111,174,87,0.30);
+    --no: #c2603f;
+    --no-fill: rgba(194,96,63,0.28);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%;
+    background: #2b2620;
+    font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    color: var(--ink);
+    -webkit-user-select: none; user-select: none;
+  }
+  .frame { max-width: 860px; margin: 22px auto; padding: 0 16px; }
+  .titlebar { text-align: center; color: #e9dcbe; margin-bottom: 10px; }
+  .titlebar h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; font-weight: 600; }
+  .titlebar p { margin: 4px 0 0; font-size: 12.5px; color: #b7a98a; font-style: italic; }
+
+  .stage {
+    position: relative;
+    height: 540px;
+    border: 2px solid #6f5b39;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+    background: linear-gradient(180deg, #f5ead2 0%, #efe1c2 100%);
+    touch-action: none;            /* let pointer drag work on touch screens too */
+  }
+
+  /* town header */
+  .town-top {
+    position: absolute; top: 0; left: 0; right: 0; height: 50px;
+    display: flex; align-items: center; gap: 12px;
+    padding: 0 14px;
+    background: linear-gradient(180deg, rgba(244,232,207,0.95), rgba(244,232,207,0.0));
+    z-index: 4; pointer-events: none;          /* only the buttons inside catch clicks */
+  }
+  .town-name { font-size: 18px; font-weight: 600; }
+  .town-stage { font-size: 12.5px; color: #8a7a55; font-style: italic; margin-left: -6px; }
+
+  /* the single Edit button (normal view) sits top-right */
+  .edit-btn {
+    margin-left: auto; pointer-events: auto;
+    border: 1.5px solid #6f5b39; background: #efe0bf; color: var(--ink);
+    border-radius: 9px; padding: 7px 14px; font-size: 13px; cursor: pointer;
+    font-family: inherit; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  .edit-btn:hover { background: #e7d4ac; }
+  .edit-btn svg { display: block; }
+
+  /* edit-mode toolbar (bottom) */
+  .edit-toolbar {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 11px 12px 13px;
+    background: linear-gradient(0deg, rgba(239,225,194,0.97), rgba(239,225,194,0.0));
+    z-index: 4;
+    opacity: 0; transform: translateY(8px); pointer-events: none;
+    transition: opacity .22s ease, transform .22s ease;
+  }
+  .editing .edit-toolbar { opacity: 1; transform: none; pointer-events: auto; }
+  .edit-toolbar .hint {
+    font-size: 12.5px; color: var(--ink-soft); font-style: italic; margin-right: 4px;
+  }
+  .tbtn {
+    border: 1.5px solid #b39a63; background: #f3e6c6; color: var(--ink);
+    border-radius: 999px; padding: 7px 14px; font-size: 12.5px; cursor: pointer;
+    font-family: inherit; font-weight: 600;
+  }
+  .tbtn:hover { background: #ecd9ad; }
+  .tbtn.primary { background: var(--gold); border-color: var(--gold-deep); color: #3a2d12; }
+  .tbtn.primary:hover { background: #d8a93a; }
+
+  /* a soft "Edit mode" ribbon while editing */
+  .edit-ribbon {
+    position: absolute; top: 52px; left: 50%; transform: translateX(-50%);
+    background: rgba(199,154,59,0.16); border: 1px solid rgba(160,125,42,0.5);
+    color: #7a5f1f; font-size: 11.5px; font-style: italic;
+    padding: 3px 12px; border-radius: 999px; z-index: 4;
+    opacity: 0; transition: opacity .22s ease; pointer-events: none;
+  }
+  .editing .edit-ribbon { opacity: 1; }
+
+  svg#town { display: block; width: 100%; height: 100%; }
+
+  /* grid overlay: faint normally, clear in edit mode */
+  #gridLayer line { stroke: var(--grid); stroke-width: 1; opacity: 0.42; }
+  #gridLayer .cell-outline { fill: transparent; stroke: var(--grid); stroke-width: 1; opacity: 0; }
+  .editing #gridLayer line { opacity: 0; }                /* swap plain lines for crisp cell outlines */
+  .editing #gridLayer .cell-outline { opacity: 0.85; stroke: #9fb083; stroke-width: 1.4; }
+  /* empty cells subtly marked as available drop spots while editing */
+  .editing #gridLayer .cell-empty { fill: rgba(255,255,255,0.10); }
+  .editing #gridLayer .cell-empty .dot { opacity: 0.5; }
+  #gridLayer .dot { fill: #9fb083; opacity: 0; }
+
+  /* live drop-target feedback diamonds (created on drag) */
+  .target-ok   { fill: var(--ok-fill);  stroke: var(--ok); stroke-width: 2; }
+  .target-no   { fill: var(--no-fill);  stroke: var(--no); stroke-width: 2; stroke-dasharray: 5 4; }
+
+  /* building groups */
+  .bldg { transform-box: fill-box; }
+  .editing .bldg[data-kind]:not([data-hall]) { cursor: grab; }
+  .editing .bldg[data-hall] { cursor: default; }
+  .bldg.dragging { cursor: grabbing; }
+  /* gentle grab affordance: soft hover outline + slight lift (edit mode, non-Hall) */
+  .editing .bldg:not([data-hall]) .lift { transition: transform .14s ease; }
+  .editing .bldg:not([data-hall]):hover .lift { transform: translateY(-4px); }
+  .editing .bldg:not([data-hall]):hover .halo { opacity: 1; }
+  .bldg .halo { opacity: 0; transition: opacity .14s ease; }
+  .bldg.dragging .lift { transform: none; }
+  .bldg.dragging .halo { opacity: 1; }
+  /* SELECTED building (dock variant): a steady gold ring while the dock is open */
+  .bldg.selected .halo { opacity: 1; stroke: var(--gold-deep); stroke-width: 2.8; }
+  .editing .bldg.selected:not([data-hall]):hover .lift { transform: none; } /* keep it grounded while selected */
+
+  /* (spring-back on an invalid drop is driven by a JS transition, not a keyframe) */
+
+  /* building rise-in on (re)render.
+     IMPORTANT: the rise animation lives on the INNER .lift group, never the
+     outer positioning group — a CSS-animation `transform` overrides the SVG
+     `transform` attribute, so animating the outer g would collapse the
+     building to the origin (0,0) when the animation ends. (Known QuestDay
+     town-render gotcha.) The .lift group carries transform-box:fill-box. */
+  @keyframes rise { from { opacity: 0; transform: translateY(11px); } to { opacity: 1; transform: none; } }
+  .bldg .lift { transform-box: fill-box; }
+  .bldg.rise .lift { animation: rise .42s cubic-bezier(.2,.9,.3,1.2) both; }
+
+  /* ---- TYPE PICKER: FIXED BOTTOM DOCK BAR ---- */
+  /* Slides up from the bottom edge of the stage when a non-Hall building is
+     selected. Sits ABOVE the edit toolbar (which it visually overlays). */
+  #dock {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 6;
+    background: linear-gradient(0deg, #f1e3bf 0%, #f1e3bf 78%, rgba(241,227,191,0.0) 100%);
+    border-top: 1.6px solid #6f5b39;
+    padding: 12px 14px 14px;
+    transform: translateY(110%); opacity: 0; pointer-events: none;
+    transition: transform .22s cubic-bezier(.2,.9,.3,1.05), opacity .22s ease;
+    box-shadow: 0 -8px 22px rgba(0,0,0,0.22);
+  }
+  #dock.open { transform: none; opacity: 1; pointer-events: auto; }
+  .dock-row { display: flex; align-items: center; gap: 10px; max-width: 620px; margin: 0 auto; }
+  .dock-title {
+    font-size: 12px; color: var(--ink-soft); font-style: italic;
+    white-space: nowrap; margin-right: 2px;
+  }
+  .dock-title b { font-style: normal; color: var(--ink); font-weight: 600; }
+  .dock-kinds { display: flex; gap: 9px; flex: 1; justify-content: center; }
+  .kind-btn {
+    border: 1.4px solid #b39a63; background: #fbf3df; border-radius: 11px;
+    padding: 6px 8px 5px; cursor: pointer; font-family: inherit;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    min-width: 64px;
+  }
+  .kind-btn:hover { background: #f0e2bf; border-color: var(--gold-deep); }
+  .kind-btn.current { background: #efe0b6; border-color: var(--gold-deep); box-shadow: inset 0 0 0 1.5px var(--gold); }
+  .kind-btn svg { display: block; width: 46px; height: 42px; }
+  .kind-btn .kname { font-size: 11px; color: var(--ink); font-weight: 600; }
+  .dock-done {
+    border: 1.5px solid var(--gold-deep); background: var(--gold); color: #3a2d12;
+    border-radius: 999px; padding: 7px 16px; font-size: 12.5px; cursor: pointer;
+    font-family: inherit; font-weight: 600; white-space: nowrap;
+  }
+  .dock-done:hover { background: #d8a93a; }
+
+  /* confirm dialog (Reset) */
+  #confirm {
+    position: absolute; inset: 0; z-index: 8; display: none;
+    align-items: center; justify-content: center;
+    background: rgba(43,38,32,0.40);
+  }
+  #confirm.open { display: flex; }
+  .confirm-card {
+    width: 320px; max-width: 86%; background: #f6ecd2;
+    border: 1.6px solid #6f5b39; border-radius: 14px; padding: 18px 18px 14px;
+    box-shadow: 0 14px 34px rgba(0,0,0,0.4); text-align: center;
+  }
+  .confirm-card h3 { margin: 0 0 6px; font-size: 16px; font-weight: 600; }
+  .confirm-card p { margin: 0 0 14px; font-size: 13px; color: var(--ink-soft); line-height: 1.45; }
+  .confirm-row { display: flex; gap: 9px; justify-content: center; }
+
+  .caption { margin: 10px 4px 0; text-align: center; color: #b7a98a; font-size: 12px; }
+  .caption b { color: #d8c79a; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+  <div class="frame">
+    <div class="titlebar">
+      <h1>Arrange your town — Greenhaven</h1>
+      <p>Visual-approval mockup · BOTTOM DOCK picker variant · drag to move, tap to swap</p>
+    </div>
+
+    <div class="stage" id="stage">
+      <div class="town-top">
+        <span class="town-name">Greenhaven</span>
+        <span class="town-stage">Village</span>
+        <button class="edit-btn" id="editBtn" title="Arrange this town">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          <span id="editBtnLabel">Edit</span>
+        </button>
+      </div>
+
+      <div class="edit-ribbon">Edit mode — drag a building to move it, tap one to change its type</div>
+
+      <svg id="town" viewBox="0 0 760 480" preserveAspectRatio="xMidYMid meet"></svg>
+
+      <div class="edit-toolbar">
+        <span class="hint">Make it yours — there's no wrong way.</span>
+        <button class="tbtn" id="resetBtn">Reset to auto-layout</button>
+        <button class="tbtn primary" id="doneBtn">Done</button>
+      </div>
+
+      <!-- type-picker bottom dock (slides up when a building is selected) -->
+      <div id="dock">
+        <div class="dock-row">
+          <span class="dock-title">Change type — <b id="dockSubject">building</b></span>
+          <div class="dock-kinds" id="dockKinds"></div>
+          <button class="dock-done" id="dockDone">Done</button>
+        </div>
+      </div>
+
+      <!-- reset confirm -->
+      <div id="confirm">
+        <div class="confirm-card">
+          <h3>Return to its natural layout?</h3>
+          <p>Return this town to its natural layout? Your arrangement will be cleared.</p>
+          <div class="confirm-row">
+            <button class="tbtn" id="confirmNo">Keep my arrangement</button>
+            <button class="tbtn primary" id="confirmYes">Reset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="caption">
+      Tap <b>Edit</b> to arrange. <b>Drag</b> a building to an empty tile (it snaps to the grid);
+      drop on an occupied tile or the Hall and it gently springs back. <b>Tap</b> a building to
+      select it — a dock rises from the bottom to swap its type, and stays open until you tap
+      empty space or press Done. The <b>Hall</b> in the center stays put.
+    </p>
+  </div>
+
+<script>
+"use strict";
+(function () {
+  // ---- isometric helpers (same math/feel as the proven scaffold) -----------
+  const TILE_W = 92, TILE_H = 46;            // 2:1 isometric tile
+  const OX = 380, OY = 150;                  // grid origin inside the 760x480 viewBox
+  const GRID_N = 5;                          // 5x5 cells, gx/gy in 0..4
+  const HALL_GX = 2, HALL_GY = 2;            // fixed landmark cell
+
+  const iso = (gx, gy) => ({ x: OX + (gx - gy) * TILE_W / 2, y: OY + (gx + gy) * TILE_H / 2 });
+  // inverse iso: screen point -> fractional grid, rounded to nearest cell
+  function cellAt(px, py) {
+    const u = (px - OX) / (TILE_W / 2);
+    const v = (py - OY) / (TILE_H / 2);
+    const gx = Math.round((u + v) / 2);
+    const gy = Math.round((v - u) / 2);
+    return { gx, gy };
+  }
+  const key = (gx, gy) => gx + "," + gy;
+  const inGrid = (gx, gy) => gx >= 0 && gx < GRID_N && gy >= 0 && gy < GRID_N;
+  const isHallCell = (gx, gy) => gx === HALL_GX && gy === HALL_GY;
+
+  const reduceMotion = () =>
+    window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // ---- state ---------------------------------------------------------------
+  // Each building: stable id, current cell {gx,gy}, kind. Hall is fixed.
+  const SWAP_KINDS = ["keep", "tavern", "house", "cottage"];
+  const KIND_LABEL = { hall: "Hall", keep: "Keep", tavern: "Tavern", house: "House", cottage: "Cottage" };
+
+  // Starting layout from the spec.
+  const START = [
+    { id: "b-hall",  gx: 2, gy: 2, kind: "hall",    hall: true },
+    { id: "b-h1",    gx: 1, gy: 2, kind: "house"   },
+    { id: "b-c1",    gx: 2, gy: 1, kind: "cottage" },
+    { id: "b-t1",    gx: 3, gy: 2, kind: "tavern"  },
+    { id: "b-h2",    gx: 2, gy: 3, kind: "house"   },
+    { id: "b-k1",    gx: 1, gy: 1, kind: "keep"    },
+    { id: "b-c2",    gx: 3, gy: 1, kind: "cottage" }
+  ];
+  let buildings = clone(START);
+  let editing = false;
+
+  function clone(arr) { return arr.map(b => Object.assign({}, b)); }
+  function occupiedMap(except) {
+    const m = new Map();
+    for (const b of buildings) { if (b === except) continue; m.set(key(b.gx, b.gy), b); }
+    return m;
+  }
+
+  // ---- glyphs: 5 distinct inked iso buildings, anchored at local (0,0) ------
+  // Each returns an SVG string with a grounding-shadow ellipse + a <g class="lift">
+  // holding the body (so CSS hover-lift / drag don't fight the outer positioning g).
+  const STROKE = '#5a4a2e';
+  function shadow(rx, ry) {
+    return `<ellipse class="ground" cx="0" cy="6" rx="${rx}" ry="${ry}" fill="rgba(60,46,20,0.18)"/>`;
+  }
+  // small helper: an iso "box" (4 visible faces) given half-width a, half-depth b, height h,
+  // with face colors. Top is the roof unless drawn separately.
+  function isoBox(a, b, h, topY, lit, shade, roof) {
+    // base diamond at y=0; raised top at y=-h (topY shifts whole box up if needed)
+    const yb = topY;                 // baseline y
+    const T = [0, yb - b], R = [a, yb], B = [0, yb + b], L = [-a, yb];
+    const Tt = [0, yb - b - h], Rt = [a, yb - h], Bt = [0, yb + b - h], Lt = [-a, yb - h];
+    const p = (arr) => arr.map(q => q.join(",")).join(" ");
+    return `
+      <polygon points="${p([L,B,Bt,Lt])}" fill="${lit}" stroke="${STROKE}" stroke-width="1.3"/>
+      <polygon points="${p([B,R,Rt,Bt])}" fill="${shade}" stroke="${STROKE}" stroke-width="1.3"/>
+      <polygon points="${p([Tt,Rt,Bt,Lt])}" fill="${roof}" stroke="${STROKE}" stroke-width="1.3"/>`;
+  }
+
+  function glyph(kind) {
+    switch (kind) {
+      // HALL: largest — twin turrets + gold banner on top, gold roof. (landmark)
+      case "hall": {
+        const lit = "#e7d9b4", shade = "#bca87b", roof = "#d8a93a";
+        let s = shadow(58, 26);
+        // main keep body
+        s += isoBox(40, 20, 50, 0, lit, shade, roof);
+        // two turrets (left & right), drawn after so they sit in front
+        const turret = (dx) => {
+          const a = 13, b = 7, h = 64;
+          const yb = 0, x0 = dx;
+          const Tt = [x0, yb - b - h], Rt = [x0 + a, yb - h], Bt = [x0, yb + b - h], Lt = [x0 - a, yb - h];
+          const L = [x0 - a, yb], B = [x0, yb + b], R = [x0 + a, yb];
+          const p = (arr) => arr.map(q => q.join(",")).join(" ");
+          return `
+            <polygon points="${p([L,B,Bt,Lt])}" fill="${lit}" stroke="${STROKE}" stroke-width="1.2"/>
+            <polygon points="${p([B,R,Rt,Bt])}" fill="${shade}" stroke="${STROKE}" stroke-width="1.2"/>
+            <polygon points="${[Tt,Rt,Bt,Lt].map(q=>q.join(',')).join(' ')}" fill="#d8a93a" stroke="${STROKE}" stroke-width="1.2"/>
+            <polygon points="${(x0)+','+(yb-b-h-13)} ${(x0+a)+','+(yb-h-3)} ${(x0-a)+','+(yb-h-3)}" fill="#c79a3b" stroke="${STROKE}" stroke-width="1.1"/>`;
+        };
+        s += turret(-30) + turret(30);
+        // central gold banner on a pole above the main roof
+        const top = -20 - 50; // baseline b=20, h=50
+        s += `
+          <line x1="0" y1="${top - 6}" x2="0" y2="${top - 30}" stroke="${STROKE}" stroke-width="2.2"/>
+          <path d="M0 ${top - 30} L 20 ${top - 24} L 0 ${top - 18} Z" fill="#c79a3b" stroke="${STROKE}" stroke-width="1.2"/>`;
+        // a door
+        s += `<path d="M-7 -2 q 0 -13 7 -13 q 7 0 7 13 Z" fill="#7c6336" stroke="${STROKE}" stroke-width="1.1"/>`;
+        return s;
+      }
+      // KEEP: tall narrow stone tower, crenellated (notched) top, slate-grey roof.
+      case "keep": {
+        const lit = "#dcd6c8", shade = "#a9a292", a = 16, b = 8, h = 72;
+        let s = shadow(26, 12);
+        s += isoBox(a, b, h, 0, lit, shade, "#8b8c92");
+        // crenellations across the top edge (notched battlement)
+        const topY = -b - h;
+        let merlons = "";
+        for (let i = -1; i <= 1; i++) {
+          const mx = i * 9;
+          merlons += `<rect x="${mx - 3}" y="${topY - 9}" width="6" height="9" fill="#c9c3b4" stroke="${STROKE}" stroke-width="1"/>`;
+        }
+        s += merlons;
+        // a narrow slit window
+        s += `<rect x="-3" y="${-h * 0.55}" width="6" height="13" rx="2" fill="#6c6f76" stroke="${STROKE}" stroke-width="1"/>`;
+        return s;
+      }
+      // TAVERN: wide & low, warm-red pitched roof, hanging sign on a post + chimney.
+      case "tavern": {
+        const lit = "#e3d3ad", shade = "#bca579", a = 40, b = 20, h = 26;
+        let s = shadow(50, 23);
+        s += isoBox(a, b, h, 0, lit, shade, "#b8543e");
+        // a separate ridged red roof peak
+        const topY = -b - h;
+        s += `<polygon points="0,${topY - 14} ${a},${topY} -${a},${topY}" fill="#c8624a" stroke="${STROKE}" stroke-width="1.3"/>`;
+        // chimney (right side)
+        s += `<rect x="${a * 0.5 - 4}" y="${topY - 22}" width="9" height="20" fill="#9a8a66" stroke="${STROKE}" stroke-width="1.1"/>`;
+        // hanging sign on a post (left)
+        s += `
+          <line x1="-${a + 4}" y1="-2" x2="-${a + 4}" y2="-34" stroke="${STROKE}" stroke-width="2"/>
+          <line x1="-${a + 4}" y1="-30" x2="-${a - 12}" y2="-30" stroke="${STROKE}" stroke-width="2"/>
+          <rect x="-${a + 2}" y="-30" width="18" height="13" rx="2" fill="#e9d4a0" stroke="${STROKE}" stroke-width="1.2"/>`;
+        // door
+        s += `<path d="M-6 -2 q 0 -12 6 -12 q 6 0 6 12 Z" fill="#7c6336" stroke="${STROKE}" stroke-width="1.1"/>`;
+        return s;
+      }
+      // HOUSE: medium two-story, brown gabled (peaked) roof, door + one window.
+      case "house": {
+        const lit = "#e6d6b0", shade = "#bca87b", a = 26, b = 13, h = 42;
+        let s = shadow(34, 16);
+        s += isoBox(a, b, h, 0, lit, shade, "#9c6a3c");
+        // gable peak (brown), front-facing
+        const topY = -b - h;
+        s += `<polygon points="0,${topY - 16} ${a},${topY} 0,${topY + b}" fill="#8a5e35" stroke="${STROKE}" stroke-width="1.3"/>`;
+        s += `<polygon points="0,${topY - 16} -${a},${topY} 0,${topY + b}" fill="#7a5230" stroke="${STROKE}" stroke-width="1.3"/>`;
+        // window (upper) + door (lower) on the lit face
+        s += `<rect x="-15" y="${-h * 0.62}" width="9" height="9" fill="#cfe0e6" stroke="${STROKE}" stroke-width="1"/>`;
+        s += `<path d="M-6 -2 q 0 -12 6 -12 q 6 0 6 12 Z" fill="#6f5733" stroke="${STROKE}" stroke-width="1.1"/>`;
+        return s;
+      }
+      // COTTAGE: smallest, rounded warm-tan thatch roof, one tiny window.
+      case "cottage": {
+        const lit = "#e8dcbb", shade = "#c3b487", a = 22, b = 11, h = 24;
+        let s = shadow(28, 13);
+        s += isoBox(a, b, h, 0, lit, shade, "#cBa463");
+        // rounded thatch cap
+        const topY = -b - h;
+        s += `<path d="M-${a} ${topY} Q 0 ${topY - 22} ${a} ${topY} Q 0 ${topY + 6} -${a} ${topY} Z"
+                fill="#d8b772" stroke="${STROKE}" stroke-width="1.3"/>`;
+        // tiny window + little door
+        s += `<rect x="6" y="${-h * 0.5}" width="7" height="7" fill="#cfe0e6" stroke="${STROKE}" stroke-width="1"/>`;
+        s += `<path d="M-9 -2 q 0 -10 5 -10 q 5 0 5 10 Z" fill="#7c6336" stroke="${STROKE}" stroke-width="1.1"/>`;
+        return s;
+      }
+    }
+    return "";
+  }
+
+  // approximate hit-rect (local coords) so taps anywhere on the building register
+  const HIT = { hall: [70,86], keep: [40,92], tavern: [92,70], house: [58,72], cottage: [50,52] };
+
+  // ---- DOM refs ------------------------------------------------------------
+  const stage   = document.getElementById("stage");
+  const svg     = document.getElementById("town");
+  const editBtn = document.getElementById("editBtn");
+  const editLbl = document.getElementById("editBtnLabel");
+  const dock    = document.getElementById("dock");
+  const dockKinds = document.getElementById("dockKinds");
+  const dockSubject = document.getElementById("dockSubject");
+  const confirmEl = document.getElementById("confirm");
+
+  const SVGNS = "http://www.w3.org/2000/svg";
+
+  // ---- ground + grid layer (built once) ------------------------------------
+  function buildGround() {
+    const cpt = (gx, gy) => { const p = iso(gx, gy); return p.x + "," + p.y; };
+    let html = `<polygon points="${cpt(-0.5,-0.5)} ${cpt(4.5,-0.5)} ${cpt(4.5,4.5)} ${cpt(-0.5,4.5)}"
+                  fill="var(--grass)" stroke="var(--grass-edge)" stroke-width="2"/>`;
+    html += `<g id="gridLayer">`;
+    // plain faint lines (normal view)
+    for (let g = 0; g <= GRID_N; g++) {
+      const aa = iso(g - 0.5, -0.5), ab = iso(g - 0.5, GRID_N - 0.5);
+      const ba = iso(-0.5, g - 0.5), bb = iso(GRID_N - 0.5, g - 0.5);
+      html += `<line x1="${aa.x}" y1="${aa.y}" x2="${ab.x}" y2="${ab.y}"/>`;
+      html += `<line x1="${ba.x}" y1="${ba.y}" x2="${bb.x}" y2="${bb.y}"/>`;
+    }
+    // crisp per-cell diamond outlines (shown in edit mode), one per cell
+    for (let gx = 0; gx < GRID_N; gx++) {
+      for (let gy = 0; gy < GRID_N; gy++) {
+        const T = iso(gx, gy - 0.5), R = iso(gx + 0.5, gy), B = iso(gx, gy + 0.5), L = iso(gx - 0.5, gy);
+        const c = iso(gx, gy);
+        html += `<polygon class="cell-outline" data-gx="${gx}" data-gy="${gy}"
+                   points="${T.x},${T.y} ${R.x},${R.y} ${B.x},${B.y} ${L.x},${L.y}"/>`;
+        html += `<circle class="dot" cx="${c.x}" cy="${c.y}" r="3" data-gx="${gx}" data-gy="${gy}"/>`;
+      }
+    }
+    html += `</g>`;
+    // a dedicated layer that live drop-target diamonds get appended into
+    html += `<g id="dropLayer"></g>`;
+    return html;
+  }
+
+  // ---- render buildings (far -> near depth sort) ---------------------------
+  let firstPaint = true;
+  function render() {
+    // keep ground+grid; rebuild building groups
+    // remove old building groups
+    Array.from(svg.querySelectorAll(".bldg")).forEach(n => n.remove());
+
+    // refresh empty-cell marking on the grid outlines
+    const occ = occupiedMap(null);
+    svg.querySelectorAll("#gridLayer .cell-outline").forEach(o => {
+      const k = key(+o.dataset.gx, +o.dataset.gy);
+      const empty = !occ.has(k);
+      o.classList.toggle("cell-empty", empty && !isHallCell(+o.dataset.gx, +o.dataset.gy));
+    });
+    svg.querySelectorAll("#gridLayer .dot").forEach(d => {
+      const k = key(+d.dataset.gx, +d.dataset.gy);
+      d.classList.toggle("cell-empty", !occ.has(k));
+    });
+
+    const sorted = buildings.slice().sort((m, n) => (m.gx + m.gy) - (n.gx + n.gy) || m.gx - n.gx);
+    const frag = document.createDocumentFragment();
+    const willRise = firstPaint && !reduceMotion();
+    sorted.forEach((b, i) => {
+      const p = iso(b.gx, b.gy);
+      const g = document.createElementNS(SVGNS, "g");
+      // outer group carries ONLY the positioning transform (SVG attribute).
+      g.setAttribute("class", "bldg" + (willRise ? " rise" : "") + (b.id === selectedId ? " selected" : ""));
+      g.setAttribute("transform", `translate(${p.x},${p.y})`);
+      g.dataset.id = b.id;
+      g.dataset.kind = b.kind;
+      if (b.hall) g.dataset.hall = "1";
+      const hit = HIT[b.kind] || [50, 60];
+      g.innerHTML =
+        `<g class="lift">` +
+          glyph(b.kind) +
+          // soft hover halo (outline glow) — a faint ground ring
+          `<ellipse class="halo" cx="0" cy="2" rx="${hit[0]*0.7}" ry="${hit[0]*0.34}"
+             fill="none" stroke="#c79a3b" stroke-width="2.2" opacity="0"/>` +
+          // invisible hit-rect (reliable taps), centered on the tile
+          `<rect x="${-hit[0]/2}" y="${-hit[1]}" width="${hit[0]}" height="${hit[1]+12}"
+             fill="transparent" pointer-events="all"/>` +
+        `</g>`;
+      // the rise animation runs on the INNER .lift group; stagger via its delay,
+      // then strip the `rise` class once done so the held `transform:none` never
+      // blocks the edit-mode hover-lift.
+      if (willRise) {
+        const lift = g.querySelector(".lift");
+        lift.style.animationDelay = (i * 0.04).toFixed(2) + "s";
+        lift.addEventListener("animationend", () => g.classList.remove("rise"), { once: true });
+      }
+      frag.appendChild(g);
+    });
+    svg.appendChild(frag);
+    firstPaint = false;
+    wireBuildingPointers();
+  }
+
+  // ---- drop-target feedback diamond ----------------------------------------
+  let targetEl = null;
+  function showTarget(gx, gy, ok) {
+    const layer = svg.querySelector("#dropLayer");
+    if (!targetEl) {
+      targetEl = document.createElementNS(SVGNS, "polygon");
+      layer.appendChild(targetEl);
+    }
+    const T = iso(gx, gy - 0.5), R = iso(gx + 0.5, gy), B = iso(gx, gy + 0.5), L = iso(gx - 0.5, gy);
+    targetEl.setAttribute("points", `${T.x},${T.y} ${R.x},${R.y} ${B.x},${B.y} ${L.x},${L.y}`);
+    targetEl.setAttribute("class", ok ? "target-ok" : "target-no");
+  }
+  function clearTarget() { if (targetEl) { targetEl.remove(); targetEl = null; } }
+
+  // ---- coordinate conversion: client px -> svg viewBox coords ---------------
+  function toSvg(clientX, clientY) {
+    const pt = svg.createSVGPoint();
+    pt.x = clientX; pt.y = clientY;
+    const ctm = svg.getScreenCTM();
+    const loc = pt.matrixTransform(ctm.inverse());
+    return { x: loc.x, y: loc.y };
+  }
+
+  // ---- pointer drag / tap on buildings -------------------------------------
+  let drag = null; // { el, b, startX, startY, moved, origin:{gx,gy} }
+
+  function wireBuildingPointers() {
+    svg.querySelectorAll(".bldg").forEach(g => {
+      g.onpointerdown = onPointerDown;
+    });
+  }
+
+  function onPointerDown(e) {
+    if (!editing) return;
+    const g = e.currentTarget;
+    const b = buildings.find(x => x.id === g.dataset.id);
+    if (!b) return;
+    if (b.hall) return; // Hall: no grab, no drag, no picker
+
+    e.preventDefault();
+    const s = toSvg(e.clientX, e.clientY);
+    drag = {
+      el: g, b,
+      startCX: e.clientX, startCY: e.clientY,
+      startSX: s.x, startSY: s.y,
+      origin: { gx: b.gx, gy: b.gy },
+      base: iso(b.gx, b.gy),
+      moved: false, lastValid: null
+    };
+    g.setPointerCapture(e.pointerId);
+    g.classList.add("dragging");
+    // lift it above siblings so it tracks over everything
+    svg.appendChild(g);
+    g.onpointermove = onPointerMove;
+    g.onpointerup = onPointerUp;
+    g.onpointercancel = onPointerUp;
+  }
+
+  function onPointerMove(e) {
+    if (!drag) return;
+    const dx = e.clientX - drag.startCX;
+    const dy = e.clientY - drag.startCY;
+    const dist = Math.hypot(dx, dy);
+    if (!drag.moved && dist < 6) return;          // below threshold: still a potential tap
+    drag.moved = true;
+
+    const s = toSvg(e.clientX, e.clientY);
+    const nx = drag.base.x + (s.x - drag.startSX);
+    const ny = drag.base.y + (s.y - drag.startSY);
+    drag.el.setAttribute("transform", `translate(${nx},${ny})`);
+
+    // nearest cell under the pointer, validity check
+    const { gx, gy } = cellAt(s.x, s.y);
+    if (inGrid(gx, gy)) {
+      const occ = occupiedMap(drag.b);
+      const ok = !occ.has(key(gx, gy)) && !isHallCell(gx, gy);
+      showTarget(gx, gy, ok);
+      drag.lastValid = ok ? { gx, gy } : null;
+    } else {
+      clearTarget();
+      drag.lastValid = null;
+    }
+  }
+
+  function onPointerUp(e) {
+    if (!drag) return;
+    const g = drag.el, b = drag.b;
+    g.classList.remove("dragging");
+    g.onpointermove = null; g.onpointerup = null; g.onpointercancel = null;
+    try { g.releasePointerCapture(e.pointerId); } catch (_) {}
+
+    if (!drag.moved) {
+      // TAP -> select this building and raise the bottom dock to swap its type
+      drag = null;
+      clearTarget();
+      selectBuilding(b);
+      return;
+    }
+
+    const dropOk = drag.lastValid;
+    clearTarget();
+
+    if (dropOk) {
+      // commit the move; re-render with correct depth sort
+      b.gx = dropOk.gx; b.gy = dropOk.gy;
+      drag = null;
+      render();
+    } else {
+      // invalid -> spring back to original cell (instant if reduced motion)
+      springBack(g, drag.base);
+      drag = null;
+    }
+  }
+
+  function springBack(g, base) {
+    if (reduceMotion()) {
+      g.setAttribute("transform", `translate(${base.x},${base.y})`);
+      render();
+      return;
+    }
+    g.style.transition = "transform .28s cubic-bezier(.34,1.4,.5,1)";
+    g.setAttribute("transform", `translate(${base.x},${base.y})`);
+    const done = () => {
+      g.style.transition = "";
+      g.removeEventListener("transitionend", done);
+      render(); // restore normal depth order
+    };
+    g.addEventListener("transitionend", done);
+    // safety fallback
+    setTimeout(() => { if (g.style.transition) done(); }, 360);
+  }
+
+  // ---- type-picker: SELECTED building + BOTTOM DOCK ------------------------
+  // The dock variant keeps a persistent selection. Tapping a non-Hall building
+  // selects it (steady gold ring), raises the dock, and the dock STAYS OPEN so
+  // the user can re-skin and keep tweaking until they tap empty space or Done.
+  let selectedId = null; // id of the currently selected building (null = none)
+
+  // refresh just the .selected class on rendered building groups (no full render)
+  function applySelectionClasses() {
+    svg.querySelectorAll(".bldg").forEach(g => {
+      g.classList.toggle("selected", g.dataset.id === selectedId);
+    });
+  }
+
+  // rebuild the dock's kind buttons, marking the selected building's current kind.
+  function buildDockKinds(current) {
+    dockKinds.innerHTML = "";
+    SWAP_KINDS.forEach(kind => {
+      const btn = document.createElement("button");
+      btn.className = "kind-btn" + (kind === current ? " current" : "");
+      btn.type = "button";
+      btn.innerHTML =
+        `<svg viewBox="-50 -90 100 100">${glyph(kind)}</svg>` +
+        `<span class="kname">${KIND_LABEL[kind]}</span>`;
+      btn.onclick = () => {
+        const b = buildings.find(x => x.id === selectedId);
+        if (!b) return;
+        if (b.kind !== kind) { b.kind = kind; render(); applySelectionClasses(); }
+        // re-mark the "current" pill; dock STAYS OPEN for further tweaks
+        buildDockKinds(kind);
+      };
+      dockKinds.appendChild(btn);
+    });
+  }
+
+  function selectBuilding(b) {
+    if (b.hall) return;             // Hall is never selectable
+    selectedId = b.id;
+    applySelectionClasses();
+    dockSubject.textContent = KIND_LABEL[b.kind];
+    buildDockKinds(b.kind);
+    dock.classList.add("open");
+  }
+
+  function deselect() {
+    selectedId = null;
+    applySelectionClasses();
+    dock.classList.remove("open");
+  }
+
+  // dock's own Done button just closes/deselects (stays in Edit mode)
+  document.getElementById("dockDone").addEventListener("click", deselect);
+
+  // tapping empty space (not a building, not the dock) deselects + lowers the dock.
+  stage.addEventListener("pointerdown", (e) => {
+    if (selectedId === null) return;
+    if (dock.contains(e.target)) return;            // interacting with the dock
+    if (e.target.closest(".bldg")) return;          // a building's own handler manages selection
+    deselect();
+  }, true);
+
+  // ---- edit toggle ---------------------------------------------------------
+  function setEditing(on) {
+    editing = on;
+    stage.classList.toggle("editing", on);
+    editLbl.textContent = on ? "Done" : "Edit";
+    editBtn.style.display = on ? "none" : "inline-flex"; // toolbar carries Done in edit mode
+    if (!on) { deselect(); clearTarget(); }
+  }
+  editBtn.addEventListener("click", () => setEditing(true));
+  document.getElementById("doneBtn").addEventListener("click", () => setEditing(false));
+
+  // ---- reset to auto-layout (gentle confirm) -------------------------------
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    deselect();
+    confirmEl.classList.add("open");
+  });
+  document.getElementById("confirmNo").addEventListener("click", () => confirmEl.classList.remove("open"));
+  document.getElementById("confirmYes").addEventListener("click", () => {
+    buildings = clone(START);
+    confirmEl.classList.remove("open");
+    firstPaint = !reduceMotion();   // gentle re-rise of the restored layout
+    render();
+  });
+  confirmEl.addEventListener("click", (e) => { if (e.target === confirmEl) confirmEl.classList.remove("open"); });
+
+  // Esc closes dock / confirm / exits edit
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    if (confirmEl.classList.contains("open")) { confirmEl.classList.remove("open"); return; }
+    if (selectedId !== null) { deselect(); return; }
+    if (editing) setEditing(false);
+  });
+
+  // ---- boot ----------------------------------------------------------------
+  svg.innerHTML = buildGround();
+  render();
+})();
+</script>
+</body>
+</html>

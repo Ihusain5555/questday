@@ -354,7 +354,14 @@ export const balance = {
       { id: 'sunreach', name: 'Sun Reach', biome: 'desert', worldRegionId: 'ashlands', unlockAt: 250, comingSoon: true }
     ],
     /** Each completion adds ONE structure to the active town, sized by difficulty. */
-    buildingScaleByDifficulty: { Easy: 'small', Medium: 'cottage', Hard: 'landmark' } as Record<Difficulty, string>
+    buildingScaleByDifficulty: { Easy: 'small', Medium: 'cottage', Hard: 'landmark' } as Record<Difficulty, string>,
+    /** XP-driven town growth (v1.10). Buildings appear as all-time XP accrues:
+     *  count = min(cap, startCount + floor(totalXp / xpPerBuilding)). A PURE function
+     *  of XP — nothing stored — so ↩ Restore (which claws XP back exactly) walks the
+     *  town back exactly. `startCount` keeps a fresh town from looking empty; `cap`
+     *  bounds it to the 7x7 town grid (the layout was tuned for 30). `xpPerBuilding`
+     *  is the pacing knob — expect to RAISE it after play-feel (deliberately frequent). */
+    buildings: { startCount: 2, xpPerBuilding: 20, cap: 30 }
   },
 
   // --- The Arcade — quick brain-training breaks ------------------------------
