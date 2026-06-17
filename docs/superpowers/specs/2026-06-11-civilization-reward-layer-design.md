@@ -140,7 +140,7 @@ Lighthouse → Focus/Active mode · Harbor Master → Time-blocking · Market Do
 - Feature-buildings click-through: **Cartographer's Tower, Tavern, Forge, War Room** (+ Bonfire).
 - Optional drag-rearrange; numbers-softened UI; license/credits manifest.
 
-**Later backlog (parked):** named townsfolk/settlers · pets · Explorer's Guild (expeditions) · Museum · seasonal festivals · non-destructive Empire **ascension** to new biomes · castle interiors · world wonders · category-driven personalization + guilds · remaining feature-buildings (Hall of Records, Quest Board, Greenhouse, Mill, Bell Tower) · paid hand-drawn hero-art upgrade · richer continuous transitions.
+**Later backlog (parked):** named townsfolk/settlers · pets · Explorer's Guild (expeditions) · Museum · seasonal festivals · non-destructive Empire **ascension** to new biomes · castle interiors · world wonders · category-driven personalization + guilds · remaining feature-buildings (Hall of Records, Quest Board, Greenhouse, Mill, Bell Tower) · paid hand-drawn hero-art upgrade · richer continuous transitions · **world-map markers that develop with each town's stage (sparse camp → built-up, same terrain) — a mini-preview of the town inside; couple with the town-view art decision (user-requested 2026-06-15)**.
 
 ---
 

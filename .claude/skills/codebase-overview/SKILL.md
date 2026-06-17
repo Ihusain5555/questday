@@ -90,6 +90,26 @@ ONLY writer of the data file. This is why edits in one window appear live in oth
 - Post-v1.7: UI chrome = Phosphor icons; emoji = content/decoration only (Twemoji webfont).
 
 ## Gotchas & landmines (non-obvious — saves re-exploration)
+- **Quest Library (v1.11) — `questTemplates` is a SEALED db key.** Reusable quest templates live in a
+  new top-level `questTemplates: QuestTemplate[]` (types.ts), wholesale-replaced on save, `migrate()`
+  tolerant (missing/non-array → `[]`), `validate()` REJECTS the whole save on malformed (mirrors
+  `townLayouts`). It is **never read by `civilization.ts`/`realm.ts`/rewards** — templates only ever
+  produce ordinary quests via `createQuest`, so ↩ Restore stays exact (proved by `pw:rewards`). Store
+  actions: `createTemplate`/`updateTemplate`/`deleteTemplate`/`saveQuestAsTemplate` (+ `duplicateQuest`).
+- **Quest Library DRAG coexistence.** Template cards drag with a DISTINCT payload
+  `application/x-questday-template` (const in `TemplateCard.tsx`). The frame `onDragOver` must detect it
+  via `e.dataTransfer.types.includes(...)` — templates never set the `dragId` React state, so without
+  that check `preventDefault()` never runs and the drop SILENTLY fails. `onDrop` checks the template MIME
+  BEFORE the existing `getData('text/plain') || dragId` quest-move fallback, so a template drop can never
+  be mis-read as a reorder.
+- **`QuestForm` now serves quests AND templates.** `hideScheduling` hides due/frame/Repeats (template
+  mode); `isEdit` overrides the create-vs-edit wording (tap-add pre-fills from a template but is CREATING,
+  so it passes `isEdit={false}` → "New quest"). `QuestFormInitial` (a `Pick` of Quest + optional
+  scheduling) lets one form accept a `Quest` OR a `QuestTemplate`.
+- **`questLibrary` toggle = a sub-section, not a tab.** It's in `TOGGLEABLE_FEATURES` (so the Data tab
+  auto-renders its switch) but NO tab has that id, so `App.tsx`'s tab filter never hides a tab; `QuestsView`
+  reads `isFeatureEnabled(...,'questLibrary')` directly to show/hide the rail. NOT seeded in
+  `enabledFeatures` (missing key = ON). The Data tab itself is now a right-aligned **gear** (`.tab.gear-tab`).
 - **The garden "looks unused" but ISN'T.** `garden.ts` / `GardenView` / `balance.garden` are kept
   and `growOnCompletion` still runs on every completion. Deleting it would break ↩ Restore's
   coin claw-back math and the reversibility guarantee. The Realm swapped only the *views* +
@@ -111,6 +131,31 @@ ONLY writer of the data file. This is why edits in one window appear live in oth
 - **Output-filter hook hides PASS lines.** Bash/PowerShell test output collapses to "no failures
   detected — N lines hidden". To SEE real PASS/FAIL, redirect to a temp file and `Read` it (the
   hook filters the tool *result*, not the file); `cygpath -w /tmp/x.txt` gives the path for Read.
+- **`npm run typecheck` does NOT catch a non-existent Phosphor icon import — only `npm run build`
+  (rollup) does** (tsc's `@phosphor-icons/react` types are looser than the bundle's actual exports).
+  Always BUILD before claiming an icon works. The installed version exports `Archive` (NOT
+  `ArchiveBox`), `PencilSimple`, `X`, `Mosque`, `CalendarCheck`. Quest-row action buttons are
+  icon-only with `aria-label`s that MUST match the old text ("Edit"/"Duplicate"/"Drop"/"Delete"/
+  "Save as template") so `pw` `getByRole({name})` lookups still resolve.
+- **Responsive CSS source-order trap.** `.quests-layout`/`.library-rail` base rules live ~line 4066
+  of `styles.css`; the 308px rail is the width-thief, so its responsive override (drop full-width
+  under the list below 940px — the window min is 720px) MUST sit at the END of the file, else an
+  earlier equal-specificity `@media` rule loses the cascade. `scripts/pw-scale.mjs` screenshots the
+  Quests tab at 1040 (rail beside) and 720 (rail stacked) to verify.
+- **Opt-in faith features must SEED `false` — they override the "missing key = ON" convention.**
+  Most features rely on a missing `enabledFeatures` key meaning ON, but a faith feature (`faithChecklist`)
+  must be OFF until opted in so non-Muslim users never see it. So `defaults.ts` explicitly seeds
+  `faithChecklist: false`, and `migrate()` merges fresh-first (`...fresh, ...db`) so existing saves
+  inherit the seed too. Any future identity/belief-scoped feature must do the same — do NOT rely on the
+  default-ON rule for it.
+- **Share-card (v1.11) — canvas text needs the webfont PRELOADED or it silently falls back.** The offline
+  PNG export (`src/renderer/app/shareCard.ts`, drawn on an `<canvas>` 2D context, `toDataURL('image/png')`,
+  ZERO deps / ZERO IPC) must `await document.fonts.load('<weight> <size> "Clash Display"')` (and Satoshi)
+  BEFORE the first `fillText`, or the canvas draws in a system fallback font even though the same font
+  renders fine in the DOM — canvas doesn't lazy-load fonts the way the DOM does. It reads ONLY derived
+  weekly numbers + realm art + brand — never quest titles (a locked privacy rule). `scripts/pw-sharecard.mjs`
+  (3/3) checks the data-URL is a real non-trivial PNG; the last-mile Save-to-disk / clipboard-paste is the
+  one step pw can't fully script.
 - **Single-instance lock:** a running QuestDay (tray) makes `npm run dev`/`pw`/`dist` launches
   quit instantly. `Get-Process QuestDay,electron | Stop-Process` first; relaunch the installed app
   after. **As of v1.9.0 ALL pw drivers use an isolated `--user-data-dir`** (pw-arcade + pw-run were
@@ -138,6 +183,21 @@ ONLY writer of the data file. This is why edits in one window appear live in oth
   `https://github.com/electron/electron/releases/download/v<ver>/electron-v<ver>-win32-x64.zip`,
   `Expand-Archive` into `node_modules/electron/dist`, write `path.txt` = `electron.exe`. (electron-builder's
   own download for `npm run dist` works — `questday-release/` is outside OneDrive.)
+- **macOS build (v1.10, free/unsigned universal `.dmg`) — the landmines.** `npm run dist:mac` (Mac
+  only) or GitHub Actions `.github/workflows/build-macos.yml` → `release/`. Repo is PUBLIC at
+  `github.com/Ihusain5555/questday`. (1) `build.mac.identity` MUST be `"-"` (ad-hoc), NOT `null` —
+  `null` logs "skipped code signing" and the universal binary is killed on launch by Apple Silicon.
+  (2) `electron-builder --mac` MUST pass `--publish never` — a tag-triggered build otherwise fails
+  demanding `GH_TOKEN` (implicit publish). (3) `workflow_dispatch` takes ~10 min to register on a
+  fresh repo; a `push: tags: v*` trigger fires immediately (throwaway tag `v1.10.0-mac.1` exists on
+  the remote, points to the pre-fix commit). (4) GitHub Actions **artifacts need a GitHub login to
+  download** — to hand the `.dmg` to a non-GitHub user, attach it to a public Release or transfer
+  the file. (5) Renderer detects macOS via `navigator.userAgent` (`src/renderer/platform.ts`
+  `IS_MAC`), NOT a preload field — keeps the security surface untouched. (6) Active Mode is hidden +
+  never started on macOS (Win32/PowerShell-only). (7) Icon regenerated to 1024px via
+  `scripts/_gen-icon.cjs` — headless Electron renders the Clash Display Bold "Q" to a canvas (no
+  standalone Chrome here; Playwright drives Electron). (8) `directories.output` is now relative
+  `release/`; the Windows `dist` script overrides it back to `questday-release/` via `-c.`.
 - **Active-mode timers are GATED (v1.9.0).** The 30s scheduler tick + the 2s PowerShell foreground
   detector only run when `settings.activeModeEnabled` is on (started/stopped via `onDatabaseChanged`
   in `index.ts`) — they're no longer always-on. `nudgedFrameKeys` is pruned on day-change.
@@ -201,3 +261,41 @@ ONLY writer of the data file. This is why edits in one window appear live in oth
   `{name, svg}`), HTML-entity-decodes, and injects each town `<g>` into a `<!--TOWNS-->` marker in the base HTML. The 8
   town clusters were fan-out generated by parallel agents against a strict shared style spec (exact hex tokens + an
   example building) so they stay cohesive — blind multi-agent SVG only works with a tight spec + a final review pass.
+- **The Level-1 TOWN render-engine (v1.10, built 2026-06-16) lives in `src/renderer/app/TownView.tsx`** — clicking a
+  charted hero town on the map zooms into an iso town that grows Camp→Empire (`COUNT_BY_STAGE`, count derived from the
+  civ stage). Art is **self-authored inked SVG** baked into two AUTO-GENERATED modules: `townBuildings.ts`
+  (`BUILDING_SVG`, 5 kinds: hall/keep/tavern/house/cottage) and `biomeDecor.ts` (`BIOME_GROUND` = 8 biomes' base/accent +
+  decoration SVGs, plus `REGION_BIOME` mapping all 15 region ids → biome). RealmView passes `biome={REGION_BIOME[id]}`.
+  **Tunables at the top of TownView** (don't hardcode elsewhere): `TILE_W=100 TILE_H=50` (2:1 iso, wider than a building
+  so grass shows), `BUILDING_SCALE=0.72`, `DECORATION_SCALE=0.45` (keeps trees/pines UNDER house height — a user rule),
+  `JITTER_X=16 JITTER_Y=9`. Placement is organic via a deterministic `hash(gx,gy)` jitter + size variation; the centre
+  Hall (plot 0) is anchored. Everything is **pure-derived** (stage+plot+region → deterministic, nothing stored) so **↩
+  Restore stays exact** — do NOT add stored state.
+- **TOWN GOTCHA — a CSS animation that sets `transform` OVERRIDES an SVG `transform` attribute.** Buildings are positioned
+  by an SVG `transform` on an OUTER `<g>`, but the `.town-bldg` rise animation (`@keyframes town-rise`, `translateY`) also
+  sets `transform` — so positioning and animation MUST be on separate elements (outer = position, inner `.town-bldg` =
+  animate), else every building stacks at 0,0. Buildings are inlined via `dangerouslySetInnerHTML` on `<g>` (the
+  `storybookMapIcons` pattern). Buildings + scattered decorations are **merged into one list and depth-sorted by screen-y**
+  (a tree in front of a house must paint over it). Decorations scatter on EMPTY tiles only.
+- **Inked-SVG art pipeline (reuse for any new town art).** Generate via a **Workflow against a LOCKED style contract**
+  (exact palette hexes, ink `#5a4a2e`, single upper-left light, exact iso box/roof vertex math) + a per-asset
+  **precision/cohesion enforcer** pass (snaps colours, forces constant-x verticals, centres roof ridges, converts flat
+  "sticker" windows to in-plane parallelograms). Two traps: (a) workflow returns SVGs **HTML-entity-encoded** — decode
+  before embedding (`&lt;`→`<` …, `&amp;` last, strip `<![CDATA[`); (b) **workflow agents cannot reliably write files or
+  "render in a browser"** — a returned HTML that claims a file write is CONFABULATED, so have the workflow return RAW svg
+  data and assemble/codegen/screenshot in the MAIN thread (or resume the run with the return changed → cached agents are
+  instant). Tune all scales/spacing VISUALLY in throwaway `mockups/` previews (served via `node scripts/_mockserver.mjs`
+  on :8777 + Playwright MCP, which blocks `file://`) BEFORE baking into TownView. Gemini critique (`_gemini-buildings.mjs`)
+  is one opinion only — it confabulates and flip-flops by model; the visually-driven user is the art judge.
+- **Town EDITING v1 is DESIGNED, NOT built — don't re-derive it** (spec
+  `docs/superpowers/specs/2026-06-16-town-editing-design.md`, 2026-06-16; the civilization layer's chosen
+  headline, after the Goodgame-Empire research). v1 "Arrange your town" = drag-move + type-swap in a dedicated
+  Edit mode, grid-snap, all unlocked towns, reset-to-auto. **Architecture to reuse:** keep the current
+  pure-derived town as the BASE; persist ONLY sparse per-building overrides in a NEW sealed top-level db key
+  `townLayouts` (`Record<townId,{overrides:Record<buildingIndex,{cell?:PLOTSindex,kind?:'keep'|'tavern'|'house'|'cottage'}>}>`),
+  **wholesale-replace** on save (reset = omit the town), NEVER read by `civilization.ts`/rewards (keeps ↩ Restore
+  exact). Render = derived base + overrides; **untouched buildings keep their own default `PLOTS[i]` cell and
+  reflow ONLY if an override claimed that exact cell** — do NOT refill the whole grid order, or untouched
+  buildings shuffle when you move a different one. Hall (index 0) is fixed/non-swappable. Adding `townLayouts` =
+  STOP-AND-CONFIRM schema change. Build order in spec §13 (mockup → data layer → render → swap UI → drag UI →
+  reset/polish → `pw:townedit` driver).

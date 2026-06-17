@@ -18,7 +18,8 @@ npm run dev        # live dev (widget + main window, hot-reload)
 npm run build      # compile to out/
 npm run typecheck  # tsc for main (node) + renderer (web) — run before considering done
 npm run pw         # drive the app with Playwright, screenshots -> pw-shots/
-npm run dist       # build the NSIS installer -> C:\Users\ihusa\questday-release\
+npm run dist       # build the Windows NSIS installer -> C:\Users\ihusa\questday-release\
+npm run dist:mac   # (macOS ONLY) build the free unsigned universal .dmg -> release/
 ```
 
 No unit tests — **verification is driving the real app with Playwright** (per-feature drivers).
@@ -27,6 +28,34 @@ they launch the built `out/`, so `npm run build` after a source change first. Ke
 `pw:rewards` (reward + ↩Restore exactness + save-path safety), `pw:rollover` (rollover/recurrence),
 plus `pw:arcade`/`pw:run`/`pw:eisenhower`/`pw:realm`/`pw:timeboxing`.
 → See the **playwright-verification** skill for how to write/run drivers safely.
+
+## macOS build (v1.10 — free, unsigned, universal)
+
+A macOS target ships alongside the Windows NSIS build, **free and UNSIGNED** (no Apple
+Developer account). Build on a Mac with `npm run dist:mac`, or in the cloud via GitHub
+Actions (`.github/workflows/build-macos.yml`) → universal `.dmg` in `release/`. The repo
+is now **public** at `github.com/Ihusain5555/questday` (default branch =
+`feature/civilization-world-map`). Hard-won build quirks (learned 2026-06-15):
+- **`build.mac.identity` MUST be `"-"` (ad-hoc), NEVER `null`** — `null` logs "skipped
+  code signing" and the universal binary won't launch on Apple Silicon. Ad-hoc needs no
+  cert/account and still shows the normal one-time "Open Anyway".
+- **`electron-builder --mac` MUST pass `--publish never`** — else a tag-triggered build
+  fails demanding `GH_TOKEN` (electron-builder's implicit publish). We ship the file via
+  the workflow's `upload-artifact` step, not electron-builder publishing.
+- All Mac code is **platform-gated** (`isMac` in `src/main/index.ts`; `IS_MAC` from
+  `src/renderer/platform.ts` via `navigator.userAgent` — deliberately NOT a preload field,
+  to leave the security surface untouched). Title bar = `hiddenInset` + CSS left-padding so
+  the brand text clears the traffic lights; tray icon = template image; widget visible
+  across Spaces. **Active Mode is Windows-only — hidden + never started on macOS** (tone
+  rule: data kept, tab hidden).
+- Unsigned ⇒ end users do a one-time "Open Anyway" (see `docs/MAC-INSTALL.md`). GitHub
+  Actions **artifacts need a login to download** — to give the `.dmg` to a non-GitHub
+  user, attach it to a **public Release** (direct link) or transfer the file. `workflow_dispatch`
+  takes ~10 min to register on a fresh repo; a `push: tags: v*` trigger fires immediately.
+- `directories.output` is relative `release/`; the Windows `dist` script overrides it back
+  to `C:/Users/ihusa/questday-release` via `-c.directories.output=`. App icon is 1024px,
+  regenerated crisp from the brand font via `scripts/_gen-icon.cjs` (headless Electron).
+- Code-signing/notarization remains **deferred** (needs a paid Apple account).
 
 ## Architecture (map)
 
@@ -69,6 +98,12 @@ Pure engines live in `src/shared/engine/` (current-quest scoring, rewards, **rea
   must send ONLY the fields it changed for those two keys (never a stale whole-object spread — it
   re-clobbers siblings). It persists to disk BEFORE advancing the in-memory cache. All OTHER top-level
   keys still replace wholesale.
+- **No-network is HARD — including for Islamic features.** The local-only / no-cloud rule means any
+  prayer-time / Hijri / Qibla feature MUST compute on-device with pure math (the well-known **PrayTimes**
+  algorithm — no new dependency, just date/lat-lon math), NEVER an online API (IslamicFinder, Aladhan,
+  etc.). An API would leak the user's location off-device every day and break the trust promise. Inputs
+  (location + calculation method) are user-entered settings, not fetched. (Decision made 2026-06-17 when
+  the user asked for real prayer times.)
 - **Icons vs emoji (post-v1.7):** UI chrome uses Phosphor icons; emoji reserved for content/
   decoration and render via the bundled Twemoji color webfont.
 - **Toggleable features:** new optional feature = one `features.ts` entry + one App.tsx tab +
@@ -130,6 +165,18 @@ by outcome and **cannot read code**, so the gates below are load-bearing, not op
   against the built `out/` AND the spec's acceptance check for that task is met; visual/art tasks ALSO require
   the user to have seen it in the real app and accepted the look. Partial work is flagged explicitly — never
   reported as done.
+- **Headline DECIDED (2026-06-16): hands-on TOWN EDITING is the civilization layer's centerpiece** — the user
+  chose it (over "auto-grow" / "lightweight") after the **Goodgame Empire** inspiration research. GGE is the
+  *skeleton* (map of settlements → enter → build) only; its PvP / troop-&-resource loss / build-timers /
+  monetization are ALL DROPPED (they violate gains-only). **v1 = "Arrange your town"**: drag-move buildings +
+  swap their type, dedicated Edit mode, grid-snap, all unlocked towns, reset-to-auto safety. **decorate-with-
+  props = v2; shape-the-land / terraform = v3.** Spec: `docs/superpowers/specs/2026-06-16-town-editing-design.md`.
+  **Durable architecture rule:** editing persists as a SEALED override layer — a NEW top-level `townLayouts` db
+  key (`Record<townId,{overrides:Record<buildingIndex,{cell?,kind?}>}>`), **wholesale-replace** on save (reset =
+  omit the town), and **NEVER read by `civilization.ts`/rewards** — so ↩ Restore stays exact and buildings still
+  appear automatically on completion (editing is optional, never overshadows the task). The town renders as
+  **derived base + sparse overrides**; untouched buildings keep their own default cell (don't reflow). Adding
+  `townLayouts` is a STOP-AND-CONFIRM schema change.
 
 ## Standing guidance (efficiency)
 
