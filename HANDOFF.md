@@ -1,40 +1,45 @@
 # HANDOFF — QuestDay (resume kit)
-_Updated 2026-06-17 · branch `feature/civilization-world-map` · HEAD `be4dd14` · NOT pushed._
+_Updated 2026-06-17 · branch `feature/civilization-world-map` · HEAD `6c4acf6` · NOT pushed._
 
-## ▶ ACTIVE — RESUME HERE: two new feature requests (asked 2026-06-17, NEITHER built yet)
+## ▶ ACTIVE — RESUME HERE: Request A brainstorming, parked at 3 micro-confirms before the spec
 
-The researched-features batch is fully built & committed (see "Batch — DONE" below). Since then the
-user gave **two new requests**. The session ended (API 529 outages) before either was built — they
-are the live work.
+Two new requests came after the batch (A = prayer-time Salah, B = capacity-bar markers). **Request A
+is mid-brainstorming** (using the `superpowers:brainstorming` skill). Interview done + design presented;
+**next action = get the 3 micro-confirms below, then WRITE THE SPEC** to
+`docs/superpowers/specs/2026-06-17-prayer-times-salah-design.md`, self-review, user-review, then invoke
+`writing-plans`. Do NOT code until the spec is approved. (Task list #1–#6 tracks this flow.)
 
-### Request A — Salah quests driven by REAL prayer times (supersedes part of `b0510b5`)
+### Request A — Salah quests driven by REAL prayer times (supersedes the Salah half of `b0510b5`)
 **What the user wants:** drop the single "Salah (daily prayers)" subtask-checklist. Instead, **five
-separate daily quests** — Fajr, Dhuhr, Asr, Maghrib, Isha — each **due at the actual prayer time**
-("due at the time the prayer ends"), recurring every day. User suggested IslamicFinder; said "or find
-a better solution."
+separate daily quests** — Fajr, Dhuhr, Asr, Maghrib, Isha — each **due at the time the prayer ends**,
+recurring every day.
 
-**Direction already decided & told to the user (do NOT re-litigate):**
-- **NO online API.** IslamicFinder/Aladhan would send the user's location off-device daily and break
-  the local-only / no-network guarantee (now also recorded in `CLAUDE.md` persistence section).
-- **Compute prayer times ON-DEVICE** with the well-known **PrayTimes** algorithm — pure date + lat/lon
-  math, **zero new dependency**. Inputs (location + calculation method) become user-entered settings.
+**DECISIONS LOCKED in the interview (do NOT re-ask):**
+- **NO online API** — compute ON-DEVICE via the **PrayTimes** astronomical formulas (self-implemented
+  from public solar-position math → no third-party code, ZERO new dependency). Now also a `CLAUDE.md` rule.
+- **Location = pick a city** from a bundled offline list (`src/shared/data/cities.ts`, ~150 cities + coords);
+  PLUS a manual lat/lon fallback.
+- **Method = default ISNA**, with a settings picker for method + Asr (Standard/Hanafi).
+- **Due = when the window closes** (Fajr→sunrise, Dhuhr→Asr start, …).
+- **Scope = due-times only, NO notifications** (the widget already surfaces the nearest due quest).
 
-**This is a NON-TRIVIAL build → run the discovery interview → write a v1 spec → get explicit yes
-BEFORE coding** (per the user's "before any non-trivial build" rule; batch mode does NOT waive the
-schema/irreversible gates, and this needs a settings/schema decision). Open design questions to resolve
-in that interview:
-1. **Location entry:** manual lat/lon, a city lookup (offline city DB = a data file, no network), or
-   timezone-only? (City lookup is friendliest but needs a bundled coords table.)
-2. **Calculation method:** ISNA / Muslim World League / Umm al-Qura / Egyptian / etc. — needs a picker;
-   default likely ISNA for North America. Asr = Standard vs Hanafi is a second toggle.
-3. **"Due at when the prayer ends"** = the START of the NEXT prayer (e.g. Fajr's window ends at sunrise;
-   Dhuhr ends when Asr starts). Decide per-prayer end semantics with the user.
-4. **THE REAL ARCHITECTURAL WRINKLE:** prayer times shift every day, but a quest's `dueAt` is a fixed
-   ISO timestamp and `recurDays` only repeats a fixed pattern. So either (a) the rollover/recurrence
-   engine (`src/shared/engine/rollover.ts` / `recurrence.ts`) must RECOMPUTE each prayer quest's `dueAt`
-   from the PrayTimes engine when it rolls the quest into a new day, or (b) store a time-of-day + a flag
-   instead of an absolute `dueAt`. (a) is cleaner but touches the recurrence engine — flag it as
-   stop-and-confirm.
+**APPROACH CHOSEN — A: recompute `dueAt` at the daily reset, identify prayer quests by stable TITLE,
+NO `Quest` schema change.** (Rejected B = adding a `dueTimeOfDay` field to `Quest` — ripples into
+`isOverdue`/widget/scoring/migration for no user-visible gain.) Safe for ↩ Restore because reward/Restore
+math keys off completion records, never `dueAt` — so `dueAt` can be restamped daily with zero effect on payout.
+
+**THE 3 MICRO-CONFIRMS the user still owes (ask these FIRST on resume):**
+1. **Isha's "window close":** recommended = **next-day Fajr** (most forgiving, never overdue mid-evening)
+   vs Islamic midnight.
+2. **XP:** keep the gentle **2 XP** per prayer (status quo) or set **0** (worship not "scored").
+3. **Old single "Salah (daily prayers)" quest** from `b0510b5`: plan = **leave it untouched** (never
+   auto-delete user data); new card seeds the 5 timed quests; user deletes the old one. Confirm OK.
+
+**THE REAL ARCHITECTURAL WRINKLE (verified in code this session):** the daily-reset/renew path in
+`src/renderer/state/store.ts` (~line 758, the `renewIds` branch) re-activates a recurring quest —
+clears `completedAt`/subtasks — but **never recomputes `dueAt`**. So Approach A must, in that renew path
+(and on app open / rollover), restamp the 5 prayer quests' `dueAt` from `prayerTimes.ts` using today's
+date + `settings.prayerTimes`. Prayer quests are matched by their stable titles (degrade gracefully if renamed).
 
 **Files it will touch (for planning):**
 - NEW `src/shared/engine/prayerTimes.ts` — pure PrayTimes math (lat, lon, date, method → 5 times). No deps.
@@ -69,22 +74,20 @@ already exists (shipped in `1898ea5`, calm gold, shows planned-minutes vs frame 
 ## Baseline (recorded 2026-06-17, so next session need not re-derive)
 - `npm run typecheck` → **PASS** (~10s, main + renderer).
 - `npm run build` → **PASS** (~25s).
+- **No source code changed since this baseline** (only docs committed + an interview held) → the PASS
+  above still holds; no need to re-run before resuming Request A.
 - No open errors. Last failure of the session was an **API 529 overload** (infra, not code) — ignore.
 - Last driver runs this session (all green): `pw-faith` 7/7 · `pw-weekly` 4/4 · `pw-resting` 4/4 ·
   `pw-scale` (+ `pw-library` 12/12) · `pw-sharecard` 3/3 · `pw:rewards` ALL PASS (↩ Restore still exact).
 
 ## Git state
-- Branch `feature/civilization-world-map`, HEAD **`be4dd14`**, **NOT pushed**. No stashes.
-- Last 6 commits: `be4dd14` share-card · `bccfe99` Quests icon/scaling · `ef54094` resting widget ·
-  `2b8c7f5` Weekly Review · `b0510b5` Salah checklist · `1898ea5` Quest Library + quick wins.
-- **Uncommitted tracked changes** (`git diff --stat HEAD` = 5 files, all close-out docs — NOT a feature):
-  - `HANDOFF.md` — this rewrite.
-  - `CLAUDE.md` — added the no-network/on-device prayer-times durable rule (persistence section).
-  - `.claude/skills/codebase-overview/SKILL.md` — added gotchas (opt-in-faith-seeds-false; share-card
-    canvas font preload), plus the batch's earlier gotchas.
-  - `docs/superpowers/specs/2026-06-11-civilization-reward-layer-design.md` — 1-line backlog add
-    (world-map markers that develop with town stage).
-  - `.claude/settings.local.json` — added `WebSearch` permission.
+- Branch `feature/civilization-world-map`, HEAD **`6c4acf6`**, **NOT pushed**. No stashes.
+- Last 6 commits: `6c4acf6` docs close-out · `be4dd14` share-card · `bccfe99` Quests icon/scaling ·
+  `ef54094` resting widget · `2b8c7f5` Weekly Review · `b0510b5` Salah checklist.
+- `6c4acf6` committed the close-out docs (this HANDOFF + CLAUDE.md no-API rule + codebase-overview
+  gotchas + the civ-spec backlog line).
+- **Only remaining uncommitted tracked change: `.claude/settings.local.json`** (added `WebSearch`
+  permission — a personal/local setting, deliberately left out of the docs commit).
 - **Untracked = throwaway** (see "Throwaway" below) — none of it is source.
 
 ## Batch — DONE this session (all committed, NOT pushed; each has a pw driver, typecheck+build clean)
@@ -111,7 +114,13 @@ already exists (shipped in `1898ea5`, calm gold, shows planned-minutes vs frame 
 - (d) Decide **push** and/or **`npm run dist`** installer — both are STOP-AND-CONFIRM; await explicit go.
 
 ## Open / deferred (swept from the diff + this session)
-- **Request A & B above** — the live open work.
+- **Request A (prayer-time Salah) — 3 micro-confirms owed by the user before the spec is written**
+  (resume here): (1) Isha window-close = next-day Fajr [recommended] vs Islamic midnight; (2) XP per
+  prayer = keep 2 [status quo] vs 0; (3) confirm the old `b0510b5` single Salah quest is left untouched
+  (never auto-deleted) while the new card seeds the 5 timed quests. Full context in ▶ ACTIVE above.
+- **Request B (per-quest capacity-bar time markers)** — not started; mockup-first (segmented bar).
+- **`#1 Salah faith copy`** still needs Islamic-Center sign-off (carries over; mostly moot once Request A
+  rewrites the Salah quest, but the Qur'an + general copy still apply).
 - **AI/hero-art upgrade** for the civilization (style-lock / commissioned hero map) — explicitly DEFERRED.
 - **Town-editing live-trial feedback** (user tried `4ead7e7`, deferred all): (1) a tile rejects drops
   (likely the Hall centre cell, by design — confirm before "fixing"); (2) buildings look "deformed"

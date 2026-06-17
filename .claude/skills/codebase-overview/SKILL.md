@@ -41,6 +41,15 @@ ONLY writer of the data file. This is why edits in one window appear live in oth
 - `rollover.ts` — daily carry-over (encouraging) + past-due detection.
 - `recurrence.ts` — v1.5 recurring quests (`recurDays` weekday schedule; completed reset
   next day, full payout each completion; off-day quests "rest", dimmed).
+  - **GOTCHA — the daily reset NEVER recomputes `dueAt`.** The renew path in
+    `src/renderer/state/store.ts` (~line 758, the `renewIds` branch) re-activates a recurring quest by
+    clearing `completedAt`/`completionAward` and un-ticking subtasks, but leaves `dueAt` as-is. So a
+    recurring quest's `dueAt` is frozen at its original timestamp forever. Any "time-of-day recurring"
+    feature (e.g. the planned prayer-time Salah quests) MUST restamp `dueAt` itself in that renew path.
+  - **"Looks like overdue is universal but isn't" — recurring quests are EXCLUDED from the overdue nag.**
+    `rollover.ts:~49` filters the "needs review" set to `q.status==='active' && !isRecurring(q)`, so a
+    recurring quest with a past `dueAt` is deliberately never surfaced as overdue (tone rule: it just rests
+    and returns fresh). Don't "fix" this — it's intentional gains-only behaviour.
 - `activeMode.ts` — frame-ending timing.
 - `eisenhower.ts` — v1.6 read-only urgent×important classifier over existing fields
   (dueAt=urgent within `balance.eisenhower.urgentWithinHours`; skippability/priority=
