@@ -131,6 +131,21 @@ export type WorldStageKey =
   | 'kingdom'
   | 'empire'
 
+// --- Prayer-time settings (opt-in faith feature, v1.12) ---------------------
+export type PrayerMethod = 'isna' | 'mwl' | 'egyptian' | 'karachi' | 'ummAlQura'
+export type AsrSchool = 'standard' | 'hanafi'
+
+/** Location + calculation method for the prayer-time Salah quests. Additive,
+ *  optional, and NEVER read by the rewards/civilization engine → ↩ Restore stays
+ *  exact. `lat`/`lon` come from a bundled city or manual entry; `null` = not set. */
+export interface PrayerSettings {
+  cityId: string | null
+  lat: number | null
+  lon: number | null
+  method: PrayerMethod
+  asr: AsrSchool
+}
+
 export interface Settings {
   activeModeEnabled: boolean
   activeModeTiers: Record<ActiveModeTier, boolean>
@@ -168,6 +183,9 @@ export interface Settings {
   /** The topic the player chose last in the Realm — highlighted next time for
    *  quick repeat tapping (they can still pick any). */
   realmLastTopic?: string
+  /** Prayer-time settings for the opt-in Salah quests (v1.12). Optional so old
+   *  saves migrate cleanly; defaults seeded in defaults.ts. */
+  prayerTimes?: PrayerSettings
 }
 
 // --- Reward world: the garden (§7 vision, built 2026-06-06) -----------------

@@ -59,7 +59,11 @@ export function createDefaultDatabase(): Database {
       // seed, which migrate() merges fresh-first so existing saves inherit it too)
       // so non-Muslim users never see it.
       enabledFeatures: { focus: true, matrix: true, faithChecklist: false },
-      realmChronicle: []
+      realmChronicle: [],
+      // Prayer-time settings (v1.12). No location until the user picks a city, so
+      // the Salah setup card prompts for one before seeding timed quests. Never
+      // read by rewards/civilization → ↩ Restore exact.
+      prayerTimes: { cityId: null, lat: null, lon: null, method: 'isna', asr: 'standard' }
     },
     townLayouts: {},
     questTemplates: [],
