@@ -34,21 +34,21 @@ const frames = [
 
 const carryQuest = {
   id: 'roll-active', title: 'Carry me over', subTasks: [], difficulty: 'Easy',
-  priority: 'Medium', skippability: 'Should do', timeEstimateMinutes: 15,
+  importance: 'Medium', urgency: 'Medium', timeEstimateMinutes: 15,
   dueAt: new Date(now.getTime() + 24 * 3_600_000).toISOString(), // tomorrow, not overdue
   timeFrameId: frames[0].id, status: 'active', createdAt: yesterdayDate.toISOString(),
   completedAt: null, sortOrder: 0
 }
 const overdueQuest = {
   id: 'roll-overdue', title: 'Past my due', subTasks: [], difficulty: 'Easy',
-  priority: 'High', skippability: 'Should do', timeEstimateMinutes: 15,
+  importance: 'Medium', urgency: 'High', timeEstimateMinutes: 15,
   dueAt: new Date(now.getTime() - 6 * 3_600_000).toISOString(), // 6h ago, overdue
   timeFrameId: frames[0].id, status: 'active', createdAt: yesterdayDate.toISOString(),
   completedAt: null, sortOrder: 1
 }
 const recurQuest = {
-  id: 'roll-recur', title: 'Daily habit', difficulty: 'Medium', priority: 'Medium',
-  skippability: 'Should do', timeEstimateMinutes: 20, dueAt: null, timeFrameId: frames[0].id,
+  id: 'roll-recur', title: 'Daily habit', difficulty: 'Medium', importance: 'Medium',
+  urgency: 'Medium', timeEstimateMinutes: 20, dueAt: null, timeFrameId: frames[0].id,
   status: 'completed', createdAt: yesterdayDate.toISOString(), completedAt: yesterdayDate.toISOString(),
   sortOrder: 2, recurDays: [0, 1, 2, 3, 4, 5, 6], completionDates: [yesterday],
   subTasks: [{ id: 'st1', title: 'step', order: 0, done: true }],

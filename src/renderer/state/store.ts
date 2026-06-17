@@ -2,11 +2,13 @@ import { create } from 'zustand'
 import type {
   Database,
   DatabasePatch,
+  Importance,
   PlotOverride,
   Quest,
   Settings,
   SubTask,
-  TimeFrame
+  TimeFrame,
+  Urgency
 } from '@shared/types'
 import { applyCompletion, xpForLevel, type CompletionAward } from '@shared/engine/rewards'
 import { computeDayChange, ymd, type DayChange } from '@shared/engine/rollover'
@@ -73,8 +75,8 @@ export interface HarvestFlash {
 export interface QuestInput {
   title: string
   difficulty: Quest['difficulty']
-  priority: Quest['priority']
-  skippability: Quest['skippability']
+  importance: Importance
+  urgency: Urgency
   timeEstimateMinutes: number
   dueAt: string | null
   timeFrameId: string
@@ -222,8 +224,8 @@ export const useStore = create<AppStore>((set, get) => ({
       title: input.title.trim(),
       subTasks: buildSubTasks(input.subTasks),
       difficulty: input.difficulty,
-      priority: input.priority,
-      skippability: input.skippability,
+      importance: input.importance,
+      urgency: input.urgency,
       timeEstimateMinutes: Math.max(0, Math.round(input.timeEstimateMinutes)),
       dueAt: input.dueAt,
       timeFrameId: input.timeFrameId,
@@ -250,8 +252,8 @@ export const useStore = create<AppStore>((set, get) => ({
               return prev ? { ...s, done: prev.done } : s
             }),
             difficulty: input.difficulty,
-            priority: input.priority,
-            skippability: input.skippability,
+            importance: input.importance,
+            urgency: input.urgency,
             timeEstimateMinutes: Math.max(0, Math.round(input.timeEstimateMinutes)),
             dueAt: input.dueAt,
             timeFrameId: input.timeFrameId,

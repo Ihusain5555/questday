@@ -45,7 +45,7 @@ const activeFrame = frames.find(covers) ?? frames[0]
 
 const doneQuest = (i) => ({
   id: `done-${i}`, title: `Past quest ${i + 1}`, subTasks: [], difficulty: 'Easy',
-  priority: 'Medium', skippability: 'Should do', timeEstimateMinutes: 10, dueAt: null,
+  importance: 'Medium', urgency: 'Medium', timeEstimateMinutes: 10, dueAt: null,
   timeFrameId: frames[0].id, status: 'completed', createdAt: d.toISOString(),
   completedAt: d.toISOString(), sortOrder: i, completionAward: { xp: 10, currency: 5 }
 })
@@ -54,13 +54,13 @@ const activeQuest = (big) =>
   big
     ? {
         id: 'qx', title: 'Slay the dragon', subTasks: [], difficulty: 'Hard',
-        priority: 'Critical', skippability: 'Must do', timeEstimateMinutes: 800, dueAt: iso(2 * H),
+        importance: 'High', urgency: 'High', timeEstimateMinutes: 800, dueAt: iso(2 * H),
         timeFrameId: activeFrame.id, status: 'active', createdAt: d.toISOString(),
         completedAt: null, sortOrder: 0
       }
     : {
         id: 'qx', title: 'Do the thing', subTasks: [], difficulty: 'Medium',
-        priority: 'Critical', skippability: 'Must do', timeEstimateMinutes: 20, dueAt: iso(2 * H),
+        importance: 'High', urgency: 'High', timeEstimateMinutes: 20, dueAt: iso(2 * H),
         timeFrameId: activeFrame.id, status: 'active', createdAt: d.toISOString(),
         completedAt: null, sortOrder: 0
       }

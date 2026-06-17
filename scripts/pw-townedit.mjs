@@ -42,8 +42,8 @@ const settings = {
 }
 
 const doneQuest = (i) => ({
-  id: `done-${i}`, title: `Past ${i}`, subTasks: [], difficulty: 'Easy', priority: 'Medium',
-  skippability: 'Should do', timeEstimateMinutes: 10, dueAt: null, timeFrameId: frames[0].id,
+  id: `done-${i}`, title: `Past ${i}`, subTasks: [], difficulty: 'Easy', importance: 'Medium',
+  urgency: 'Medium', timeEstimateMinutes: 10, dueAt: null, timeFrameId: frames[0].id,
   status: 'completed', createdAt: d.toISOString(), completedAt: d.toISOString(), sortOrder: i,
   completionAward: { xp: 10, currency: 5 }
 })

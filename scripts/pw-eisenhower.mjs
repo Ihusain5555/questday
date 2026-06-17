@@ -38,24 +38,25 @@ const covers = (f) =>
     : nowMin >= f.startMinute || nowMin < f.endMinute
 const activeFrame = frames.find(covers) ?? frames[0]
 
-// One quest engineered for each quadrant (urgentWithinHours=24; important =
-// Must do/Should do OR High/Critical priority):
+// One quest engineered for each quadrant. Axes are now the hand-set fields:
+// important = importance Medium/High, urgent = urgency Medium/High (the due date
+// only schedules — it no longer drives the matrix).
 const q = (id, title, extra) => ({
-  id, title, subTasks: [], difficulty: 'Medium', priority: 'Medium', skippability: 'Should do',
+  id, title, subTasks: [], difficulty: 'Medium', importance: 'Medium', urgency: 'Medium',
   timeEstimateMinutes: 20, dueAt: null, timeFrameId: activeFrame.id, status: 'active',
   createdAt: d.toISOString(), completedAt: null, sortOrder: 0, ...extra
 })
 const seed = {
   version: 1,
   quests: [
-    // DO: urgent (due +3h) + important (Must do)
-    q('q-do', 'Ship the release', { dueAt: iso(3 * H), skippability: 'Must do', priority: 'Critical', sortOrder: 0 }),
-    // SCHEDULE: not urgent (due +72h) + important (Must do)
-    q('q-sched', 'Plan next quarter', { dueAt: iso(72 * H), skippability: 'Must do', priority: 'High', sortOrder: 1 }),
-    // MINIMIZE: urgent (due +3h) + NOT important (Nice to have, Low)
-    q('q-min', 'Reply to newsletter', { dueAt: iso(3 * H), skippability: 'Nice to have', priority: 'Low', sortOrder: 2 }),
-    // LATER: not urgent (undated) + NOT important (Nice to have, Low)
-    q('q-later', 'Reorganize bookmarks', { dueAt: null, skippability: 'Nice to have', priority: 'Low', sortOrder: 3 })
+    // DO: urgent + important
+    q('q-do', 'Ship the release', { dueAt: iso(3 * H), importance: 'High', urgency: 'High', sortOrder: 0 }),
+    // SCHEDULE: not urgent + important
+    q('q-sched', 'Plan next quarter', { dueAt: iso(72 * H), importance: 'High', urgency: 'Low', sortOrder: 1 }),
+    // MINIMIZE: urgent + NOT important
+    q('q-min', 'Reply to newsletter', { dueAt: iso(3 * H), importance: 'Low', urgency: 'High', sortOrder: 2 }),
+    // LATER: not urgent + NOT important
+    q('q-later', 'Reorganize bookmarks', { dueAt: null, importance: 'Low', urgency: 'Low', sortOrder: 3 })
   ],
   timeFrames: frames,
   player: { xp: 0, level: 3, currency: 0, streakCount: 0, lastCompletionDate: null, arcadeTickets: 0 },

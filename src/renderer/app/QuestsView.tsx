@@ -3,7 +3,7 @@ import type { Quest } from '@shared/types'
 import { useStore, type QuestInput } from '../state/store'
 import { useNow } from '../hooks/useNow'
 import { QuestForm } from './QuestForm'
-import { PRIORITY_COLOR, SKIPPABILITY_COLOR } from './options'
+import { IMPORTANCE_COLOR, URGENCY_COLOR } from './options'
 import { formatDue, formatMinutes } from '@shared/format'
 import { activeTimeFrame } from '@shared/engine/selectCurrentQuest'
 import { questXP } from '@shared/engine/rewards'
@@ -199,11 +199,11 @@ export function QuestsView(): JSX.Element {
                         )}
                       </div>
                       <div className="quest-meta">
-                        <span className="badge" style={{ background: PRIORITY_COLOR[q.priority] }}>
-                          {q.priority}
+                        <span className="badge" style={{ background: IMPORTANCE_COLOR[q.importance] }}>
+                          {q.importance}
                         </span>
-                        <span className="badge" style={{ background: SKIPPABILITY_COLOR[q.skippability] }}>
-                          {q.skippability}
+                        <span className="badge" style={{ background: URGENCY_COLOR[q.urgency] }}>
+                          {q.urgency}
                         </span>
                         <span className="badge outline">{q.difficulty}</span>
                         {q.status === 'active' && (

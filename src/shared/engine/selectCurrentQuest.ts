@@ -3,14 +3,13 @@
 //
 // Precedence:
 //   1. TIME FRAME is the primary gate: only active-frame, active-status quests
-//      are candidates. Time frame trumps priority.
-//   2. Among candidates, rank by a documented score balancing urgency,
-//      priority, skippability, and time-to-complete. All weights live in
-//      config/balance.ts.
+//      are candidates. Time frame trumps importance/urgency.
+//   2. Among candidates, rank by a documented score balancing the hand-set
+//      importance and urgency levels plus a small quick-win nudge. All weights
+//      live in config/balance.ts.
 //
-// Skippability GATES urgency, which encodes the §4 worked example:
-//   2pm, A due in 1h but "Nice to have", B High/"Must do" due Friday -> show B;
-//   make A "Must do" and A wins because it is time-critical.
+// Importance and urgency are now hand-set Low/Medium/High levels (the due date
+// only schedules — it no longer feeds urgency).
 //
 // Wired into the widget in Phase 2. Implemented now as documented bones.
 // ---------------------------------------------------------------------------
@@ -41,42 +40,27 @@ export function activeTimeFrame(timeFrames: TimeFrame[], now: Date): TimeFrame |
   return matches[0] ?? null
 }
 
-/** 0..1 time-pressure. Overdue = 1; undated = small baseline; ramps over the horizon. */
-export function urgencyScore(quest: Quest, now: Date): number {
-  if (!quest.dueAt) return balance.selection.undatedUrgency
-  const dueMs = Date.parse(quest.dueAt)
-  if (Number.isNaN(dueMs)) return balance.selection.undatedUrgency
-  const hoursUntilDue = (dueMs - now.getTime()) / (60 * 60 * 1000)
-  if (hoursUntilDue <= 0) return 1
-  const horizon = balance.selection.urgencyHorizonHours
-  return Math.max(0, Math.min(1, 1 - hoursUntilDue / horizon))
-}
-
 export interface QuestScore {
   quest: Quest
   score: number
   breakdown: {
+    importance: number
     urgency: number
-    effectiveUrgency: number
-    priority: number
     quickWin: number
   }
 }
 
-/** Transparent score for a single quest (higher = more deserving of the spotlight). */
-export function scoreQuest(quest: Quest, now: Date): QuestScore {
+/** Transparent score for a single quest (higher = more deserving of the spotlight).
+ *  Importance and urgency are read straight from the quest's hand-set levels. */
+export function scoreQuest(quest: Quest): QuestScore {
   const w = balance.selection.weights
-  const urgency = urgencyScore(quest, now)
-  const skip = balance.selection.skippabilityScore[quest.skippability]
-  // Skippability gates urgency: a skippable soon-due quest yields.
-  const effectiveUrgency = urgency * skip
-  const priority = balance.selection.priorityScore[quest.priority]
+  const imp = balance.selection.importanceScore[quest.importance]
+  const urg = balance.selection.urgencyScore[quest.urgency]
   const quickWin = quest.timeEstimateMinutes <= balance.selection.quickWinThresholdMinutes ? 1 : 0
 
-  const score =
-    w.urgency * effectiveUrgency + w.priority * priority + w.quickWin * quickWin
+  const score = w.importance * imp + w.urgency * urg + w.quickWin * quickWin
 
-  return { quest, score, breakdown: { urgency, effectiveUrgency, priority, quickWin } }
+  return { quest, score, breakdown: { importance: imp, urgency: urg, quickWin } }
 }
 
 /** Candidates = active-status quests assigned to the active frame, ranked.
@@ -86,7 +70,7 @@ export function rankCandidates(quests: Quest[], timeFrames: TimeFrame[], now: Da
   if (!frame) return []
   return quests
     .filter((q) => q.status === 'active' && q.timeFrameId === frame.id && !isResting(q, now))
-    .map((q) => scoreQuest(q, now))
+    .map((q) => scoreQuest(q))
     .sort((a, b) => b.score - a.score)
 }
 

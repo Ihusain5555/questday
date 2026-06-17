@@ -7,7 +7,7 @@
 // for tuning, not final.
 // ---------------------------------------------------------------------------
 
-import type { Difficulty, Priority, Skippability } from '../types'
+import type { Difficulty, Importance, Urgency } from '../types'
 
 export const balance = {
   // --- §7 XP / currency economy -------------------------------------------
@@ -17,8 +17,8 @@ export const balance = {
   /** baseXP = round(timeEstimateMinutes / 5) * difficultyMultiplier */
   xpPerMinuteDivisor: 5,
 
-  /** priorityBonus: +10% (High), +20% (Critical); Low/Medium = 0. */
-  priorityBonus: { Low: 0, Medium: 0, High: 0.1, Critical: 0.2 } as Record<Priority, number>,
+  /** importanceBonus: +10% (Medium), +20% (High); Low = 0. */
+  importanceBonus: { Low: 0, Medium: 0.1, High: 0.2 } as Record<Importance, number>,
 
   // --- Levels --------------------------------------------------------------
   /** xpForLevel(n) = baseCost * n  (rising cost per level). */
@@ -427,15 +427,14 @@ export const balance = {
   },
 
   // --- Eisenhower matrix: prioritization layer ------------------------------
-  // The urgent×important 2×2, computed from fields quests ALREADY have. Tunable
-  // so "urgent" / "important" can be re-defined without touching the engine.
+  // The urgent×important 2×2, mapped straight from the hand-set importance/urgency
+  // levels. Tunable so which levels count as "important"/"urgent" can be
+  // re-defined without touching the engine.
   eisenhower: {
-    /** Due within this many hours (or overdue) = urgent. Mirrors selection.urgencyHorizonHours. */
-    urgentWithinHours: 24,
-    /** Skippability levels that count as "important". */
-    importantSkippability: ['Must do', 'Should do'],
-    /** Priority levels that ALSO tip a quest into "important". */
-    importantPriority: ['High', 'Critical'],
+    /** Importance levels that count as "important" (Eisenhower y-axis). */
+    importantLevels: ['Medium', 'High'],
+    /** Urgency levels that count as "urgent" (Eisenhower x-axis). */
+    urgentLevels: ['Medium', 'High'],
     /**
      * The four quadrants — label / blurb / colour, in 2×2 render order
      * (Do, Schedule, Minimize, Later). Tone: "Later", never "Delete".
@@ -456,27 +455,17 @@ export const balance = {
   // these combine. The worked example in §4 is encoded as a unit expectation.
   selection: {
     weights: {
-      /** Weight on time-pressure (gated by skippability — see note). */
+      /** Weight on hand-set importance. */
+      importance: 1.0,
+      /** Weight on hand-set urgency. */
       urgency: 1.0,
-      /** Weight on raw priority level. */
-      priority: 1.0,
       /** Small nudge toward quick wins so a fast must-do can slot ahead. */
       quickWin: 0.4
     },
-    priorityScore: { Low: 0.2, Medium: 0.5, High: 0.8, Critical: 1.0 } as Record<Priority, number>,
-    /**
-     * Skippability GATES urgency: a soon-due "Nice to have" yields to a
-     * higher-priority quest due later, but a soon-due "Must do" wins.
-     */
-    skippabilityScore: {
-      'Must do': 1.0,
-      'Should do': 0.5,
-      'Nice to have': 0.2
-    } as Record<Skippability, number>,
-    /** Quests due within this horizon ramp urgency from 0 -> 1 (overdue = 1). */
-    urgencyHorizonHours: 24,
-    /** Baseline urgency for an undated quest (small, so dated ones lead). */
-    undatedUrgency: 0.15,
+    /** Score per importance level — the higher, the more it leads. */
+    importanceScore: { Low: 0.2, Medium: 0.5, High: 1.0 } as Record<Importance, number>,
+    /** Score per urgency level (hand-set; no longer derived from the due date). */
+    urgencyScore: { Low: 0.2, Medium: 0.5, High: 1.0 } as Record<Urgency, number>,
     /** A quest at or under this estimate counts as a "quick win". */
     quickWinThresholdMinutes: 15
   }

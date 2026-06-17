@@ -18,9 +18,38 @@ import {
   fsyncSync,
   closeSync
 } from 'fs'
-import type { Database, DatabasePatch } from '@shared/types'
+import type { Database, DatabasePatch, Importance, Quest, Urgency } from '@shared/types'
 import { createDefaultDatabase, DB_VERSION } from '@shared/defaults'
 import { writeAutoBackup } from '../backup/backup'
+
+/** A stored quest that may still carry the pre-taxonomy `priority`/`skippability`
+ *  fields (and may be missing the new `importance`/`urgency`). Lets migrate()
+ *  read the old shape without `any` while emitting the current Quest shape. */
+type LegacyQuest = Partial<Quest> & {
+  priority?: string
+  skippability?: string
+  importance?: Importance
+  urgency?: Urgency
+}
+
+/** Old skippability -> new importance; old priority -> new urgency. Idempotent:
+ *  an existing importance/urgency is kept. The due date no longer feeds urgency. */
+function migrateQuestTaxonomy(q: LegacyQuest): Quest {
+  const { priority, skippability, ...rest } = q
+  const importance: Importance =
+    rest.importance ??
+    (({ 'Must do': 'High', 'Should do': 'Medium', 'Nice to have': 'Low' } as Record<string, Importance>)[
+      skippability ?? ''
+    ] ??
+      'Medium')
+  const urgency: Urgency =
+    rest.urgency ??
+    (({ Low: 'Low', Medium: 'Medium', High: 'High', Critical: 'High' } as Record<string, Urgency>)[
+      priority ?? ''
+    ] ??
+      'Medium')
+  return { ...rest, importance, urgency } as Quest
+}
 
 let cache: Database | null = null
 
@@ -93,7 +122,9 @@ function migrate(db: Database): Database {
   const fresh = createDefaultDatabase()
   return {
     version: DB_VERSION,
-    quests: db.quests ?? fresh.quests,
+    // Carry each quest into the current importance/urgency taxonomy, dropping the
+    // old priority/skippability fields (idempotent — existing values are kept).
+    quests: (db.quests ?? fresh.quests).map((q) => migrateQuestTaxonomy(q as LegacyQuest)),
     timeFrames: db.timeFrames ?? fresh.timeFrames,
     player: { ...fresh.player, ...db.player },
     garden: {

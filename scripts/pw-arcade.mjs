@@ -35,8 +35,8 @@ const seed = {
   version: 1,
   quests: [
     {
-      id: 'q-act', title: 'Play a quick round', subTasks: [], difficulty: 'Easy', priority: 'High',
-      skippability: 'Must do', timeEstimateMinutes: 10, dueAt: null, timeFrameId: activeFrame.id,
+      id: 'q-act', title: 'Play a quick round', subTasks: [], difficulty: 'Easy', importance: 'High',
+      urgency: 'High', timeEstimateMinutes: 10, dueAt: null, timeFrameId: activeFrame.id,
       status: 'active', createdAt: d.toISOString(), completedAt: null, sortOrder: 0
     }
   ],

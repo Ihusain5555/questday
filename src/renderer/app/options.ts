@@ -1,18 +1,17 @@
-import type { Difficulty, Priority, Skippability } from '@shared/types'
+import type { Difficulty, Importance, Urgency } from '@shared/types'
 
 export const DIFFICULTIES: Difficulty[] = ['Easy', 'Medium', 'Hard']
-export const PRIORITIES: Priority[] = ['Low', 'Medium', 'High', 'Critical']
-export const SKIPPABILITIES: Skippability[] = ['Must do', 'Should do', 'Nice to have']
+export const IMPORTANCES: Importance[] = ['Low', 'Medium', 'High']
+export const URGENCIES: Urgency[] = ['Low', 'Medium', 'High']
 
-export const PRIORITY_COLOR: Record<Priority, string> = {
+export const IMPORTANCE_COLOR: Record<Importance, string> = {
   Low: '#6b7280',
-  Medium: '#3b82f6',
-  High: '#f59e0b',
-  Critical: '#ef4444'
+  Medium: '#f59e0b',
+  High: '#ef4444'
 }
 
-export const SKIPPABILITY_COLOR: Record<Skippability, string> = {
-  'Must do': '#ef4444',
-  'Should do': '#f59e0b',
-  'Nice to have': '#6b7280'
+export const URGENCY_COLOR: Record<Urgency, string> = {
+  Low: '#6b7280',
+  Medium: '#f59e0b',
+  High: '#3b82f6'
 }

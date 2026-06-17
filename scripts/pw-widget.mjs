@@ -28,8 +28,8 @@ const seed = {
   version: 1,
   quests: [
     {
-      id: 'q-main', title: 'Ship the widget redesign', difficulty: 'Medium', priority: 'High',
-      skippability: 'Must do', timeEstimateMinutes: 45, dueAt: null, timeFrameId: activeFrame.id,
+      id: 'q-main', title: 'Ship the widget redesign', difficulty: 'Medium', importance: 'High',
+      urgency: 'High', timeEstimateMinutes: 45, dueAt: null, timeFrameId: activeFrame.id,
       status: 'active', createdAt: d.toISOString(), completedAt: null, sortOrder: 0,
       subTasks: [
         { id: 's1', title: 'Polish the complete button', order: 0, done: false, timeEstimateMinutes: 15 },
@@ -37,13 +37,13 @@ const seed = {
       ]
     },
     {
-      id: 'q-b', title: 'Reply to design feedback', subTasks: [], difficulty: 'Easy', priority: 'Medium',
-      skippability: 'Nice to have', timeEstimateMinutes: 10, dueAt: null, timeFrameId: activeFrame.id,
+      id: 'q-b', title: 'Reply to design feedback', subTasks: [], difficulty: 'Easy', importance: 'Low',
+      urgency: 'Medium', timeEstimateMinutes: 10, dueAt: null, timeFrameId: activeFrame.id,
       status: 'active', createdAt: d.toISOString(), completedAt: null, sortOrder: 1
     },
     {
-      id: 'q-c', title: 'Take a walk', subTasks: [], difficulty: 'Easy', priority: 'Low',
-      skippability: 'Nice to have', timeEstimateMinutes: 20, dueAt: null, timeFrameId: frames[(activeFrame.order + 1) % 4].id,
+      id: 'q-c', title: 'Take a walk', subTasks: [], difficulty: 'Easy', importance: 'Low',
+      urgency: 'Low', timeEstimateMinutes: 20, dueAt: null, timeFrameId: frames[(activeFrame.order + 1) % 4].id,
       status: 'active', createdAt: d.toISOString(), completedAt: null, sortOrder: 0
     }
   ],

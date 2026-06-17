@@ -33,13 +33,13 @@ const activeFrame = frames.find(covers) ?? frames[0]
 // Goldport "3 quests to settle", Frostpeak/Sun Reach "coming soon".
 const done = Array.from({ length: 12 }, (_, i) => ({
   id: `done-${i}`, title: `Past quest ${i + 1}`, subTasks: [], difficulty: 'Easy',
-  priority: 'Medium', skippability: 'Should do', timeEstimateMinutes: 10, dueAt: null,
+  importance: 'Medium', urgency: 'Medium', timeEstimateMinutes: 10, dueAt: null,
   timeFrameId: frames[0].id, status: 'completed', createdAt: d.toISOString(),
   completedAt: d.toISOString(), sortOrder: i, completionAward: { xp: 10, currency: 0 }
 }))
 const current = {
   id: 'q-current', title: 'Build your realm', subTasks: [], difficulty: 'Medium',
-  priority: 'High', skippability: 'Must do', timeEstimateMinutes: 20, dueAt: null,
+  importance: 'High', urgency: 'High', timeEstimateMinutes: 20, dueAt: null,
   timeFrameId: activeFrame.id, status: 'active', createdAt: d.toISOString(),
   completedAt: null, sortOrder: 0
 }

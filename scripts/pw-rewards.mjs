@@ -43,7 +43,7 @@ const activeFrame = frames.find(covers) ?? frames[0]
 const seedBounds = { x: 111, y: 222, width: 320, height: 212 }
 const quest = {
   id: 'q-reward', title: 'Reward math check', subTasks: [], difficulty: 'Hard',
-  priority: 'Critical', skippability: 'Must do', timeEstimateMinutes: 60, dueAt: iso(2 * H),
+  importance: 'High', urgency: 'High', timeEstimateMinutes: 60, dueAt: iso(2 * H),
   timeFrameId: activeFrame.id, status: 'active', createdAt: d.toISOString(),
   completedAt: null, sortOrder: 0
 }

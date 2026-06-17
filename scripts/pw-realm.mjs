@@ -37,13 +37,13 @@ const activeFrame = frames.find(covers) ?? frames[0]
 // Chronicle discoveries) => 6 spendable now. Plus one active quest to complete.
 const done = Array.from({ length: 10 }, (_, i) => ({
   id: `done-${i}`, title: `Past quest ${i + 1}`, subTasks: [], difficulty: 'Easy',
-  priority: 'Medium', skippability: 'Should do', timeEstimateMinutes: 10, dueAt: null,
+  importance: 'Medium', urgency: 'Medium', timeEstimateMinutes: 10, dueAt: null,
   timeFrameId: frames[0].id, status: 'completed', createdAt: d.toISOString(),
   completedAt: d.toISOString(), sortOrder: i, completionAward: { xp: 10, currency: 5 }
 }))
 const current = {
   id: 'q-current', title: 'Chart your realm', subTasks: [], difficulty: 'Medium',
-  priority: 'Critical', skippability: 'Must do', timeEstimateMinutes: 20, dueAt: iso(2 * H),
+  importance: 'High', urgency: 'High', timeEstimateMinutes: 20, dueAt: iso(2 * H),
   timeFrameId: activeFrame.id, status: 'active', createdAt: d.toISOString(),
   completedAt: null, sortOrder: 0
 }

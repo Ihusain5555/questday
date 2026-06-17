@@ -30,19 +30,19 @@ const seed = {
   version: 1,
   quests: [
     {
-      id: 'q-main', title: 'Forge the new design system', difficulty: 'Medium', priority: 'High',
-      skippability: 'Must do', timeEstimateMinutes: 45, dueAt: null, timeFrameId: activeFrame.id,
+      id: 'q-main', title: 'Forge the new design system', difficulty: 'Medium', importance: 'High',
+      urgency: 'High', timeEstimateMinutes: 45, dueAt: null, timeFrameId: activeFrame.id,
       status: 'active', createdAt: d.toISOString(), completedAt: null, sortOrder: 0,
       subTasks: [{ id: 's1', title: 'Define the tokens', order: 0, done: false }]
     },
     {
-      id: 'q-b', title: 'Reply to design feedback', subTasks: [], difficulty: 'Easy', priority: 'Medium',
-      skippability: 'Nice to have', timeEstimateMinutes: 10, dueAt: null, timeFrameId: activeFrame.id,
+      id: 'q-b', title: 'Reply to design feedback', subTasks: [], difficulty: 'Easy', importance: 'Low',
+      urgency: 'Medium', timeEstimateMinutes: 10, dueAt: null, timeFrameId: activeFrame.id,
       status: 'active', createdAt: d.toISOString(), completedAt: null, sortOrder: 1
     },
     {
-      id: 'q-done', title: 'Morning stretch', difficulty: 'Easy', priority: 'Low',
-      skippability: 'Nice to have', timeEstimateMinutes: 5, dueAt: null, timeFrameId: activeFrame.id,
+      id: 'q-done', title: 'Morning stretch', difficulty: 'Easy', importance: 'Low',
+      urgency: 'Low', timeEstimateMinutes: 5, dueAt: null, timeFrameId: activeFrame.id,
       status: 'completed', createdAt: yesterday.toISOString(), completedAt: yesterday.toISOString(),
       sortOrder: 2, completionDates: [ymd(yesterday)], completionAward: { xp: 1, currency: 1 },
       subTasks: [{ id: 's1', title: 'Stretch', order: 0, done: true }]

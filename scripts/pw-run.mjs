@@ -34,7 +34,7 @@ const seed = {
   quests: [
     {
       id: 'q-focus', title: 'Write the report', subTasks: [], difficulty: 'Medium',
-      priority: 'High', skippability: 'Must do', timeEstimateMinutes: 30, dueAt: null,
+      importance: 'High', urgency: 'High', timeEstimateMinutes: 30, dueAt: null,
       timeFrameId: activeFrame.id, status: 'active', createdAt: d.toISOString(),
       completedAt: null, sortOrder: 0
     }

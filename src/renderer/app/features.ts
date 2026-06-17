@@ -30,7 +30,7 @@ export const TOGGLEABLE_FEATURES: ToggleableFeature[] = [
     id: 'matrix',
     icon: 'Compass',
     label: 'Eisenhower matrix',
-    blurb: 'Triage your quests in the urgent × important 2×2 — see where your effort should go.'
+    blurb: 'Triage your quests in the urgent × important 2×2, by the importance and urgency you set on each quest — see where your effort should go.'
   },
   {
     // The Realm reward world (tab id 'world'). Toggle hides the tab only — every

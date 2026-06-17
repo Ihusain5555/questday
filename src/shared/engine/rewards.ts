@@ -14,10 +14,10 @@ export function baseXP(quest: Pick<Quest, 'timeEstimateMinutes' | 'difficulty'>)
   return Math.round(quest.timeEstimateMinutes / balance.xpPerMinuteDivisor) * diffMult
 }
 
-/** questXP = round(baseXP * (1 + priorityBonus)) — before any streak bonus. */
-export function questXP(quest: Pick<Quest, 'timeEstimateMinutes' | 'difficulty' | 'priority'>): number {
-  const priorityBonus = balance.priorityBonus[quest.priority]
-  return Math.round(baseXP(quest) * (1 + priorityBonus))
+/** questXP = round(baseXP * (1 + importanceBonus)) — before any streak bonus. */
+export function questXP(quest: Pick<Quest, 'timeEstimateMinutes' | 'difficulty' | 'importance'>): number {
+  const importanceBonus = balance.importanceBonus[quest.importance]
+  return Math.round(baseXP(quest) * (1 + importanceBonus))
 }
 
 /** Rising XP cost to clear level n: 100 * n by default. */

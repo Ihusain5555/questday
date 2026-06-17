@@ -38,7 +38,7 @@ const seed = {
   quests: [
     {
       id: 'q-tb', title: 'Draft the proposal', subTasks: [], difficulty: 'Medium',
-      priority: 'High', skippability: 'Must do', timeEstimateMinutes: 20, dueAt: null,
+      importance: 'High', urgency: 'High', timeEstimateMinutes: 20, dueAt: null,
       timeFrameId: activeFrame.id, status: 'active', createdAt: d.toISOString(),
       completedAt: null, sortOrder: 0
     }

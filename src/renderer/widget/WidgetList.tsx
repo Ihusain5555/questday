@@ -1,6 +1,6 @@
 import type { Database, Quest } from '@shared/types'
 import { rankCandidates } from '@shared/engine/selectCurrentQuest'
-import { PRIORITY_COLOR } from '../app/options'
+import { IMPORTANCE_COLOR } from '../app/options'
 import { formatMinutes } from '@shared/format'
 
 interface Props {
@@ -37,7 +37,7 @@ export function WidgetList({ db, now, currentId }: Props): JSX.Element {
             ) : (
               quests.map((q) => (
                 <div className={`wlist-item ${q.id === currentId ? 'current' : ''}`} key={q.id}>
-                  <span className="pri-dot" style={{ background: PRIORITY_COLOR[q.priority] }} />
+                  <span className="pri-dot" style={{ background: IMPORTANCE_COLOR[q.importance] }} />
                   <span className="wlist-title">{q.title}</span>
                   <span className="wlist-est">{formatMinutes(q.timeEstimateMinutes)}</span>
                 </div>

@@ -37,7 +37,7 @@ function dueHint(dueAt: string, now: Date): string {
 
 /**
  * Eisenhower matrix (prioritization layer). Read-only triage over the quests you
- * already have: urgency from `dueAt`, importance from `skippability`/`priority`.
+ * already have: both axes are the importance and urgency you set on each quest.
  * It shows where effort should go and why the current quest leads — manage the
  * quests themselves in the Quests tab. Tone: the low/low cell is "Later".
  */
@@ -46,7 +46,7 @@ export function EisenhowerView(): JSX.Element {
   const now = useNow(30000)
   if (!db) return <div />
 
-  const groups = classifyQuests(db.quests, now)
+  const groups = classifyQuests(db.quests)
   const current = selectCurrentQuest(db.quests, db.timeFrames, now)
   const total = (Object.values(groups) as Quest[][]).reduce((n, arr) => n + arr.length, 0)
 
@@ -61,8 +61,8 @@ export function EisenhowerView(): JSX.Element {
         </span>
       </div>
       <p className="tagline">
-        Triage by urgency and importance. This mirrors each quest's due date and skippability —
-        read-only, so manage the quests themselves in the Quests tab.
+        Triage by importance and urgency — the two levels you set on each quest (the due date just
+        schedules). Read-only, so manage the quests themselves in the Quests tab.
       </p>
 
       <div className="eh-axes">
@@ -109,7 +109,7 @@ export function EisenhowerView(): JSX.Element {
                         )}
                         <span className="eh-chip-title">{quest.title}</span>
                         <span className="eh-chip-meta">
-                          {quest.skippability}
+                          {quest.importance} importance · {quest.urgency} urgency
                           {quest.dueAt ? ` · ${dueHint(quest.dueAt, now)}` : ''}
                         </span>
                       </div>

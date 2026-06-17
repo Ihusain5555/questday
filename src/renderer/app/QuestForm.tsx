@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Quest, TimeFrame } from '@shared/types'
 import type { QuestInput } from '../state/store'
-import { DIFFICULTIES, PRIORITIES, SKIPPABILITIES } from './options'
+import { DIFFICULTIES, IMPORTANCES, URGENCIES } from './options'
 import { isoToLocalInput, localInputToIso } from '@shared/format'
 import { X, ArrowsClockwise } from '@phosphor-icons/react'
 
@@ -23,10 +23,8 @@ interface SubRow {
 export function QuestForm({ timeFrames, initial, defaultTimeFrameId, onSave, onCancel }: Props): JSX.Element {
   const [title, setTitle] = useState(initial?.title ?? '')
   const [difficulty, setDifficulty] = useState<Quest['difficulty']>(initial?.difficulty ?? 'Medium')
-  const [priority, setPriority] = useState<Quest['priority']>(initial?.priority ?? 'Medium')
-  const [skippability, setSkippability] = useState<Quest['skippability']>(
-    initial?.skippability ?? 'Should do'
-  )
+  const [importance, setImportance] = useState<Quest['importance']>(initial?.importance ?? 'Medium')
+  const [urgency, setUrgency] = useState<Quest['urgency']>(initial?.urgency ?? 'Medium')
   // Estimate is edited as hours + minutes but stored as total minutes.
   const initialEstimate = initial?.timeEstimateMinutes ?? 30
   const [estHours, setEstHours] = useState<string>(String(Math.floor(initialEstimate / 60)))
@@ -65,8 +63,8 @@ export function QuestForm({ timeFrames, initial, defaultTimeFrameId, onSave, onC
     onSave({
       title,
       difficulty,
-      priority,
-      skippability,
+      importance,
+      urgency,
       timeEstimateMinutes: Math.max(0, (Number(estHours) || 0) * 60 + (Number(estMinutes) || 0)),
       dueAt: localInputToIso(dueLocal),
       timeFrameId,
@@ -135,21 +133,18 @@ export function QuestForm({ timeFrames, initial, defaultTimeFrameId, onSave, onC
               </select>
             </label>
             <label className="field">
-              <span>Priority</span>
-              <select value={priority} onChange={(e) => setPriority(e.target.value as Quest['priority'])}>
-                {PRIORITIES.map((p) => (
-                  <option key={p}>{p}</option>
+              <span>Importance</span>
+              <select value={importance} onChange={(e) => setImportance(e.target.value as Quest['importance'])}>
+                {IMPORTANCES.map((i) => (
+                  <option key={i}>{i}</option>
                 ))}
               </select>
             </label>
             <label className="field">
-              <span>Skippability</span>
-              <select
-                value={skippability}
-                onChange={(e) => setSkippability(e.target.value as Quest['skippability'])}
-              >
-                {SKIPPABILITIES.map((s) => (
-                  <option key={s}>{s}</option>
+              <span>Urgency</span>
+              <select value={urgency} onChange={(e) => setUrgency(e.target.value as Quest['urgency'])}>
+                {URGENCIES.map((u) => (
+                  <option key={u}>{u}</option>
                 ))}
               </select>
             </label>

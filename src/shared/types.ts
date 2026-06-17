@@ -3,9 +3,11 @@
 // ---------------------------------------------------------------------------
 
 export type Difficulty = 'Easy' | 'Medium' | 'Hard'
-export type Priority = 'Low' | 'Medium' | 'High' | 'Critical'
-/** How acceptable it is to miss a quest. Distinct from `priority` (see §3/§4). */
-export type Skippability = 'Must do' | 'Should do' | 'Nice to have'
+/** How much a quest matters — drives the XP bonus and the Eisenhower y-axis. */
+export type Importance = 'Low' | 'Medium' | 'High'
+/** How time-pressing a quest is — hand-set, the Eisenhower x-axis (no longer
+ *  derived from the due date, which now only schedules). */
+export type Urgency = 'Low' | 'Medium' | 'High'
 export type QuestStatus = 'active' | 'completed' | 'dropped'
 
 export interface SubTask {
@@ -23,8 +25,12 @@ export interface Quest {
   subTasks: SubTask[]
   /** Required by the §7 XP formula (difficultyMultiplier). */
   difficulty: Difficulty
-  priority: Priority
-  skippability: Skippability
+  /** Hand-set Low/Medium/High. Drives the XP bonus, current-quest selection, and
+   *  the Eisenhower y-axis (importance). */
+  importance: Importance
+  /** Hand-set Low/Medium/High. Drives current-quest selection and the Eisenhower
+   *  x-axis (urgency). The due date no longer feeds this — it's scheduling only. */
+  urgency: Urgency
   timeEstimateMinutes: number
   /** ISO datetime string, or null when undated. */
   dueAt: string | null
