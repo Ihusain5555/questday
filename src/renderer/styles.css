@@ -760,10 +760,13 @@ button:has(svg) {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .q-title {
   font-weight: 600;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .quest-meta {
@@ -781,8 +784,32 @@ button:has(svg) {
 
 .quest-actions {
   display: flex;
-  gap: 2px;
-  flex-shrink: 0;
+  gap: 4px;
+  align-items: center;
+  /* Scale down: let the action cluster WRAP instead of crushing the title at
+     narrow widths (it was flex-shrink:0 + text buttons = overflow). */
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* Square icon-only action buttons (Edit / Save / Duplicate / Drop / Delete) —
+   quiet by default, hover-lit; delete is a red ✕. Matches the Duplicate/Save
+   quality but drops the text labels so the row stays compact. */
+button.ghost.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 8px;
+}
+button.ghost.icon-btn.danger {
+  color: var(--candy);
+}
+button.ghost.icon-btn.danger:hover {
+  color: var(--candy);
+  background: rgba(232, 90, 110, 0.14);
 }
 
 .show-dropped {
@@ -807,6 +834,20 @@ button:has(svg) {
 .quest-row.completed .q-title {
   text-decoration: line-through;
   text-decoration-color: rgba(65, 214, 163, 0.6);
+}
+
+/* Very narrow: stack each quest row (title/meta on top, actions below) so the
+   title is never crushed. (.quest-row base is above, so this wins the cascade;
+   the rail-stacking override lives at the END of the file, after .library-rail's
+   base definition — see "Responsive: Quests layout".) */
+@media (max-width: 600px) {
+  .quest-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .quest-actions {
+    justify-content: flex-start;
+  }
 }
 
 /* ---- Time frames editor ---- */
@@ -4779,4 +4820,22 @@ code {
 .eh-chip-meta {
   color: var(--muted);
   font-size: 11px;
+}
+
+/* =====================================================================
+   Responsive: Quests layout. Placed at the END so it wins the cascade
+   over .quests-layout / .library-rail (defined earlier with equal
+   specificity). The 308px Library rail is the main width-thief; the
+   window min is 720px wide, so drop the rail UNDER the list before the
+   720–1040px range gets cramped.
+   ===================================================================== */
+@media (max-width: 940px) {
+  .quests-layout {
+    flex-direction: column;
+  }
+  .library-rail {
+    width: 100%;
+    flex: 1 1 auto;
+    position: static;
+  }
 }

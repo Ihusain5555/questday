@@ -20,7 +20,10 @@ import {
   DotsSixVertical,
   FloppyDisk,
   Copy,
-  Mosque
+  Mosque,
+  PencilSimple,
+  Archive,
+  X
 } from '@phosphor-icons/react'
 
 export function QuestsView(): JSX.Element {
@@ -383,30 +386,47 @@ export function QuestsView(): JSX.Element {
                         )}
                         {libraryOn && (
                           <button
-                            className="ghost"
+                            className="ghost icon-btn"
+                            aria-label="Save as template"
                             onClick={() => void saveQuestAsTemplate(q.id)}
-                            title="Save this as a reusable template (title, steps & badges — never its due date)"
+                            title="Save as a reusable template (title, steps & badges — never its due date)"
                           >
-                            <FloppyDisk size={13} weight="bold" /> Save as template
+                            <FloppyDisk size={16} weight="bold" />
                           </button>
                         )}
-                        <button className="ghost" onClick={() => openEdit(q)}>
-                          Edit
+                        <button
+                          className="ghost icon-btn"
+                          aria-label="Edit"
+                          title="Edit"
+                          onClick={() => openEdit(q)}
+                        >
+                          <PencilSimple size={16} weight="bold" />
                         </button>
                         <button
-                          className="ghost"
+                          className="ghost icon-btn"
+                          aria-label="Duplicate"
                           onClick={() => void duplicateQuest(q.id)}
                           title="Duplicate as a fresh active quest"
                         >
-                          <Copy size={13} weight="bold" /> Duplicate
+                          <Copy size={16} weight="bold" />
                         </button>
                         {q.status === 'active' && (
-                          <button className="ghost" onClick={() => dropQuest(q.id)} title="Abandon — no penalty">
-                            Drop
+                          <button
+                            className="ghost icon-btn"
+                            aria-label="Drop"
+                            onClick={() => dropQuest(q.id)}
+                            title="Drop — set aside, no penalty"
+                          >
+                            <Archive size={16} weight="bold" />
                           </button>
                         )}
-                        <button className="ghost danger" onClick={() => deleteQuest(q.id)}>
-                          Delete
+                        <button
+                          className="ghost icon-btn danger"
+                          aria-label="Delete"
+                          title="Delete"
+                          onClick={() => void deleteQuest(q.id)}
+                        >
+                          <X size={16} weight="bold" />
                         </button>
                       </div>
                     </li>
