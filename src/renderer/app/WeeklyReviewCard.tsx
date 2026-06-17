@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { useStore } from '../state/store'
 import { useNow } from '../hooks/useNow'
 import { weeklyReview } from '@shared/engine/stats'
-import { CalendarCheck } from '@phosphor-icons/react'
+import { CalendarCheck, ShareNetwork } from '@phosphor-icons/react'
+import { ShareCardModal } from './ShareCardModal'
 
 const FULL_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
@@ -21,6 +23,7 @@ function fullDayName(dateStr: string): string {
 export function WeeklyReviewCard(): JSX.Element | null {
   const { db } = useStore()
   const now = useNow(60000)
+  const [sharing, setSharing] = useState(false)
   if (!db) return null
 
   const wr = weeklyReview(db.quests, db.timeFrames, now)
@@ -67,7 +70,24 @@ export function WeeklyReviewCard(): JSX.Element | null {
               </span>
             </div>
           </div>
+          <button className="ghost wr-share" onClick={() => setSharing(true)}>
+            <ShareNetwork size={16} weight="bold" /> Share my week
+          </button>
         </>
+      )}
+
+      {sharing && (
+        <ShareCardModal
+          data={{
+            weekTotal: wr.total,
+            activeDays: wr.activeDays,
+            streak,
+            level: db.player.level,
+            bestDayName: wr.bestDay ? fullDayName(wr.bestDay.date) : null,
+            bestDayCount: wr.bestDay?.count ?? 0
+          }}
+          onClose={() => setSharing(false)}
+        />
       )}
     </div>
   )

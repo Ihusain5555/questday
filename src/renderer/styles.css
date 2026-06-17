@@ -4142,6 +4142,103 @@ code {
   font-weight: 600;
   color: var(--text);
 }
+.wr-share {
+  align-self: flex-start;
+  margin-top: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--gold-bright);
+}
+.wr-share:hover {
+  color: var(--gold-bright);
+  background: rgb(var(--gold-rgb) / 0.1);
+}
+
+/* ---- Share-card preview modal ---- */
+.share-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(4, 10, 8, 0.62);
+  backdrop-filter: blur(3px);
+}
+.share-modal {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  padding: 22px 24px 24px;
+  border-radius: var(--r-card);
+  background: linear-gradient(160deg, var(--panel-2), var(--panel));
+  box-shadow: var(--shadow-2), 0 0 0 1px rgba(201, 162, 74, 0.22);
+}
+.share-modal h3 {
+  margin: 0 0 4px;
+}
+.share-note {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.share-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 8px;
+  background: transparent;
+  border-color: transparent;
+  color: var(--muted);
+}
+.share-close:hover {
+  color: var(--text);
+  background: var(--panel-2);
+}
+.share-preview {
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.25);
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.share-preview img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+.share-loading {
+  color: var(--muted);
+  font-size: 13px;
+}
+.share-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+.share-actions .primary,
+.share-actions .ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.share-err {
+  margin: 10px 0 0;
+  color: var(--candy);
+  font-size: 12.5px;
+}
 
 .library-rail {
   width: 308px;
