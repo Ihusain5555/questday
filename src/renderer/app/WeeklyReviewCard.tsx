@@ -1,0 +1,74 @@
+import { useStore } from '../state/store'
+import { useNow } from '../hooks/useNow'
+import { weeklyReview } from '@shared/engine/stats'
+import { CalendarCheck } from '@phosphor-icons/react'
+
+const FULL_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
+/** YYYY-MM-DD (local) -> full weekday name. Parses the parts so it never shifts a
+ *  day across the UTC boundary the way new Date('YYYY-MM-DD') would. */
+function fullDayName(dateStr: string): string {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  return FULL_DAYS[new Date(y, m - 1, d).getDay()]
+}
+
+/**
+ * Weekly Review — a calm once-a-week recap card on the Dashboard. Pure
+ * celebration over the trailing 7 days (completions, best day, the week's power
+ * hour, streak). No targets, no misses, no shame. Derived entirely from existing
+ * data, so ↩ Restore stays exact.
+ */
+export function WeeklyReviewCard(): JSX.Element | null {
+  const { db } = useStore()
+  const now = useNow(60000)
+  if (!db) return null
+
+  const wr = weeklyReview(db.quests, db.timeFrames, now)
+  const streak = db.player.streakCount
+
+  return (
+    <div className="card weekly-review">
+      <div className="wr-head">
+        <CalendarCheck size={18} weight="fill" />
+        <strong>Your week</strong>
+      </div>
+
+      {wr.total === 0 ? (
+        <p className="meta-dim wr-empty">
+          A fresh week, a clean page. Finish your first quest and your recap begins right here. ✨
+        </p>
+      ) : (
+        <>
+          <p className="wr-lead">
+            You completed <b data-wr="total">{wr.total}</b> {wr.total === 1 ? 'quest' : 'quests'} across{' '}
+            <b data-wr="days">{wr.activeDays}</b> {wr.activeDays === 1 ? 'day' : 'days'} this week.
+          </p>
+          <div className="wr-chips">
+            {wr.bestDay && wr.bestDay.count > 0 && (
+              <div className="wr-chip">
+                <span className="wr-chip-label">Best day</span>
+                <span className="wr-chip-val" data-wr="bestday">
+                  {fullDayName(wr.bestDay.date)} · {wr.bestDay.count}
+                </span>
+              </div>
+            )}
+            {wr.topFrame && (
+              <div className="wr-chip">
+                <span className="wr-chip-label">Power hour</span>
+                <span className="wr-chip-val" data-wr="frame">
+                  {wr.topFrame.frame.name}
+                </span>
+              </div>
+            )}
+            <div className="wr-chip">
+              <span className="wr-chip-label">Streak</span>
+              <span className="wr-chip-val" data-wr="streak">
+                {streak} {streak === 1 ? 'day' : 'days'}
+              </span>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}

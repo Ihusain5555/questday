@@ -4033,6 +4033,56 @@ code {
   align-self: flex-start;
 }
 
+/* Weekly Review — a calm "Your week" recap card on the Dashboard. Narrative +
+   a row of gold-accented highlight chips; celebration only. */
+.weekly-review .wr-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+.weekly-review .wr-head strong {
+  color: var(--text);
+  font-size: 1.02rem;
+}
+.weekly-review .wr-empty {
+  margin: 4px 0 0;
+}
+.weekly-review .wr-lead {
+  margin: 0 0 12px;
+  color: var(--text);
+  line-height: 1.5;
+}
+.weekly-review .wr-lead b {
+  color: var(--gold-bright);
+}
+.wr-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.wr-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill, 12px);
+  background: rgb(var(--gold-rgb) / 0.06);
+  min-width: 92px;
+}
+.wr-chip-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.wr-chip-val {
+  font-weight: 600;
+  color: var(--text);
+}
+
 .library-rail {
   width: 308px;
   flex: 0 0 308px;

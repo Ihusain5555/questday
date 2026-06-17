@@ -63,6 +63,16 @@ export const TOGGLEABLE_FEATURES: ToggleableFeature[] = [
     label: 'Salah & Qur’an checklist',
     blurb:
       'An optional, private daily checklist for the five prayers and Qur’an reading. You only ever tick what you’ve done — nothing is ever counted against you. Off by default.'
+  },
+  {
+    // A Dashboard recap CARD, not a tab — read via isFeatureEnabled (App.tsx's tab
+    // filter never matches this id). Default ON (missing key = on), so no defaults
+    // seed is needed; users can hide it from the Data tab.
+    id: 'weeklyReview',
+    icon: 'CalendarCheck',
+    label: 'Weekly review',
+    blurb:
+      'A calm weekly recap on the Dashboard — your completions, best day, and power hour. Pure celebration, never targets or misses.'
   }
 ]
 

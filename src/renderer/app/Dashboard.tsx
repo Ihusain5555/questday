@@ -7,7 +7,9 @@ import {
 } from '@shared/engine/selectCurrentQuest'
 import { RealmPeek } from './RealmView'
 import { StatsView } from './StatsView'
+import { WeeklyReviewCard } from './WeeklyReviewCard'
 import { PlayerBar } from '../components/PlayerBar'
+import { isFeatureEnabled } from './features'
 import { questXP } from '@shared/engine/rewards'
 import { Lightning, Check } from '@phosphor-icons/react'
 
@@ -52,6 +54,8 @@ export function Dashboard(): JSX.Element {
       </div>
 
       <RealmPeek />
+
+      {isFeatureEnabled(db.settings.enabledFeatures, 'weeklyReview') && <WeeklyReviewCard />}
 
       <div className="dash-stats">
         <StatsView />
