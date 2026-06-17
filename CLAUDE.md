@@ -79,6 +79,10 @@ Pure engines live in `src/shared/engine/` (current-quest scoring, rewards, **rea
   garden economy under `garden.*` (inert), arcade tickets + per-game difficulty/`icon`/`color`).
   Never hardcode weights in logic. (Coins were removed in v1.8.2 — `player.currency` is a dead
   field kept only for migration; don't surface it.)
+  - **XP is DERIVED from `timeEstimateMinutes`** (`rewards.ts`: base XP ≈ `round(timeEst/5) × difficultyMult`).
+    A quest's time estimate is NOT a free "gentleness" knob — lowering it lowers the XP earned. When seeding
+    quests programmatically, pick the time estimate to hit the intended XP (e.g. 10 min Easy → 2 XP). Learned
+    v1.12 (seeding prayers at 5 min silently halved the locked 2 XP; the multi-agent audit caught it, not tsc).
 - **ALL visual design tokens** → `src/renderer/theme.css` (`@import`ed at top of `styles.css`).
   Reference `var(--brand)` etc., never raw hex. Title-bar emerald `#10362a` is duplicated in
   3 spots that must stay in sync: `--titlebar` (theme.css), `titleBarOverlay.color`

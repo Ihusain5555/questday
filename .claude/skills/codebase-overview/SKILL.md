@@ -66,6 +66,23 @@ ONLY writer of the data file. This is why edits in one window appear live in oth
   (persists + restamps existing quests on a city/method change), and the daily `dueAt` restamp in
   the renew path (gated to all-7-day recurring quests so a user quest named "Asr" is never re-timed).
   Settings UI = `PrayerSettings` in `DataView.tsx`. Driver: `scripts/pw-prayer.mjs` (12/12).
+- **LANDMINE — XP is DERIVED from `timeEstimateMinutes`.** `rewards.ts` computes base XP ≈
+  `round(timeEstimateMinutes / 5) × difficultyMult`. So a quest's time estimate is NOT a free "gentleness"
+  knob — lowering it lowers the XP. (This bit v1.12: seeding prayers at 5 min silently gave 1 XP instead of
+  the intended 2; 10 min → 2 XP. The audit caught it; typecheck/build/driver did not.) When you set a
+  time estimate programmatically, check the XP it implies.
+- **LANDMINE — the widget "current quest" scorer ignores `dueAt` and only ranks WITHIN the active frame.**
+  `selectCurrentQuest.ts` `scoreQuest` ranks by importance/urgency/quick-win; it does NOT read `dueAt`, and
+  `rankCandidates` only considers quests whose time frame is currently active. Consequences: (1) a quest with
+  a near due-time does NOT auto-rise as its time approaches; (2) a quest pinned to the wrong frame can never
+  be "current" in another part of the day (v1.12: prayers had to be placed in the frame containing their
+  actual time, via `frameForTime`, or Maghrib/Isha would never surface). A real due-time-driven "current"
+  feature needs an explicit due-soon term added here.
+- **Driver gotcha — to import a `.ts` engine into a `.mjs` pw driver, use esbuild's JS API, not the bin.**
+  `pw-prayer.mjs` transpiles `prayerTimes.ts` to a temp `.mjs` to compute expected times. Spawning
+  `node_modules/.bin/esbuild.cmd` via `execFileSync` fails on Windows (Node 24: `EINVAL` on `.cmd`). Use
+  `import { buildSync } from 'esbuild'; buildSync({ entryPoints, outfile, format:'esm', absWorkingDir })`
+  then dynamic-`import(pathToFileURL(outfile))`. esbuild is present (electron-vite dep), so zero new deps.
 
 ## Feature details
 - **Arcade** (`app/arcade/`): a **10-game brain-training set** (v1.8.3), high-score only — NO

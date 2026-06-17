@@ -1,184 +1,107 @@
 # HANDOFF — QuestDay (resume kit)
-_Updated 2026-06-17 · branch `feature/civilization-world-map` · v1.12.0 · NOT pushed (until the release push)._
+_Updated 2026-06-17 · branch `feature/civilization-world-map` · **v1.12.0** · HEAD `da00970` (PUSHED) · tag `v1.12.0`._
 
-## ▶ ACTIVE — RESUME HERE: v1.12 shipped both new features; cutting the macOS installer
+## ▶ STATUS: v1.12.0 SHIPPED — both new features done, no active task
 
-Both 2026-06-17 requests are **BUILT, audit-hardened, verified, and committed:**
-- **Request A — prayer-time Salah** (`e1bbe86` foundation + `f57709d` UI/store/audit-fixes): 5 separate
-  daily prayer quests, each due at its window-close time for the user's city (Isha = Islamic midnight),
-  on-device PrayTimes math (no API), city-list + manual coords, ISNA default + method/Asr picker,
-  `setPrayerSettings` restamps on change, each prayer placed in its real time frame, 10 min → 2 XP.
-  `pw-prayer.mjs` 12/12, `pw:rewards` 7/7 (↩ Restore exact).
-- **Request B — segmented capacity bar** (`f9449f8`): each quest a time-proportional segment + soft
-  over-capacity hatch. Pure-derived, no schema. `pw-capacity.mjs` 4/4. Mockup `mockups/capacity-segments.html`.
-- **Adversarial multi-agent audit** (workflow `wf_629ff235`, 39 agents): 25 confirmed / 7 refuted; the
-  9 actionable issues fixed in `f57709d`. Decisions DECIDED this round: add settings block · Isha =
-  Islamic midnight · keep 2 XP · Request B = Variant A.
+Both 2026-06-17 feature requests are **built, audit-hardened, verified, committed, pushed, and shipped**
+as a public macOS Release: https://github.com/Ihusain5555/questday/releases/tag/v1.12.0 (no-login `.dmg`).
+- **Request A — prayer-time Salah** (`e1bbe86` foundation + `f57709d` UI/store/audit-fixes): five separate
+  daily prayer quests (Fajr/Dhuhr/Asr/Maghrib/Isha), each due at its window-close time for the user's city
+  (Isha = Islamic midnight). On-device PrayTimes math (NO API, zero deps), city list + manual coords, ISNA
+  default + method/Asr picker, `setPrayerSettings` restamps on change, each prayer placed in its real time
+  frame, 10 min → the locked 2 XP. `pw-prayer` 12/12, `pw:rewards` 7/7 (↩ Restore exact).
+- **Request B — segmented capacity bar** (`f9449f8`): each quest a time-proportional segment + soft over-cap
+  hatch. Pure-derived, no schema. `pw-capacity` 4/4. Mockup `mockups/capacity-segments.html` (Variant A).
+- **Adversarial audit** (workflow `wf_629ff235`, 39 agents): 25 confirmed / 7 refuted; the 9 actionable
+  issues fixed in `f57709d` (XP regression, frame-pinning, settings-change restamp, wayfinding copy, engine
+  crash-guard, restamp gating, deleted obsolete `pw-faith.mjs`).
 
-**Next action: cut the macOS installer for v1.12** — bump done (1.12.0); push branch + tag `v1.12.0`
-(fires `build-macos.yml`); `gh run watch` → `gh run download` → `gh release create v1.12.0 <dmg>`
-(see memory [[mac-build-pipeline]] for the exact clean flow).
-
-**Deferred enhancement (flagged, NOT built):** widget "due-soon" promotion — the current-quest scorer
-ignores `dueAt`, so a prayer doesn't auto-rise as its time nears (it surfaces within its frame by score).
-This matches the user's locked "due-times only" scope; adding a bounded due-soon urgency boost in
-`scoreQuest`/`balance.ts` is an available future option. Faith copy still wants Islamic-Center sign-off.
-
----
-
-## (historical) Request A brainstorming — resolved
-The 3 micro-confirms below were answered (Isha=Islamic midnight, keep 2 XP, leave old quest untouched);
-the spec `docs/superpowers/specs/2026-06-17-prayer-times-salah-design.md` is written + implemented.
-
-### Request A — Salah quests driven by REAL prayer times (supersedes the Salah half of `b0510b5`)
-**What the user wants:** drop the single "Salah (daily prayers)" subtask-checklist. Instead, **five
-separate daily quests** — Fajr, Dhuhr, Asr, Maghrib, Isha — each **due at the time the prayer ends**,
-recurring every day.
-
-**DECISIONS LOCKED in the interview (do NOT re-ask):**
-- **NO online API** — compute ON-DEVICE via the **PrayTimes** astronomical formulas (self-implemented
-  from public solar-position math → no third-party code, ZERO new dependency). Now also a `CLAUDE.md` rule.
-- **Location = pick a city** from a bundled offline list (`src/shared/data/cities.ts`, ~150 cities + coords);
-  PLUS a manual lat/lon fallback.
-- **Method = default ISNA**, with a settings picker for method + Asr (Standard/Hanafi).
-- **Due = when the window closes** (Fajr→sunrise, Dhuhr→Asr start, …).
-- **Scope = due-times only, NO notifications** (the widget already surfaces the nearest due quest).
-
-**APPROACH CHOSEN — A: recompute `dueAt` at the daily reset, identify prayer quests by stable TITLE,
-NO `Quest` schema change.** (Rejected B = adding a `dueTimeOfDay` field to `Quest` — ripples into
-`isOverdue`/widget/scoring/migration for no user-visible gain.) Safe for ↩ Restore because reward/Restore
-math keys off completion records, never `dueAt` — so `dueAt` can be restamped daily with zero effect on payout.
-
-**THE 3 MICRO-CONFIRMS the user still owes (ask these FIRST on resume):**
-1. **Isha's "window close":** recommended = **next-day Fajr** (most forgiving, never overdue mid-evening)
-   vs Islamic midnight.
-2. **XP:** keep the gentle **2 XP** per prayer (status quo) or set **0** (worship not "scored").
-3. **Old single "Salah (daily prayers)" quest** from `b0510b5`: plan = **leave it untouched** (never
-   auto-delete user data); new card seeds the 5 timed quests; user deletes the old one. Confirm OK.
-
-**THE REAL ARCHITECTURAL WRINKLE (verified in code this session):** the daily-reset/renew path in
-`src/renderer/state/store.ts` (~line 758, the `renewIds` branch) re-activates a recurring quest —
-clears `completedAt`/subtasks — but **never recomputes `dueAt`**. So Approach A must, in that renew path
-(and on app open / rollover), restamp the 5 prayer quests' `dueAt` from `prayerTimes.ts` using today's
-date + `settings.prayerTimes`. Prayer quests are matched by their stable titles (degrade gracefully if renamed).
-
-**Files it will touch (for planning):**
-- NEW `src/shared/engine/prayerTimes.ts` — pure PrayTimes math (lat, lon, date, method → 5 times). No deps.
-- `src/shared/types.ts` + `defaults.ts` — new `settings.prayerTimes` shape (location + method + asr).
-  **Adding a settings sub-shape = stop-and-confirm schema change.**
-- `src/renderer/app/DataView.tsx` — settings UI (location + method pickers) behind the existing
-  `faithChecklist` toggle.
-- `src/renderer/state/store.ts` — **rewrite `addFaithChecklist`** (currently seeds one Salah checklist +
-  one Qur'an quest; const titles `FAITH_SALAH_TITLE`/`FAITH_QURAN_TITLE`) to seed 5 timed prayer quests
-  (+ keep Qur'an as-is). Stays gains-only, ordinary quests, never read by rewards → ↩ Restore exact.
-- `src/shared/engine/rollover.ts` / `recurrence.ts` — daily `dueAt` recompute hook (wrinkle #4).
-- NEW `scripts/pw-prayer.mjs` driver.
-
-### Request B — per-quest time markers in the time-frame bar
-**What the user wants:** in the Quests page, "depending on the estimated time for each quest… show a
-marker for each quest in the progress bar — or think of a better idea." The time-frame **capacity bar**
-already exists (shipped in `1898ea5`, calm gold, shows planned-minutes vs frame capacity).
-**NOT started** — API outage hit right as I was about to read the capacity-bar code.
-
-**Next concrete steps:**
-1. Read the capacity-bar implementation: `grep` for `capacity` in `src/renderer/app/QuestsView.tsx` and
-   `styles.css` (`.capacity*`); find where planned-minutes is summed per time frame.
-2. Design (VISUAL feature → **mockup-first**, the user can't read code): the strongest idea is a
-   **segmented capacity bar** — instead of one fill, each quest is a proportional segment sized by its
-   `timeEstimateMinutes`, so you see how the frame's time is carved up and where each quest "lands."
-   Hover/label per segment. Build `mockups/capacity-segments.html` (offline, inline SVG/CSS) and get the
-   look APPROVED before coding.
-3. Pure-derived from `quests[].timeEstimateMinutes` + frame capacity → no schema, ↩ Restore unaffected.
-
----
-
-## Baseline (recorded 2026-06-17, so next session need not re-derive)
-- `npm run typecheck` → **PASS** (~10s, main + renderer).
-- `npm run build` → **PASS** (~25s).
-- **No source code changed since this baseline** (only docs committed + an interview held) → the PASS
-  above still holds; no need to re-run before resuming Request A.
-- No open errors. Last failure of the session was an **API 529 overload** (infra, not code) — ignore.
-- Last driver runs this session (all green): `pw-faith` 7/7 · `pw-weekly` 4/4 · `pw-resting` 4/4 ·
-  `pw-scale` (+ `pw-library` 12/12) · `pw-sharecard` 3/3 · `pw:rewards` ALL PASS (↩ Restore still exact).
+## Next options (no active task — the user's move; nothing required)
+1. **Visual test** in `npm run dev` (the user's own acceptance gate — see "How to test" below). NOT yet done in-app.
+2. **Faith-copy Islamic-Center sign-off** before wide promotion — copy lives in `QuestsView.tsx` (faith card,
+   ~line 157) + `DataView.tsx` (`PrayerSettings`, method/asr labels). Opt-in/off-by-default; audit found tone correct.
+3. **(deferred enhancement) Widget "due-soon" promotion** — the current-quest scorer ignores `dueAt`, so a
+   prayer doesn't auto-rise as its time nears (it surfaces within its frame by score, matching the locked
+   "due-times only" scope). To add: a bounded due-soon urgency term in `scoreQuest()` in
+   `src/shared/engine/selectCurrentQuest.ts` + a tunable in `src/shared/config/balance.ts`. Affects ALL quests.
+4. **(polish) Seasonal frame drift** — prayer quests keep their seed-day time frame; to follow seasonal
+   shifts, re-evaluate `frameForTime` for prayer quests in the daily restamp loop in
+   `src/renderer/state/store.ts` (the renew-path `db.quests.map`, ~line 813).
 
 ## Git state
-- Branch `feature/civilization-world-map`, HEAD **`6c4acf6`**, **NOT pushed**. No stashes.
-- Last 6 commits: `6c4acf6` docs close-out · `be4dd14` share-card · `bccfe99` Quests icon/scaling ·
-  `ef54094` resting widget · `2b8c7f5` Weekly Review · `b0510b5` Salah checklist.
-- `6c4acf6` committed the close-out docs (this HANDOFF + CLAUDE.md no-API rule + codebase-overview
-  gotchas + the civ-spec backlog line).
-- **Only remaining uncommitted tracked change: `.claude/settings.local.json`** (added `WebSearch`
-  permission — a personal/local setting, deliberately left out of the docs commit).
-- **Untracked = throwaway** (see "Throwaway" below) — none of it is source.
+- branch `feature/civilization-world-map`, HEAD **`da00970`**, **fully PUSHED** (origin up to date), tag
+  `v1.12.0` pushed. No stashes.
+- **Only uncommitted tracked file: `.claude/settings.local.json`** (personal `WebSearch` permission —
+  intentionally not committed). Untracked = throwaway (see bottom); none is source.
+- This-session commits: `6c4acf6`/`e897feb` (close-out docs) · `d34b2b0` (v1.11.0 bump → public v1.11.0
+  release) · `b70ab64` (prayer spec) · `e1bbe86` (prayer foundation) · `f57709d` (prayer UI+audit fixes) ·
+  `f9449f8` (capacity bar) · `da00970` (v1.12.0 bump + docs → public v1.12.0 release).
 
-## Batch — DONE this session (all committed, NOT pushed; each has a pw driver, typecheck+build clean)
-- `1898ea5` **Quest Library v1** + 4 Tier-A quick wins (duplicate quest · reorder subtasks · time-frame
-  capacity bar · Data-tab gear). `pw-library` 12/12, `pw:rewards` 8/8.
-- `b0510b5` **Salah & Qur'an checklist** — opt-in OFF by default (`faithChecklist:false` seeded).
-  `pw-faith` 7/7. **NOTE: the Salah half is being SUPERSEDED by Request A above** (single checklist →
-  5 timed quests). Qur'an quest stays.
-- `2b8c7f5` **Weekly Review** Dashboard card — pure `weeklyReview()` + `completionsByFrameRecent()` in
-  `stats.ts`, toggle `weeklyReview` default-ON. `pw-weekly` 4/4.
-- `ef54094` **Resting widget** — "🌙 Welcome back — your realm's been resting. No rush." when no win
-  today AND last win 2+ days ago. `isRealmResting()` off `lastCompletionDate`, no schema. `pw-resting` 4/4.
-- `bccfe99` **Quests fix** — action buttons icon-only (`aria-label`s preserve pw `getByRole` names) +
-  responsive (rail drops full-width <940px; window min 720). `pw-scale` + `pw-library` green.
-- `be4dd14` **Offline share-card** — Weekly Review → "Share my week" → Canvas-2D PNG (`shareCard.ts` /
-  `ShareCardModal.tsx`), zero deps, zero new IPC, Save download + Copy clipboard, image-only (NO quest
-  titles). `pw-sharecard` 3/3.
+## Session diff --stat + why (`be4dd14..HEAD`, 19 files, +1781/-304)
+- `src/shared/engine/prayerTimes.ts` (NEW 166) — pure on-device prayer-time math (PrayTimes astronomy).
+- `src/shared/data/cities.ts` (NEW 184) — ~140-city offline lat/lon table + `findCity()`.
+- `src/shared/types.ts` (+18) / `defaults.ts` (+6) — additive `settings.prayerTimes` schema + seed.
+- `src/renderer/state/store.ts` (+140) — `addFaithChecklist` rewrite, `prayerDayInfo`/`frameForTime`,
+  `setPrayerSettings`, daily `dueAt` restamp (gated to all-7-day recurring quests).
+- `src/renderer/app/DataView.tsx` (+114) — `PrayerSettings` panel (city/method/Asr).
+- `src/renderer/app/QuestsView.tsx` (+54) — 3-state faith card + segmented capacity bar.
+- `src/renderer/styles.css` (+89) — `.prayer-settings` + `.capacity-seg`/`.capacity-over` styling.
+- `scripts/pw-prayer.mjs` (NEW 267) / `scripts/pw-capacity.mjs` (NEW 127) — drivers; `pw-faith.mjs` DELETED (obsolete).
+- Docs: prayer spec (NEW 93), `mockups/capacity-segments.html` (NEW 188), codebase-overview skill (+119),
+  `CLAUDE.md` (+49), this HANDOFF, civ spec (+1), `package.json`/`-lock` (version 1.12.0).
 
-## Batch — PENDING user action (not blockers for Request A/B)
-- (a) Visually test the batch in `npm run dev` (last definition-of-done gate — none tested in-app yet).
-- (b) #1 Salah **faith copy needs Islamic-Center sign-off** before ship (mostly moot once Request A
-  rewrites it, but the Qur'an copy + general wording still apply).
-- (c) #1 XP: keep the small **2 XP** per prayer or set **0 XP** (user offered the 0 variant).
-- (d) Decide **push** and/or **`npm run dist`** installer — both are STOP-AND-CONFIRM; await explicit go.
+## Baseline (no source changed since — these still hold)
+- `npm run typecheck` → **PASS** · `npm run build` → **PASS** (~7s). No open errors.
+- Drivers (all green): `pw-prayer` 12/12 · `pw-capacity` 4/4 · `pw:rewards` 7/7 (↩ Restore exact) ·
+  `pw-library` 12/12 · `pw-scale` pass.
 
-## Open / deferred (swept from the diff + this session)
-- **Request A (prayer-time Salah) — 3 micro-confirms owed by the user before the spec is written**
-  (resume here): (1) Isha window-close = next-day Fajr [recommended] vs Islamic midnight; (2) XP per
-  prayer = keep 2 [status quo] vs 0; (3) confirm the old `b0510b5` single Salah quest is left untouched
-  (never auto-deleted) while the new card seeds the 5 timed quests. Full context in ▶ ACTIVE above.
-- **Request B (per-quest capacity-bar time markers)** — not started; mockup-first (segmented bar).
-- **`#1 Salah faith copy`** still needs Islamic-Center sign-off (carries over; mostly moot once Request A
-  rewrites the Salah quest, but the Qur'an + general copy still apply).
+## Resume / verification commands
+- `npm install` only on a fresh clone (OneDrive npm download gotcha — see memory `v1-9-0-audit-release`).
+- `npm run dev` (live) · `npm run build` (→ `out/`, do this before any pw driver) · `npm run typecheck`.
+- Drivers run the built `out/` in an isolated `--user-data-dir` (never the real `db.json`); kill stray
+  `electron`/`QuestDay` first. `node scripts/pw-prayer.mjs`, `node scripts/pw-capacity.mjs`,
+  `npm run pw:rewards`, `node scripts/pw-library.mjs`, plus `pw:eisenhower`/`pw:realm`/`pw:rollover`/
+  `pw:arcade`/`pw:timeboxing`, `node scripts/pw-townedit.mjs`.
+- Test-output hook collapses PASS/FAIL → redirect to a temp file and `Read` it, or use the `test-runner` agent.
+- macOS installer: bump `package.json`, `git tag vX.Y.Z`, `git push origin vX.Y.Z` (fires `build-macos.yml`),
+  `gh run watch <id> --exit-status` (background on Windows) → `gh run download <id> -n questday-mac-dmg`
+  → `gh release create vX.Y.Z <dmg> --notes-file … --latest`. Detail: memory `mac-build-pipeline`.
+
+## How to test (for the user, beginner steps)
+1. `npm run dev` → **Data** tab (gear) → turn on **Salah & Qur'an checklist** → a prayer panel appears →
+   pick your **city** + method.
+2. **Quests** tab → the gold card says ready → **Add to my quests** → five prayer quests appear, each with a
+   real **due time**, spread across the correct time frames; plus an optional **Read Qur'an** quest.
+3. Any frame with quests → the **capacity bar** shows each quest as a colored time-slice (hover for its name).
+4. On a Mac: download the v1.12.0 `.dmg`, right-click → **Open → Open Anyway** (one time, unsigned).
+
+## Open / deferred
+- **Faith-copy Islamic-Center sign-off** (option 2 above) — opt-in/off-by-default; review before wide promotion.
+- **Widget due-soon promotion** + **seasonal frame drift** (options 3 & 4 above) — file-level targets noted.
+- **Umm al-Qura Ramadan 120-min Isha** — engine uses the standard 90-min year-round (spec defers Ramadan).
 - **AI/hero-art upgrade** for the civilization (style-lock / commissioned hero map) — explicitly DEFERRED.
-- **Town-editing live-trial feedback** (user tried `4ead7e7`, deferred all): (1) a tile rejects drops
-  (likely the Hall centre cell, by design — confirm before "fixing"); (2) buildings look "deformed"
-  (LOWEST priority, likely pre-existing art); (3) **panel + drag-in model** (buildings in a tray dragged
-  IN, not auto-placed) — design as an OPTIONAL layer over auto-placement. Detail: memory [[town-editing-v1]].
-- **Schema-gated, not in any batch** (each = stop-and-confirm when picked): snooze (`snoozedUntil`),
-  quest notes (one string), end-of-day wind-down note.
-- **Backlog (parked):** Quest Library Bundles (phase 2) + morning prompt (phase 3); Pipe Connect minigame
-  + gains-only unlock tiers (mockup-first); Ramadan / Qibla / Hijri (bigger Muslim-layer pieces);
-  world-map markers that develop with each town's stage (added to the civ spec backlog this session).
-- **Celebration/XP WIP** committed inside `4ead7e7` runs + `pw-celebration` passes but was flagged
-  "interim" — revisit only if the on-completion reward experience needs tidying.
+- **Town-editing live-trial feedback** (user tried `4ead7e7`): tile-rejects-drop (likely Hall centre, by design);
+  "deformed" buildings (lowest priority); **panel + drag-in model** as an optional layer. Detail: [[town-editing-v1]].
+- **Schema-gated quick-adds** (each = stop-and-confirm): snooze (`snoozedUntil`), quest notes, end-of-day note.
+- **Backlog (parked):** Quest Library Bundles + morning prompt; Pipe Connect minigame + unlock tiers (mockup-first);
+  Qibla / Hijri; world-map markers that develop with each town's stage.
+- **Celebration/XP WIP** in `4ead7e7` runs (`pw-celebration` passes) but flagged "interim".
 
 ## Architecture reference (durable)
-- **Quest Library:** `questTemplates: QuestTemplate[]` top-level db key (types.ts), wholesale-replaced,
-  `migrate()` tolerant, `validate()` rejects malformed; NEVER read by civ/rewards → ↩ Restore exact.
-  Drag uses a DISTINCT MIME `application/x-questday-template` (frame `onDragOver` detects via
-  `dataTransfer.types.includes`; `onDrop` checks it BEFORE the quest-move fallback). `QuestForm` gained
-  `hideScheduling` + `isEdit`. Full gotchas live in the **codebase-overview** skill.
-- The same **sealed-key + never-read-by-rewards** pattern is the template for Request A's prayer quests
-  (they're ordinary quests) and Request B's markers (pure-derived).
-
-## Verification quickref
-`npm run typecheck` → `npm run build` → drivers (each isolated `--user-data-dir`, never the real
-`db.json`): `node scripts/pw-library.mjs` (12/12), `npm run pw:rewards` (↩ Restore exact), plus
-`pw:eisenhower`/`pw:realm`/`pw:rollover`/`pw:arcade`/`pw:timeboxing`, `node scripts/pw-townedit.mjs`
-(15/15), and this batch's `pw-faith` / `pw-weekly` / `pw-resting` / `pw-scale` / `pw-sharecard`.
-The Bash/PowerShell test-output hook collapses results — redirect to a temp file and `Read` it, or use
-the `test-runner` agent. Launch blocked? Kill stray `electron`, release the app-lock. Mockups served
-over HTTP via `scripts/_mockserver.mjs` :8777 (Playwright MCP blocks `file://`).
+- **Prayer times (v1.12):** pure engine `prayerTimes.ts` + data `cities.ts`; settings `prayerTimes` is additive
+  + optional + **never read by rewards/civilization → ↩ Restore exact**. Prayer quests are ORDINARY quests
+  matched by stable title (`FAITH_PRAYER_TITLES`); `dueAt` restamped daily (gated to 7-day recurring). Full
+  detail in the **codebase-overview** skill (prayerTimes.ts entry + the XP-from-`timeEstimateMinutes` and
+  widget-scoring landmines).
+- **Quest Library (v1.11):** `questTemplates` top-level db key, wholesale-replaced, tolerant migrate, validate
+  rejects malformed; never read by civ/rewards. Drag uses MIME `application/x-questday-template`.
+- The **sealed-key + never-read-by-rewards** pattern is the template for every new optional feature.
 
 ## Throwaway (untracked; delete only with user OK — stop-and-confirm)
-Root PNGs (`biome-*`/`town-*`/`tb-*`/`tp-*`/`edit-*`/`cadence-*`/`halls-*`/`share-card-mockup.png`),
-`_*.json`/`_*.txt`/`_gemcrit*`/`_vers*`, the `C:…TEMP*` stray txt files, `mockups/_*`,
-`mockups/quest-library-{a,c}.html` (a/c throwaway; **b is the approved look — keep**), `scripts/_*.mjs`
-generators, `pw-*-out.txt`/`pw-*-run.txt`/`pw-*-result.txt`, `scripts/build-deck.mjs`/`scripts/pw-deck.mjs`,
-`presentation/`. KEEP the real drivers: `scripts/pw-townedit.mjs`, `scripts/pw-townlayouts.mjs`,
-`scripts/pw-celebration.mjs`, `scripts/pw-library.mjs`, `scripts/pw-faith.mjs`, `scripts/pw-weekly.mjs`,
-`scripts/pw-resting.mjs`, `scripts/pw-scale.mjs`, `scripts/pw-sharecard.mjs`, `mockups/town-edit-*.html`,
-`mockups/quest-library-b.html`, `mockups/share-card.html`.
+Root PNGs (`biome-*`/`town-*`/`tb-*`/`tp-*`/`edit-*`/`cadence-*`/`halls-*`/`share-card-mockup.png`/
+`capacity-segments-mockup.png`), `_*.json`/`_*.txt`/`_gemcrit*`/`_vers*`, the `C:…TEMP*` stray txt files,
+`mockups/_*`, `mockups/quest-library-{a,c}.html`, `scripts/_*.mjs` generators, `pw-*-out.txt`/`-run.txt`/
+`-result.txt`, `scripts/build-deck.mjs`/`pw-deck.mjs`, `presentation/`, `pw-shots/`, `.playwright-mcp/`.
+KEEP the real drivers: `pw-prayer.mjs`, `pw-capacity.mjs`, `pw-townedit.mjs`, `pw-townlayouts.mjs`,
+`pw-celebration.mjs`, `pw-library.mjs`, `pw-weekly.mjs`, `pw-resting.mjs`, `pw-scale.mjs`, `pw-sharecard.mjs`,
+and committed mockups (`capacity-segments.html`, `town-edit-*.html`, `quest-library-b.html`, `share-card.html`).
