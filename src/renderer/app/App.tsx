@@ -24,7 +24,7 @@ import {
   Hammer,
   MapTrifold,
   GameController,
-  FloppyDisk
+  Gear
 } from '@phosphor-icons/react'
 
 type Tab = 'dashboard' | 'quests' | 'frames' | 'productivity' | 'world' | 'arcade' | 'data'
@@ -36,7 +36,7 @@ const TABS: { id: Tab; label: string; icon: JSX.Element }[] = [
   { id: 'productivity', label: 'Forge', icon: <Hammer size={16} weight="fill" /> },
   { id: 'world', label: 'Realm', icon: <MapTrifold size={16} weight="fill" /> },
   { id: 'arcade', label: 'Arcade', icon: <GameController size={16} weight="fill" /> },
-  { id: 'data', label: 'Data', icon: <FloppyDisk size={16} weight="fill" /> }
+  { id: 'data', label: 'Data', icon: <Gear size={16} weight="fill" /> }
 ]
 
 export function App(): JSX.Element {
@@ -104,7 +104,7 @@ export function App(): JSX.Element {
         {visibleTabs.map((t) => (
           <button
             key={t.id}
-            className={`tab ${tab === t.id ? 'on' : ''}`}
+            className={`tab ${tab === t.id ? 'on' : ''} ${t.id === 'data' ? 'gear-tab' : ''}`}
             onClick={() => setTab(t.id)}
           >
             {t.icon}

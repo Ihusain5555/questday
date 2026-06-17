@@ -18,7 +18,7 @@ import {
   fsyncSync,
   closeSync
 } from 'fs'
-import type { Database, DatabasePatch, Importance, Quest, Urgency } from '@shared/types'
+import type { Database, DatabasePatch, Importance, Quest, QuestTemplate, Urgency } from '@shared/types'
 import { createDefaultDatabase, DB_VERSION } from '@shared/defaults'
 import { writeAutoBackup } from '../backup/backup'
 
@@ -147,6 +147,9 @@ function migrate(db: Database): Database {
       db.townLayouts && typeof db.townLayouts === 'object' && !Array.isArray(db.townLayouts)
         ? db.townLayouts
         : fresh.townLayouts,
+    // Quest Library: tolerate old saves (missing) and corruption (non-array) by
+    // failing safe to []. Per-entry validation happens on the WRITE path (validate()).
+    questTemplates: Array.isArray(db.questTemplates) ? db.questTemplates : fresh.questTemplates,
     lastSeenDate: db.lastSeenDate ?? fresh.lastSeenDate
   }
 }
@@ -228,6 +231,22 @@ function validate(db: Database): string | null {
       if (!overrides || typeof overrides !== 'object' || Array.isArray(overrides)) {
         return `townLayouts.${townId} must have an overrides object`
       }
+    }
+  }
+  // questTemplates (Quest Library v1) is optional-shaped on disk; if present it must
+  // be an array of blueprint objects carrying the required fields. Reject the whole
+  // save on malformed data (don't silently drop entries) so a renderer bug can't
+  // persist a corrupt library — the reward engine never reads it, but the save must
+  // stay structurally sound. Checked as `unknown` — runtime data may defy types.
+  const templates = db.questTemplates as unknown
+  if (templates != null) {
+    if (!Array.isArray(templates)) return 'questTemplates must be an array'
+    for (const t of templates as unknown[]) {
+      const tpl = t as Partial<QuestTemplate> | null
+      if (!tpl || typeof tpl !== 'object') return 'questTemplates entries must be objects'
+      if (typeof tpl.id !== 'string') return 'questTemplates entry needs a string id'
+      if (typeof tpl.title !== 'string') return 'questTemplates entry needs a string title'
+      if (!Array.isArray(tpl.subTasks)) return 'questTemplates entry needs a subTasks array'
     }
   }
   return null

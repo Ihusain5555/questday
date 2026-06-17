@@ -5,6 +5,7 @@ import type {
   Importance,
   PlotOverride,
   Quest,
+  QuestTemplate,
   Settings,
   SubTask,
   TimeFrame,
@@ -119,6 +120,8 @@ interface AppStore {
   createQuest: (input: QuestInput) => Promise<void>
   updateQuest: (id: string, input: QuestInput) => Promise<void>
   deleteQuest: (id: string) => Promise<void>
+  /** Clone a quest as a fresh ACTIVE one (new ids/dates, steps un-done) to tweak. */
+  duplicateQuest: (id: string) => Promise<void>
   dropQuest: (id: string) => Promise<void>
   moveQuestToFrame: (id: string, timeFrameId: string) => Promise<void>
   moveQuestBefore: (id: string, targetId: string) => Promise<void>
@@ -128,6 +131,16 @@ interface AppStore {
   restoreQuest: (id: string) => Promise<void>
   /** Spend an expedition to chart a chosen region, learning a chosen topic's entry. */
   claimRegion: (regionId: string, topicId: string, entryId: string) => Promise<void>
+
+  // ---- Quest Library (templates, v1) ----
+  /** Build a reusable blueprint from form input and append it to the Library. */
+  createTemplate: (input: QuestInput) => Promise<void>
+  /** Replace a template's reusable fields. */
+  updateTemplate: (id: string, input: QuestInput) => Promise<void>
+  /** Remove a template (quests already created from it are independent — untouched). */
+  deleteTemplate: (id: string) => Promise<void>
+  /** Copy an existing quest's blueprint into the Library. */
+  saveQuestAsTemplate: (questId: string) => Promise<void>
 
   // ---- Daily rollover (§6) ----
   /** Process a transition into today (carry over + flag past-due). Idempotent per day. */
@@ -268,6 +281,110 @@ export const useStore = create<AppStore>((set, get) => ({
     const db = get().db
     if (!db) return
     await get().save({ quests: db.quests.filter((q) => q.id !== id) })
+  },
+
+  duplicateQuest: async (id) => {
+    const db = get().db
+    if (!db) return
+    const src = db.quests.find((q) => q.id === id)
+    if (!src) return
+    const maxOrder = db.quests.reduce((m, q) => Math.max(m, q.sortOrder), -1)
+    const copy: Quest = {
+      id: uid(),
+      title: src.title,
+      // Fresh sub-task ids; never carry completion state into the copy.
+      subTasks: src.subTasks.map((s, i) => ({
+        id: uid(),
+        title: s.title,
+        order: i,
+        done: false,
+        timeEstimateMinutes: s.timeEstimateMinutes
+      })),
+      difficulty: src.difficulty,
+      importance: src.importance,
+      urgency: src.urgency,
+      timeEstimateMinutes: src.timeEstimateMinutes,
+      dueAt: src.dueAt,
+      timeFrameId: src.timeFrameId,
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      completedAt: null,
+      sortOrder: maxOrder + 1,
+      recurDays: src.recurDays
+    }
+    await get().save({ quests: [...db.quests, copy] })
+  },
+
+  // ---- Quest Library (templates, v1) --------------------------------------
+  // A template is a Quest blueprint MINUS its instance fields. These mirror the
+  // createQuest/deleteQuest patterns above; each writes the WHOLE questTemplates
+  // list wholesale (the safe pattern), and none are read by the reward engine —
+  // so ↩ Restore stays exact (§5 of the spec).
+  createTemplate: async (input) => {
+    const db = get().db
+    if (!db) return
+    const template: QuestTemplate = {
+      id: uid(),
+      title: input.title.trim(),
+      // buildSubTasks regenerates ids/order and forces done:false.
+      subTasks: buildSubTasks(input.subTasks),
+      difficulty: input.difficulty,
+      importance: input.importance,
+      urgency: input.urgency,
+      timeEstimateMinutes: Math.max(0, Math.round(input.timeEstimateMinutes)),
+      createdAt: new Date().toISOString()
+    }
+    await get().save({ questTemplates: [...db.questTemplates, template] })
+  },
+
+  updateTemplate: async (id, input) => {
+    const db = get().db
+    if (!db) return
+    const questTemplates = db.questTemplates.map((t) =>
+      t.id === id
+        ? {
+            ...t,
+            title: input.title.trim(),
+            subTasks: buildSubTasks(input.subTasks),
+            difficulty: input.difficulty,
+            importance: input.importance,
+            urgency: input.urgency,
+            timeEstimateMinutes: Math.max(0, Math.round(input.timeEstimateMinutes))
+          }
+        : t
+    )
+    await get().save({ questTemplates })
+  },
+
+  deleteTemplate: async (id) => {
+    const db = get().db
+    if (!db) return
+    await get().save({ questTemplates: db.questTemplates.filter((t) => t.id !== id) })
+  },
+
+  saveQuestAsTemplate: async (questId) => {
+    const db = get().db
+    if (!db) return
+    const q = db.quests.find((x) => x.id === questId)
+    if (!q) return
+    const template: QuestTemplate = {
+      id: uid(),
+      title: q.title,
+      // Strip instance state: regenerate sub-task ids/order, force done:false.
+      subTasks: q.subTasks.map((s, i) => ({
+        id: uid(),
+        title: s.title,
+        order: i,
+        done: false,
+        timeEstimateMinutes: s.timeEstimateMinutes
+      })),
+      difficulty: q.difficulty,
+      importance: q.importance,
+      urgency: q.urgency,
+      timeEstimateMinutes: q.timeEstimateMinutes,
+      createdAt: new Date().toISOString()
+    }
+    await get().save({ questTemplates: [...db.questTemplates, template] })
   },
 
   /** Move a quest into another time frame (drag-and-drop); lands at the end. */

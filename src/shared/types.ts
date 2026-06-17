@@ -54,6 +54,25 @@ export interface Quest {
   completionDates?: string[]
 }
 
+/** A reusable quest blueprint (Quest Library v1). Stores ONLY the reusable parts
+ *  of a quest; the day-specific instance fields (dueAt, timeFrameId, status,
+ *  rewards, recurrence…) are intentionally omitted — they're filled in when a
+ *  template is turned into a real quest via createQuest. Gains-only, wholesale-
+ *  replaced on save, and NEVER read by civilization.ts/realm.ts/rewards, so
+ *  ↩ Restore stays exact. */
+export interface QuestTemplate {
+  id: string
+  title: string
+  /** Each sub-task's `done` is always false in a template. */
+  subTasks: SubTask[]
+  difficulty: Difficulty
+  importance: Importance
+  urgency: Urgency
+  timeEstimateMinutes: number
+  /** ISO; default sort is newest-first. */
+  createdAt: string
+}
+
 export interface TimeFrame {
   id: string
   name: string
@@ -225,6 +244,10 @@ export interface Database {
    *  NEVER read by the rewards/civilization engine, so ↩ Restore stays exact.
    *  Wholesale-replace on save; a reset simply omits the town. Old/absent = {}. */
   townLayouts: Record<string, TownLayout>
+  /** Quest Library: saved reusable quest blueprints (v1). Wholesale-replaced on
+   *  save like townLayouts; NEVER read by reward/civilization math, so ↩ Restore
+   *  stays exact. Old/absent saves migrate to []. */
+  questTemplates: QuestTemplate[]
   /** Last local date (YYYY-MM-DD) the app processed a daily rollover. */
   lastSeenDate: string | null
 }

@@ -3,14 +3,32 @@ import type { Quest, TimeFrame } from '@shared/types'
 import type { QuestInput } from '../state/store'
 import { DIFFICULTIES, IMPORTANCES, URGENCIES } from './options'
 import { isoToLocalInput, localInputToIso } from '@shared/format'
-import { X, ArrowsClockwise } from '@phosphor-icons/react'
+import { X, ArrowsClockwise, CaretUp, CaretDown } from '@phosphor-icons/react'
+
+/** What QuestForm needs to pre-fill. A Quest satisfies this; so does a
+ *  QuestTemplate (the scheduling fields are optional and ignored in template
+ *  mode) — letting ONE form serve both quests and Library templates. */
+export type QuestFormInitial = Pick<
+  Quest,
+  'title' | 'difficulty' | 'importance' | 'urgency' | 'timeEstimateMinutes' | 'subTasks'
+> &
+  Partial<Pick<Quest, 'dueAt' | 'timeFrameId' | 'recurDays'>>
 
 interface Props {
   timeFrames: TimeFrame[]
-  initial: Quest | null
+  initial: QuestFormInitial | null
   defaultTimeFrameId: string
   onSave: (input: QuestInput) => void
   onCancel: () => void
+  /** Template mode (Quest Library): hide Due date, Time frame, and Repeats. The
+   *  emitted QuestInput still gets dueAt:null / timeFrameId:defaultTimeFrameId /
+   *  recurDays:[] so the type holds; callers (createTemplate/updateTemplate)
+   *  ignore those instance-only fields. */
+  hideScheduling?: boolean
+  /** Override the create-vs-edit wording. Defaults to "edit when `initial` is
+   *  set". Tap-add passes `false`: it pre-fills from a template but is CREATING a
+   *  new quest, so the modal should read "New quest" / "Create quest". */
+  isEdit?: boolean
 }
 
 interface SubRow {
@@ -20,7 +38,17 @@ interface SubRow {
   estimate: string
 }
 
-export function QuestForm({ timeFrames, initial, defaultTimeFrameId, onSave, onCancel }: Props): JSX.Element {
+export function QuestForm({
+  timeFrames,
+  initial,
+  defaultTimeFrameId,
+  onSave,
+  onCancel,
+  hideScheduling = false,
+  isEdit
+}: Props): JSX.Element {
+  // Create-vs-edit wording: explicit prop wins, else infer from `initial`.
+  const editing = isEdit ?? initial != null
   const [title, setTitle] = useState(initial?.title ?? '')
   const [difficulty, setDifficulty] = useState<Quest['difficulty']>(initial?.difficulty ?? 'Medium')
   const [importance, setImportance] = useState<Quest['importance']>(initial?.importance ?? 'Medium')
@@ -66,14 +94,15 @@ export function QuestForm({ timeFrames, initial, defaultTimeFrameId, onSave, onC
       importance,
       urgency,
       timeEstimateMinutes: Math.max(0, (Number(estHours) || 0) * 60 + (Number(estMinutes) || 0)),
-      dueAt: localInputToIso(dueLocal),
-      timeFrameId,
+      // Template mode emits valid-but-ignored instance fields (callers drop them).
+      dueAt: hideScheduling ? null : localInputToIso(dueLocal),
+      timeFrameId: hideScheduling ? defaultTimeFrameId || timeFrames[0]?.id || '' : timeFrameId,
       subTasks: subs.map((s) => ({
         id: s.id,
         title: s.title,
         timeEstimateMinutes: Number(s.estimate) > 0 ? Math.round(Number(s.estimate)) : undefined
       })),
-      recurDays
+      recurDays: hideScheduling ? [] : recurDays
     })
   }
 
@@ -101,6 +130,16 @@ export function QuestForm({ timeFrames, initial, defaultTimeFrameId, onSave, onC
     setSubs((rows) => rows.map((r, idx) => (idx === i ? { ...r, estimate: value } : r)))
   const addSub = () => setSubs((rows) => [...rows, { title: '', estimate: '' }])
   const removeSub = (i: number) => setSubs((rows) => rows.filter((_, idx) => idx !== i))
+  /** Reorder a step up/down. `order` is rebuilt from list position on save
+   *  (buildSubTasks re-indexes), so this is purely positional — no schema change. */
+  const moveSub = (i: number, dir: -1 | 1) =>
+    setSubs((rows) => {
+      const j = i + dir
+      if (j < 0 || j >= rows.length) return rows
+      const next = [...rows]
+      ;[next[i], next[j]] = [next[j], next[i]]
+      return next
+    })
   /** Enter in a sub-task row: insert a fresh row right below and focus it. */
   const insertSubBelow = (i: number) => {
     pendingFocus.current = i + 1
@@ -110,7 +149,15 @@ export function QuestForm({ timeFrames, initial, defaultTimeFrameId, onSave, onC
   return (
     <div className="modal-backdrop" onMouseDown={onCancel}>
       <div className="modal" onMouseDown={(e) => e.stopPropagation()}>
-        <h2>{initial ? 'Edit quest' : 'New quest'}</h2>
+        <h2>
+          {hideScheduling
+            ? editing
+              ? 'Edit template'
+              : 'New template'
+            : editing
+              ? 'Edit quest'
+              : 'New quest'}
+        </h2>
         <form onSubmit={submit}>
           <label className="field">
             <span>Title</span>
@@ -173,22 +220,27 @@ export function QuestForm({ timeFrames, initial, defaultTimeFrameId, onSave, onC
                 <span className="est-unit">min</span>
               </div>
             </label>
-            <label className="field">
-              <span>Due (optional)</span>
-              <input type="datetime-local" value={dueLocal} onChange={(e) => setDueLocal(e.target.value)} />
-            </label>
-            <label className="field">
-              <span>Time frame</span>
-              <select value={timeFrameId} onChange={(e) => setTimeFrameId(e.target.value)}>
-                {timeFrames.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {!hideScheduling && (
+              <label className="field">
+                <span>Due (optional)</span>
+                <input type="datetime-local" value={dueLocal} onChange={(e) => setDueLocal(e.target.value)} />
+              </label>
+            )}
+            {!hideScheduling && (
+              <label className="field">
+                <span>Time frame</span>
+                <select value={timeFrameId} onChange={(e) => setTimeFrameId(e.target.value)}>
+                  {timeFrames.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
           </div>
 
+          {!hideScheduling && (
           <div className="field">
             <span className="field-label-icon">
               Repeats <ArrowsClockwise size={13} weight="bold" />
@@ -223,6 +275,7 @@ export function QuestForm({ timeFrames, initial, defaultTimeFrameId, onSave, onC
               </small>
             )}
           </div>
+          )}
 
           <div className="field">
             <span>Sub-tasks (ordered)</span>
@@ -254,6 +307,26 @@ export function QuestForm({ timeFrames, initial, defaultTimeFrameId, onSave, onC
                 <button
                   type="button"
                   className="icon-btn"
+                  aria-label="Move step up"
+                  title="Move up"
+                  disabled={i === 0}
+                  onClick={() => moveSub(i, -1)}
+                >
+                  <CaretUp size={13} weight="bold" />
+                </button>
+                <button
+                  type="button"
+                  className="icon-btn"
+                  aria-label="Move step down"
+                  title="Move down"
+                  disabled={i === subs.length - 1}
+                  onClick={() => moveSub(i, 1)}
+                >
+                  <CaretDown size={13} weight="bold" />
+                </button>
+                <button
+                  type="button"
+                  className="icon-btn"
                   aria-label="Remove step"
                   onClick={() => removeSub(i)}
                   title="Remove"
@@ -272,7 +345,7 @@ export function QuestForm({ timeFrames, initial, defaultTimeFrameId, onSave, onC
               Cancel
             </button>
             <button type="submit" className="primary" disabled={titleError}>
-              {initial ? 'Save changes' : 'Create quest'}
+              {editing ? 'Save changes' : hideScheduling ? 'Create template' : 'Create quest'}
             </button>
           </div>
         </form>

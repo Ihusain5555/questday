@@ -3984,6 +3984,373 @@ code {
   background: linear-gradient(160deg, var(--panel-2), var(--panel));
   box-shadow: var(--shadow-2), 0 0 0 1px rgba(201, 162, 74, 0.22);
 }
+
+/* =====================================================================
+   Quest Library (v1) — collapsible side rail + template cards in the
+   Quests tab. Ported from the approved mockup (quest-library-b.html);
+   every value references a theme.css token. Badges reuse the live-quest
+   .badge classes (inline colours from options.ts) so cards read native.
+   ===================================================================== */
+.quests-layout {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+.quests-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.library-rail {
+  width: 308px;
+  flex: 0 0 308px;
+  align-self: flex-start;
+  position: sticky;
+  top: 0;
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-clay);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width 0.42s var(--ease-spring), flex-basis 0.42s var(--ease-spring);
+}
+
+.rail-header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 14px 14px 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(var(--brand-rgb) / 0.08), transparent);
+}
+.rail-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.2px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--text);
+  flex: 1;
+  white-space: nowrap;
+}
+.rail-title svg {
+  color: var(--brand-bright);
+}
+.rail-count {
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--panel-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 2px 9px;
+  font-weight: 600;
+}
+.rail-collapse-btn {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--panel-3);
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+.rail-collapse-btn:hover {
+  color: var(--text);
+  background: #2c3d32;
+  border-color: #3a4e41;
+}
+.rail-chevron {
+  transition: transform 0.42s var(--ease-spring);
+}
+.library-rail.collapsed .rail-chevron {
+  transform: rotate(180deg);
+}
+
+.rail-sub {
+  padding: 11px 14px 4px 16px;
+}
+.rail-newbtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--r-btn);
+  background: linear-gradient(180deg, var(--brand-bright), var(--brand));
+  color: #06251a;
+  font-weight: 700;
+  font-size: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 14px rgba(var(--brand-rgb) / 0.28);
+  transition: transform 0.12s var(--ease-spring), box-shadow 0.15s, filter 0.15s;
+}
+.rail-newbtn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+}
+.rail-newbtn:active {
+  transform: translateY(0);
+}
+
+.rail-hint {
+  font-size: 11.5px;
+  color: var(--muted);
+  padding: 8px 16px 4px 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.35;
+}
+.rail-hint svg {
+  flex: 0 0 14px;
+  color: var(--brand-bright);
+  opacity: 0.85;
+}
+.rail-hint b {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.rail-cards {
+  padding: 8px 12px 14px 12px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.rail-cards::-webkit-scrollbar {
+  width: 8px;
+}
+.rail-cards::-webkit-scrollbar-thumb {
+  background: #33473b;
+  border-radius: 8px;
+}
+
+.rail-empty {
+  padding: 16px 8px;
+  text-align: center;
+  line-height: 1.45;
+}
+.rail-empty-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.rail-empty b {
+  color: var(--text);
+}
+
+/* ---- template card ---- */
+.tpl-card {
+  position: relative;
+  background: linear-gradient(180deg, var(--panel-3), var(--panel-2));
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 13px 13px 12px 13px;
+  box-shadow: var(--shadow-clay);
+  cursor: grab;
+  transition: transform 0.16s var(--ease-spring), border-color 0.15s, box-shadow 0.2s;
+}
+.tpl-card:hover {
+  transform: translateY(-3px) scale(1.012);
+  border-color: #3c5345;
+}
+.tpl-card:active {
+  cursor: grabbing;
+}
+.tpl-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 14px;
+  bottom: 14px;
+  width: 3px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--brand-bright), var(--brand-deep));
+  opacity: 0.7;
+}
+.tpl-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+.tpl-grip {
+  flex: 0 0 auto;
+  color: #5d7568;
+  cursor: grab;
+  margin-top: 2px;
+  transition: color 0.15s;
+}
+.tpl-card:hover .tpl-grip {
+  color: var(--brand-bright);
+}
+.tpl-titlewrap {
+  flex: 1;
+  min-width: 0;
+}
+.tpl-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14.5px;
+  color: var(--text);
+  line-height: 1.25;
+}
+.tpl-steps {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.tpl-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 11px;
+}
+.tpl-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tpl-time {
+  font-size: 11.5px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+}
+.tpl-add {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 11px;
+  background: linear-gradient(180deg, var(--brand-bright), var(--brand));
+  color: #06251a;
+  font-weight: 700;
+  font-size: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 4px 10px rgba(var(--brand-rgb) / 0.22);
+  transition: transform 0.12s var(--ease-spring), filter 0.15s;
+}
+.tpl-add:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+.tpl-add:active {
+  transform: translateY(0);
+}
+/* Edit/Delete reveal on hover so the resting card matches the approved look. */
+.tpl-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.25s var(--ease-spring), opacity 0.2s;
+}
+.tpl-card:hover .tpl-actions,
+.tpl-card:focus-within .tpl-actions {
+  max-height: 40px;
+  opacity: 1;
+}
+.ghost.sm {
+  padding: 5px 9px;
+  font-size: 11.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* ---- collapsed rail ---- */
+.library-rail.collapsed {
+  width: 46px;
+  flex-basis: 46px;
+}
+.library-rail.collapsed .rail-header {
+  flex-direction: column;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: none;
+}
+.library-rail.collapsed .rail-title,
+.library-rail.collapsed .rail-count,
+.library-rail.collapsed .rail-sub,
+.library-rail.collapsed .rail-hint,
+.library-rail.collapsed .rail-cards {
+  display: none;
+}
+.rail-vertical {
+  display: none;
+}
+.library-rail.collapsed .rail-vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+}
+.library-rail.collapsed .rail-vertical svg {
+  color: var(--brand-bright);
+}
+
+/* ---- Time-frame capacity bar (calm load heads-up — never red, never a limit) ---- */
+.capacity {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 2px 4px 10px 4px;
+}
+.capacity-track {
+  flex: 1;
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--panel-3);
+  overflow: hidden;
+}
+.capacity-fill {
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: linear-gradient(90deg, var(--brand), var(--brand-bright));
+  transition: width 0.4s var(--ease-spring);
+}
+/* Near/over full: soft gold, NOT red — a heads-up, not a failure (tone rule). */
+.capacity-track.full .capacity-fill {
+  background: linear-gradient(90deg, var(--gold-deep), var(--gold));
+}
+.capacity-label {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* Data tab as a right-aligned settings gear (declutters the primary nav). */
+.tab.gear-tab {
+  margin-left: auto;
+}
 .rm-close {
   position: absolute;
   top: 12px;

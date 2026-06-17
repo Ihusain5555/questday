@@ -58,6 +58,7 @@ export function createDefaultDatabase(): Database {
       realmChronicle: []
     },
     townLayouts: {},
+    questTemplates: [],
     lastSeenDate: null
   }
 }

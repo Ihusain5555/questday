@@ -9,7 +9,9 @@
 // ---------------------------------------------------------------------------
 
 export interface ToggleableFeature {
-  /** Must match the tab id in App.tsx. */
+  /** Matches a tab id in App.tsx, OR a sub-section flag read directly via
+   *  isFeatureEnabled (e.g. 'questLibrary' — a rail inside the Quests tab, not
+   *  its own tab). */
   id: string
   /** Phosphor icon name (mapped to a component in DataView) — matches the tab
    *  icon in App.tsx so the toggle list and the tab read identically. */
@@ -39,6 +41,16 @@ export const TOGGLEABLE_FEATURES: ToggleableFeature[] = [
     icon: 'MapTrifold',
     label: 'Realm',
     blurb: 'Your reward world — an explorable map that charts a new region each time you finish a quest.'
+  },
+  {
+    // A sub-section, NOT a tab: the Library rail lives INSIDE the Quests tab, so
+    // no tab id matches 'questLibrary' (App.tsx's tab filter never hides a tab).
+    // QuestsView reads isFeatureEnabled directly to show/hide the rail; toggling
+    // off only hides it — saved templates are kept on disk (gains-only).
+    id: 'questLibrary',
+    icon: 'Books',
+    label: 'Quest Library',
+    blurb: 'Save reusable quest templates (your work-day / gym-day things) and tap or drag them into today.'
   }
 ]
 
