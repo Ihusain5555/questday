@@ -1,6 +1,6 @@
 {
   "name": "questday",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "description": "QuestDay — a quest-based daily productivity guide",
   "private": true,
   "type": "module",
@@ -55,7 +55,12 @@
     },
     "mac": {
       "target": [
-        { "target": "dmg", "arch": ["universal"] }
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
       ],
       "icon": "resources/icon.png",
       "category": "public.app-category.productivity",
@@ -67,8 +72,17 @@
     "dmg": {
       "title": "${productName} ${version}",
       "contents": [
-        { "x": 130, "y": 220, "type": "file" },
-        { "x": 410, "y": 220, "type": "link", "path": "/Applications" }
+        {
+          "x": 130,
+          "y": 220,
+          "type": "file"
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
       ]
     }
   },
