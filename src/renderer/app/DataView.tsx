@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useStore } from '../state/store'
 import { TOGGLEABLE_FEATURES, isFeatureEnabled } from './features'
+import { CITIES, findCity } from '@shared/data/cities'
+import type { PrayerMethod } from '@shared/types'
 import {
   FileText,
   Sword,
@@ -27,6 +29,117 @@ const FEATURE_ICON: Record<string, Icon> = {
   Books,
   Mosque,
   CalendarCheck
+}
+
+const PRAYER_METHODS: { id: PrayerMethod; label: string }[] = [
+  { id: 'isna', label: 'ISNA (North America)' },
+  { id: 'mwl', label: 'Muslim World League' },
+  { id: 'egyptian', label: 'Egyptian General Authority' },
+  { id: 'karachi', label: 'Karachi (Univ. of Islamic Sciences)' },
+  { id: 'ummAlQura', label: 'Umm al-Qura (Makkah)' }
+]
+
+/** Prayer-time location + method, shown under the Salah toggle. Everything is
+ *  computed on-device from lat/lon (see prayerTimes.ts) — nothing is sent anywhere. */
+function PrayerSettings(): JSX.Element {
+  const { db, setPrayerSettings } = useStore()
+  if (!db) return <></>
+  const pt = db.settings.prayerTimes ?? {
+    cityId: null,
+    lat: null,
+    lon: null,
+    method: 'isna' as PrayerMethod,
+    asr: 'standard' as const
+  }
+  // setPrayerSettings persists the change AND re-stamps existing prayer quests'
+  // due-times immediately (so a city/method change takes effect now, not next midnight).
+  const save = (patch: Partial<typeof pt>): void => {
+    void setPrayerSettings(patch)
+  }
+  const onCity = (id: string): void => {
+    if (id === '__custom__') {
+      save({ cityId: null }) // keep any existing manual lat/lon
+      return
+    }
+    const c = findCity(id)
+    if (c) save({ cityId: c.id, lat: c.lat, lon: c.lon })
+  }
+  const cities = [...CITIES].sort((a, b) => a.name.localeCompare(b.name))
+
+  return (
+    <div className="prayer-settings">
+      <strong className="ps-title">Salah &amp; Qur’an — prayer times</strong>
+      <div className="ps-row">
+        <label htmlFor="ps-city">City</label>
+        <select id="ps-city" value={pt.cityId ?? '__custom__'} onChange={(e) => onCity(e.target.value)}>
+          <option value="__custom__">Custom coordinates…</option>
+          {cities.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name} — {c.country}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {pt.cityId == null && (
+        <div className="ps-row ps-coords">
+          <label>Coordinates</label>
+          <div className="ps-coord-inputs">
+            <input
+              type="number"
+              step="0.01"
+              placeholder="Latitude"
+              value={pt.lat ?? ''}
+              onChange={(e) => save({ lat: e.target.value === '' ? null : Number(e.target.value) })}
+            />
+            <input
+              type="number"
+              step="0.01"
+              placeholder="Longitude"
+              value={pt.lon ?? ''}
+              onChange={(e) => save({ lon: e.target.value === '' ? null : Number(e.target.value) })}
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="ps-row">
+        <label htmlFor="ps-method">Calculation method</label>
+        <select
+          id="ps-method"
+          value={pt.method}
+          onChange={(e) => save({ method: e.target.value as PrayerMethod })}
+        >
+          {PRAYER_METHODS.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <p className="meta-dim ps-hint">
+        Pick the method your local mosque follows — it sets the Fajr &amp; Isha twilight angles.
+      </p>
+
+      <div className="ps-row">
+        <label htmlFor="ps-asr">Asr time</label>
+        <select
+          id="ps-asr"
+          value={pt.asr}
+          onChange={(e) => save({ asr: e.target.value as 'standard' | 'hanafi' })}
+        >
+          <option value="standard">Standard (Shafi’i / Maliki / Hanbali)</option>
+          <option value="hanafi">Hanafi</option>
+        </select>
+      </div>
+
+      <p className="meta-dim ps-note">
+        {pt.lat != null
+          ? 'Prayer times are computed on your device for this location — nothing leaves your machine.'
+          : 'Pick your city (or enter coordinates) to enable the five daily prayer quests.'}
+      </p>
+    </div>
+  )
 }
 
 /**
@@ -164,6 +277,7 @@ export function DataView(): JSX.Element {
               )
             })}
           </div>
+          {isFeatureEnabled(db.settings.enabledFeatures, 'faithChecklist') && <PrayerSettings />}
         </div>
       )}
 

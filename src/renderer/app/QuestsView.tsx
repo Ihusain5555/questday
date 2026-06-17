@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Quest, QuestTemplate } from '@shared/types'
-import { useStore, type QuestInput, FAITH_SALAH_TITLE, FAITH_QURAN_TITLE } from '../state/store'
+import { useStore, type QuestInput, FAITH_PRAYER_TITLES, FAITH_QURAN_TITLE } from '../state/store'
 import { useNow } from '../hooks/useNow'
 import { QuestForm, type QuestFormInitial } from './QuestForm'
 import { QuestLibraryRail } from './QuestLibraryRail'
@@ -68,9 +68,10 @@ export function QuestsView(): JSX.Element {
   // Salah & Qur'an checklist (opt-in, off by default). When on, a calm setup card
   // sits atop the Quests tab; once the preset quests exist it flips to a quiet note.
   const faithOn = isFeatureEnabled(db.settings.enabledFeatures, 'faithChecklist')
-  const faithAdded = db.quests.some(
-    (q) => q.title === FAITH_SALAH_TITLE || q.title === FAITH_QURAN_TITLE
-  )
+  const faithTitles = new Set<string>([...FAITH_PRAYER_TITLES, FAITH_QURAN_TITLE])
+  const faithAdded = db.quests.some((q) => faithTitles.has(q.title))
+  // Prayer times need a location; until one is set the card guides the user to Settings.
+  const prayerLocationSet = db.settings.prayerTimes?.lat != null
 
   const openNew = () => {
     setEditing(null)
@@ -156,15 +157,32 @@ export function QuestsView(): JSX.Element {
             <div className="faith-card-body">
               {faithAdded ? (
                 <>
-                  <strong>Salah &amp; Qur’an checklist</strong>
-                  <p>Added. It returns each day, ready and unticked.</p>
+                  <strong>Prayer &amp; Qur’an quests</strong>
+                  <p>Added. Your five prayers return each day at their times, ready and unticked.</p>
+                  <p className="faith-hint">
+                    Keep the prayer names as they are — renaming one stops its time from updating
+                    automatically each day.
+                  </p>
+                </>
+              ) : !prayerLocationSet ? (
+                <>
+                  <strong>Your daily prayer quests</strong>
+                  <p>
+                    Set your city first so prayer times are accurate for where you are — everything
+                    is computed on your device, nothing leaves it.
+                  </p>
+                  <p className="faith-hint">
+                    Open the <strong>Data</strong> tab (the gear, far right) → under “Productivity
+                    features” find “Salah &amp; Qur’an” → pick your city, then come back here.
+                  </p>
                 </>
               ) : (
                 <>
-                  <strong>Your daily Salah &amp; Qur’an checklist</strong>
+                  <strong>Your daily prayer &amp; Qur’an quests</strong>
                   <p>
-                    Add a gentle daily rhythm to your quests. Tick each prayer as you pray it; a day
-                    you miss one simply stays unticked — never a mark against you.
+                    Add the five daily prayers — Fajr, Dhuhr, Asr, Maghrib, Isha — each due at its
+                    time for your city, plus an optional Qur’an reading. Miss one and it simply rests
+                    and returns tomorrow — never a mark against you.
                   </p>
                   <button className="primary" onClick={() => void addFaithChecklist()}>
                     Add to my quests

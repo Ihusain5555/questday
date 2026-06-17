@@ -13,6 +13,7 @@ import type {
 } from '@shared/types'
 import { applyCompletion, xpForLevel, type CompletionAward } from '@shared/engine/rewards'
 import { computeDayChange, ymd, type DayChange } from '@shared/engine/rollover'
+import { computePrayerDay, localTzHours } from '@shared/engine/prayerTimes'
 import {
   speciesByKey,
   canPlantAt,
@@ -103,11 +104,57 @@ function buildSubTasks(items: { id?: string; title: string; timeEstimateMinutes?
     }))
 }
 
-// Quest titles seeded by the Salah & Qur'an checklist preset (opt-in faith
-// feature). Exported so the Quests setup card can detect "already added" and so
-// the seed stays idempotent — tapping the button twice never duplicates.
-export const FAITH_SALAH_TITLE = 'Salah (daily prayers)'
+// Quest title seeded by the Qur'an half of the faith preset. Exported so the
+// Quests setup card can detect "already added" and the seed stays idempotent.
 export const FAITH_QURAN_TITLE = 'Read Qur’an'
+
+// v1.12: the five daily prayers as SEPARATE timed quests (replacing the old single
+// Salah checklist). Titles are the match key for the daily dueAt recompute, so they
+// must stay stable. Order = chronological.
+export const FAITH_PRAYER_TITLES = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'] as const
+type PrayerTitle = (typeof FAITH_PRAYER_TITLES)[number]
+const FAITH_PRAYER_TITLE_SET: ReadonlySet<string> = new Set(FAITH_PRAYER_TITLES)
+
+/** Per-prayer info for `date` at the configured location: the prayer's own time
+ *  (`at`, used to drop the quest into the right time frame) and its DUE time
+ *  (window-close; Isha = Islamic midnight). Null when no location is set yet. */
+function prayerDayInfo(
+  settings: Settings,
+  date: Date
+): Record<PrayerTitle, { at: Date; due: Date }> | null {
+  const p = settings.prayerTimes
+  if (!p || p.lat == null || p.lon == null) return null
+  const day = computePrayerDay({
+    lat: p.lat,
+    lon: p.lon,
+    date,
+    tzHours: localTzHours(date),
+    method: p.method,
+    asr: p.asr
+  })
+  return {
+    Fajr: { at: day.fajr, due: day.due.fajr },
+    Dhuhr: { at: day.dhuhr, due: day.due.dhuhr },
+    Asr: { at: day.asr, due: day.due.asr },
+    Maghrib: { at: day.maghrib, due: day.due.maghrib },
+    Isha: { at: day.isha, due: day.due.isha }
+  }
+}
+
+/** The time frame whose daily window contains `date`'s local clock time (handles a
+ *  window that wraps past midnight); falls back to the first frame by order. Lets a
+ *  prayer quest live in the part of the day it actually occurs, so it can surface in
+ *  its own window rather than all five piling into the morning. */
+function frameForTime(frames: TimeFrame[], date: Date): string | undefined {
+  const minute = date.getHours() * 60 + date.getMinutes()
+  const ordered = [...frames].sort((a, b) => a.order - b.order)
+  const hit = ordered.find((f) =>
+    f.startMinute <= f.endMinute
+      ? minute >= f.startMinute && minute < f.endMinute
+      : minute >= f.startMinute || minute < f.endMinute
+  )
+  return (hit ?? ordered[0])?.id
+}
 
 interface AppStore {
   db: Database | null
@@ -154,6 +201,10 @@ interface AppStore {
    *  mechanism — no schema; the quests are never read by reward/civilization math,
    *  so ↩ Restore stays exact. Gains-only: a missed prayer is just an unticked box. */
   addFaithChecklist: () => Promise<void>
+  /** Update prayer-time settings AND immediately re-stamp existing prayer quests'
+   *  dueAt for the new location/method (so a city/method change takes effect now,
+   *  not just at the next midnight rollover). */
+  setPrayerSettings: (patch: Partial<NonNullable<Settings['prayerTimes']>>) => Promise<void>
 
   // ---- Daily rollover (§6) ----
   /** Process a transition into today (carry over + flag past-due). Idempotent per day. */
@@ -411,28 +462,32 @@ export const useStore = create<AppStore>((set, get) => ({
     if (!db) return
     const frameId = [...db.timeFrames].sort((a, b) => a.order - b.order)[0]?.id
     if (!frameId) return
+    // Prayer quests need a location. Without one the setup card prompts the user to
+    // pick a city first, so this is a safe no-op (no untimed prayer quests seeded).
+    const now = new Date()
+    const info = prayerDayInfo(db.settings, now)
+    if (!info) return
     const everyDay = [0, 1, 2, 3, 4, 5, 6]
-    const createdAt = new Date().toISOString()
+    const createdAt = now.toISOString()
     let order = db.quests.reduce((m, q) => Math.max(m, q.sortOrder), -1)
     const has = (title: string): boolean => db.quests.some((q) => q.title === title)
     const next: Quest[] = []
-    // The five prayers as ONE checklist quest — tick each as you pray it.
-    if (!has(FAITH_SALAH_TITLE)) {
+    // The five prayers as SEPARATE daily quests, each due when its window closes
+    // (today's time; the daily rollover restamps dueAt each day). Each lands in the
+    // time frame containing its actual time so it surfaces in its own window. 10 min
+    // → the gentle 2 XP locked in the spec. Idempotent by title.
+    for (const title of FAITH_PRAYER_TITLES) {
+      if (has(title)) continue
       next.push({
         id: uid(),
-        title: FAITH_SALAH_TITLE,
-        subTasks: ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].map((title, i) => ({
-          id: uid(),
-          title,
-          order: i,
-          done: false
-        })),
+        title,
+        subTasks: [],
         difficulty: 'Easy',
         importance: 'Medium',
         urgency: 'Low',
         timeEstimateMinutes: 10,
-        dueAt: null,
-        timeFrameId: frameId,
+        dueAt: info[title].due.toISOString(),
+        timeFrameId: frameForTime(db.timeFrames, info[title].at) ?? frameId,
         status: 'active',
         createdAt,
         completedAt: null,
@@ -441,7 +496,7 @@ export const useStore = create<AppStore>((set, get) => ({
       })
     }
     // Qur'an reading as its own optional daily quest (kept separate so neither
-    // forces the other — "keep Qur'an optional").
+    // forces the other — "keep Qur'an optional"). No due time.
     if (!has(FAITH_QURAN_TITLE)) {
       next.push({
         id: uid(),
@@ -754,16 +809,35 @@ export const useStore = create<AppStore>((set, get) => ({
     // Recurring quests completed on a previous day renew: a fresh chance with
     // full payout again. History stays in completionDates (v1.5).
     const renewIds = new Set(change.recurringReady.map((q) => q.id))
+    // Restamp the five prayer quests to TODAY's prayer times. They're recurring, so
+    // their dueAt would otherwise stay frozen at the day they were created (the daily
+    // reset never recomputes dueAt — see the recurrence gotcha). null = no location
+    // set yet → leave dueAt untouched. Covers renewed, carried, AND missed quests.
+    // Gated to all-7-day recurring quests so a user's own quest happening to be named
+    // e.g. "Asr" is never silently re-timed. Spreads ONLY dueAt (never completedAt/
+    // completionAward) so ↩ Restore stays exact — do not reorder above the renew branch.
+    const prayerInfo = prayerDayInfo(db.settings, now)
     const quests = db.quests.map((q) => {
-      if (renewIds.has(q.id))
-        return {
+      let nq: Quest = q
+      if (renewIds.has(q.id)) {
+        nq = {
           ...q,
           status: 'active' as const,
           completedAt: null,
           completionAward: undefined,
           subTasks: q.subTasks.map((s) => ({ ...s, done: false }))
         }
-      return carriedIds.has(q.id) ? { ...q, rolledOverCount: (q.rolledOverCount ?? 0) + 1 } : q
+      } else if (carriedIds.has(q.id)) {
+        nq = { ...q, rolledOverCount: (q.rolledOverCount ?? 0) + 1 }
+      }
+      if (
+        prayerInfo &&
+        FAITH_PRAYER_TITLE_SET.has(nq.title) &&
+        (nq.recurDays?.length ?? 0) === 7
+      ) {
+        nq = { ...nq, dueAt: prayerInfo[nq.title as PrayerTitle].due.toISOString() }
+      }
+      return nq
     })
 
     // Morning dew (v1.3): a new day grows a plant or two for free in the active
@@ -818,6 +892,32 @@ export const useStore = create<AppStore>((set, get) => ({
     // Send ONLY the changed fields; saveDatabase deep-merges settings, so this can't
     // clobber a sibling (e.g. widgetBounds written by the main process) from a stale snapshot.
     await get().save({ settings: patch })
+  },
+
+  setPrayerSettings: async (patch) => {
+    const db = get().db
+    if (!db) return
+    const prev = db.settings.prayerTimes ?? {
+      cityId: null,
+      lat: null,
+      lon: null,
+      method: 'isna' as const,
+      asr: 'standard' as const
+    }
+    const nextPt = { ...prev, ...patch }
+    // Recompute due-times for the NEW location/method and re-stamp the existing prayer
+    // quests so a city/method change takes effect immediately (not just next midnight).
+    // null = no location yet → leave quests as-is. dueAt only → ↩ Restore stays exact.
+    const info = prayerDayInfo({ ...db.settings, prayerTimes: nextPt }, new Date())
+    const quests = info
+      ? db.quests.map((q) =>
+          FAITH_PRAYER_TITLE_SET.has(q.title) && (q.recurDays?.length ?? 0) === 7
+            ? { ...q, dueAt: info[q.title as PrayerTitle].due.toISOString() }
+            : q
+        )
+      : db.quests
+    // settings deep-merges (send only prayerTimes); quests replaces wholesale.
+    await get().save({ settings: { prayerTimes: nextPt }, quests })
   },
 
   // ---- Town editing (v1.10) -------------------------------------------------

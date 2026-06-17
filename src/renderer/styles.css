@@ -4092,6 +4092,59 @@ code {
 .faith-card-body .primary {
   align-self: flex-start;
 }
+.faith-card-body .faith-hint {
+  font-size: 0.85rem;
+  color: var(--gold);
+  opacity: 0.95;
+}
+
+/* Prayer-time settings panel (under the Salah toggle in the Data tab). */
+.prayer-settings {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.prayer-settings .ps-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.prayer-settings .ps-row > label {
+  flex: 0 0 132px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.prayer-settings select,
+.prayer-settings input[type='number'] {
+  flex: 1 1 200px;
+  min-width: 0;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.14));
+  background: var(--panel-2, rgba(0, 0, 0, 0.2));
+  color: var(--text);
+}
+.prayer-settings .ps-coord-inputs {
+  flex: 1 1 200px;
+  display: flex;
+  gap: 10px;
+}
+.prayer-settings .ps-note {
+  margin: 0;
+  font-size: 0.82rem;
+}
+.prayer-settings .ps-title {
+  font-size: 0.95rem;
+  color: var(--gold);
+}
+.prayer-settings .ps-hint {
+  margin: -4px 0 0;
+  font-size: 0.8rem;
+}
 
 /* Weekly Review — a calm "Your week" recap card on the Dashboard. Narrative +
    a row of gold-accented highlight chips; celebration only. */

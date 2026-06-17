@@ -129,7 +129,7 @@ export function computePrayerDay(opts: PrayerOptions): PrayerDayTimes {
     (1 / 15) *
     dArcCos(clamp1((dSin(asrAltitude) - dSin(decl) * dSin(lat)) / (dCos(decl) * dCos(lat))))
 
-  const m = METHODS[method]
+  const m = METHODS[method] ?? METHODS.isna // tolerate a corrupt/missing method (don't crash the rollover)
 
   // All in solar hours first; +adjust converts to local clock hours.
   const sunriseH = midDay - T(0.833) + adjust
