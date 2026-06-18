@@ -461,13 +461,16 @@ export const balance = {
       urgency: 1.0,
       /** Small nudge toward quick wins so a fast must-do can slot ahead. */
       quickWin: 0.4,
-      /** Gentle promotion as a dated quest's due time nears (a bounded 0..1 ramp ×
-       *  this weight). Deliberately SMALLER than the smallest importance gap (0.3 =
-       *  Low→Medium) so on its own it acts as a tie-breaker between equally-ranked
-       *  quests and can never invert an importance level (a due Medium can't leapfrog a
-       *  High). Raise toward 0.5+ to let due dates promote across importance levels; 0
-       *  disables it. */
-      dueSoon: 0.25
+      /** Deadline pull (v1.13): how hard a dated quest is promoted as its due time
+       *  arrives. The ramp is a SHARP 0..1 curve (see dueSoonRisePower) that stays
+       *  ~0 until the deadline is imminent, hits 1 exactly at the due time, then
+       *  decays back to 0 over dueSoonOverdueHours. At 1.8 a due quest can outrank a
+       *  full importance gap (Low/Low 0.4 → High/High 2.0 = 1.6) right at its
+       *  deadline — so a near-due quest is promoted ACROSS importance levels — yet far
+       *  from the deadline the cubic curve keeps it tiny so importance still leads.
+       *  Among equally-due quests, importance still breaks the tie. 0 disables it.
+       *  (This is the foundation for prayer-time quests surfacing at their time.) */
+      dueSoon: 1.8
     },
     /** Score per importance level — the higher, the more it leads. */
     importanceScore: { Low: 0.2, Medium: 0.5, High: 1.0 } as Record<Importance, number>,
@@ -475,9 +478,17 @@ export const balance = {
     urgencyScore: { Low: 0.2, Medium: 0.5, High: 1.0 } as Record<Urgency, number>,
     /** A quest at or under this estimate counts as a "quick win". */
     quickWinThresholdMinutes: 15,
-    /** Hours-before-due window over which the due-soon nudge ramps 0→1 (then stays
-     *  capped at 1 once the quest is due/overdue). */
-    dueSoonWithinHours: 6
+    /** Hours-before-due window over which the deadline pull rises from 0 to 1. */
+    dueSoonWithinHours: 6,
+    /** Curve exponent for the rise (>1 = stays gentle until the deadline is imminent,
+     *  then climbs fast). 3 = cubic: at 3h out the pull is only ((6-3)/6)^3 ≈ 0.13,
+     *  at 1h out ≈ 0.58, at the due time = 1. Keeps importance leading until it's
+     *  genuinely close, then promotes hard. */
+    dueSoonRisePower: 3,
+    /** After the due time the pull DECAYS from 1 back to 0 across this many hours, so a
+     *  stale/forgotten dated quest (e.g. a recurring quest with a frozen past dueAt)
+     *  can't dominate the spotlight forever — it falls back to its importance rank. */
+    dueSoonOverdueHours: 4
   }
 } as const
 

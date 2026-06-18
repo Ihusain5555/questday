@@ -60,18 +60,29 @@ export function scoreQuest(quest: Quest, now?: Date): QuestScore {
   const urg = balance.selection.urgencyScore[quest.urgency]
   const quickWin = quest.timeEstimateMinutes <= balance.selection.quickWinThresholdMinutes ? 1 : 0
 
-  // Due-soon nudge: ramps 0→1 across the `dueSoonWithinHours` window before the due
-  // time, then stays capped at 1 once due/overdue. Bounded + weighted so it never
-  // overrides a clearly more important quest (importance/urgency still lead, §4). Off
-  // when the quest is undated, or when `now` isn't supplied (keeps scoreQuest usable
-  // by non-time-aware callers, e.g. tests).
+  // Deadline pull (v1.13): a 0→1 ramp that makes a dated quest rise as its due time
+  // arrives. SHAPE (so it's deadline-aware WITHOUT inverting importance hours early):
+  //   • approaching  — eased rise: ((within − hoursUntil) / within) ^ risePower, so it
+  //     stays ~0 until the deadline is imminent, reaching 1 exactly at the due time.
+  //   • overdue      — decays from 1 back to 0 across `dueSoonOverdueHours`, so a stale
+  //     dated quest (e.g. a recurring quest with a frozen past dueAt) can't dominate
+  //     forever — it falls back to its importance rank.
+  // Weighted (balance.selection.weights.dueSoon) so a quest crosses importance levels
+  // only right at its deadline. Off when undated, or when `now` isn't supplied (keeps
+  // scoreQuest usable by non-time-aware callers, e.g. tests).
   let dueSoon = 0
   if (now && quest.dueAt) {
     const due = Date.parse(quest.dueAt)
     if (!Number.isNaN(due)) {
       const within = balance.selection.dueSoonWithinHours
+      const overdueHours = balance.selection.dueSoonOverdueHours
+      const risePower = balance.selection.dueSoonRisePower
       const hoursUntil = (due - now.getTime()) / 3_600_000
-      if (hoursUntil <= within) dueSoon = Math.max(0, Math.min(1, (within - hoursUntil) / within))
+      if (hoursUntil >= 0) {
+        if (hoursUntil < within) dueSoon = Math.pow((within - hoursUntil) / within, risePower)
+      } else {
+        dueSoon = Math.max(0, 1 - -hoursUntil / overdueHours)
+      }
     }
   }
 
