@@ -44,7 +44,7 @@ const PRAYER_METHODS: { id: PrayerMethod; label: string }[] = [
 /** Prayer-time location + method, shown under the Salah toggle. Everything is
  *  computed on-device from lat/lon (see prayerTimes.ts) — nothing is sent anywhere. */
 function PrayerSettings(): JSX.Element {
-  const { db, setPrayerSettings } = useStore()
+  const { db, setPrayerSettings, updateSettings } = useStore()
   if (!db) return <></>
   const pt = db.settings.prayerTimes ?? {
     cityId: null,
@@ -134,6 +134,23 @@ function PrayerSettings(): JSX.Element {
           <option value="hanafi">Hanafi</option>
         </select>
       </div>
+
+      <div className="ps-row ps-reminder">
+        <label htmlFor="ps-reminder">Full-screen reminder</label>
+        <input
+          id="ps-reminder"
+          type="checkbox"
+          checked={db.settings.prayerReminderEnabled ?? false}
+          onChange={(e) => void updateSettings({ prayerReminderEnabled: e.target.checked })}
+        />
+      </div>
+      <p className="meta-dim ps-hint">
+        A gentle, silent full-screen reminder appears as each prayer time arrives (needs your
+        location set above).{' '}
+        <button className="ps-preview" type="button" onClick={() => void window.questday.prayer.test()}>
+          Preview
+        </button>
+      </p>
 
       <p className="meta-dim ps-note">
         {pt.lat != null

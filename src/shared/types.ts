@@ -154,6 +154,16 @@ export interface PrayerSettings {
   asr: AsrSchool
 }
 
+/** Payload for the gentle full-screen prayer reminder (main scheduler → reminder window). */
+export interface PrayerReminderInfo {
+  /** Display name, e.g. "Maghrib". */
+  prayer: string
+  /** Arabic name, e.g. "المغرب" (decoration). */
+  arabic: string
+  /** Local HH:MM the prayer began. */
+  timeLabel: string
+}
+
 export interface Settings {
   activeModeEnabled: boolean
   activeModeTiers: Record<ActiveModeTier, boolean>
@@ -198,6 +208,10 @@ export interface Settings {
   /** Prayer-time settings for the opt-in Salah quests (v1.12). Optional so old
    *  saves migrate cleanly; defaults seeded in defaults.ts. */
   prayerTimes?: PrayerSettings
+  /** Show a gentle full-screen reminder when each prayer time arrives (v1.13). OFF by
+   *  default (a faith feature — opt-in only). Needs prayerTimes (lat/lon) configured;
+   *  computed on-device from the same PrayerTimes math, never read by reward math. */
+  prayerReminderEnabled?: boolean
 }
 
 // --- Reward world: the garden (§7 vision, built 2026-06-06) -----------------

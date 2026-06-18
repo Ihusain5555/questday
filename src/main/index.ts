@@ -3,7 +3,7 @@
 // full management window, the system tray, and wiring to the store.
 // ---------------------------------------------------------------------------
 
-import { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, nativeTheme } from 'electron'
+import { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, nativeTheme, screen } from 'electron'
 import { join } from 'path'
 import { existsSync } from 'fs'
 import { registerStoreIpc } from './ipc/store'
@@ -20,11 +20,15 @@ import type { FrictionTrigger } from './activeMode/scheduler'
 import { startDetector, stopDetector } from './activeMode/detector'
 import { getDatabase, saveDatabase, onDatabaseChanged } from './db/store'
 import { flushAutoBackup } from './backup/backup'
+import { startPrayerReminders, samplePrayerReminder } from './prayer/reminder'
+import type { PrayerReminderInfo } from '@shared/types'
 
 let widgetWindow: BrowserWindow | null = null
 let mainWindow: BrowserWindow | null = null
 let frictionWindow: BrowserWindow | null = null
 let pendingFriction: FrictionTrigger | null = null
+let prayerWindow: BrowserWindow | null = null
+let pendingPrayer: PrayerReminderInfo | null = null
 let tray: Tray | null = null
 let isQuitting = false
 
@@ -222,6 +226,53 @@ function hideFriction(): void {
   if (frictionWindow && !frictionWindow.isDestroyed()) frictionWindow.hide()
 }
 
+// --- Gentle full-screen prayer reminder (v1.13) -----------------------------
+// A calm, SILENT, dismissible overlay covering the primary display. Same window
+// hardening as the friction window (sandbox false + contextIsolation + nav guards).
+function ensurePrayerWindow(): BrowserWindow {
+  if (prayerWindow && !prayerWindow.isDestroyed()) return prayerWindow
+  const { bounds } = screen.getPrimaryDisplay()
+  prayerWindow = new BrowserWindow({
+    x: bounds.x,
+    y: bounds.y,
+    width: bounds.width,
+    height: bounds.height,
+    show: false,
+    frame: false,
+    resizable: false,
+    movable: false,
+    minimizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    skipTaskbar: true,
+    alwaysOnTop: true,
+    backgroundColor: '#0b1020',
+    webPreferences: { preload, sandbox: false }
+  })
+  prayerWindow.setAlwaysOnTop(true, 'screen-saver')
+  loadRenderer(prayerWindow, 'prayer.html')
+  prayerWindow.on('closed', () => {
+    prayerWindow = null
+  })
+  return prayerWindow
+}
+
+function showPrayerReminder(data: PrayerReminderInfo): void {
+  pendingPrayer = data
+  const win = ensurePrayerWindow()
+  const send = (): void => win.webContents.send('prayer:show', data)
+  if (win.webContents.isLoading()) win.webContents.once('did-finish-load', send)
+  else send()
+  win.setAlwaysOnTop(true, 'screen-saver')
+  win.show()
+  win.focus()
+}
+
+function hidePrayerReminder(): void {
+  pendingPrayer = null
+  if (prayerWindow && !prayerWindow.isDestroyed()) prayerWindow.hide()
+}
+
 // --- System tray (§9) -------------------------------------------------------
 function createTray(): void {
   const iconFile = resourcesPath('tray.png')
@@ -268,6 +319,11 @@ function registerWindowIpc(): void {
   // Re-open the widget from the Dashboard (createWidgetWindow shows it if it already
   // exists, otherwise recreates it — same path the tray "Show/Hide Widget" uses).
   ipcMain.handle('widget:show', () => createWidgetWindow())
+  // Prayer reminder: the renderer pulls the current reminder on mount, dismisses it,
+  // and (from the settings "Preview" button) can trigger a sample.
+  ipcMain.handle('prayer:requestPending', () => pendingPrayer)
+  ipcMain.handle('prayer:dismiss', () => hidePrayerReminder())
+  ipcMain.handle('prayer:test', () => showPrayerReminder(samplePrayerReminder()))
   ipcMain.handle('friction:requestPending', () => pendingFriction)
   ipcMain.handle('friction:dismiss', (_e, proceeded: boolean) => {
     const kind = pendingFriction?.kind ?? 'soft'
@@ -338,6 +394,8 @@ if (!singleLock) {
     // visible over any app, even when the main window is closed to the tray.
     setShowFriction((data) => showFriction(data))
     syncActiveMode(getDatabase().settings.activeModeEnabled)
+    // Gentle prayer-time reminders (opt-in; the poll no-ops while disabled/unconfigured).
+    startPrayerReminders(getDatabase, (data) => showPrayerReminder(data))
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWidgetWindow()

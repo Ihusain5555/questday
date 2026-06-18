@@ -2,7 +2,7 @@
 // both renderer windows via contextBridge (contextIsolation stays on).
 
 import { contextBridge, ipcRenderer } from 'electron'
-import type { Database, DatabasePatch } from '@shared/types'
+import type { Database, DatabasePatch, PrayerReminderInfo } from '@shared/types'
 
 const api = {
   getState: (): Promise<Database> => ipcRenderer.invoke('store:getState'),
@@ -26,6 +26,21 @@ const api = {
       ipcRenderer.invoke('friction:dismiss', proceeded),
     requestPending: (): Promise<FrictionTrigger | null> =>
       ipcRenderer.invoke('friction:requestPending')
+  },
+  prayer: {
+    /** Dismiss (hide) the full-screen prayer reminder. */
+    dismiss: (): Promise<void> => ipcRenderer.invoke('prayer:dismiss'),
+    /** Trigger a sample reminder (settings "Preview" button / tests). */
+    test: (): Promise<void> => ipcRenderer.invoke('prayer:test'),
+    /** Fetch the reminder currently showing (the window pulls this on mount). */
+    requestPending: (): Promise<PrayerReminderInfo | null> =>
+      ipcRenderer.invoke('prayer:requestPending'),
+    /** Subscribe to reminders pushed when a prayer time arrives. */
+    onShow: (cb: (info: PrayerReminderInfo) => void): (() => void) => {
+      const listener = (_e: unknown, info: PrayerReminderInfo) => cb(info)
+      ipcRenderer.on('prayer:show', listener)
+      return () => ipcRenderer.removeListener('prayer:show', listener)
+    }
   },
   backup: {
     export: (): Promise<BackupResult> => ipcRenderer.invoke('backup:export'),

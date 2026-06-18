@@ -2766,6 +2766,94 @@ code {
   color: #ff9a9a;
 }
 
+/* ---- Gentle full-screen prayer reminder (v1.13) ---- */
+.prayer-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
+  padding: 24px;
+  color: #eef3ee;
+  background:
+    radial-gradient(120% 80% at 50% 22%, rgba(63, 224, 168, 0.1), transparent 55%),
+    radial-gradient(140% 90% at 50% 120%, rgba(245, 185, 56, 0.08), transparent 60%),
+    linear-gradient(170deg, #14223f 0%, #0b1020 60%, #070a12 100%);
+  animation: prayer-fade 0.5s ease both;
+}
+
+@keyframes prayer-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.prayer-stars {
+  font-size: 46px;
+  margin-bottom: 6px;
+  filter: drop-shadow(0 0 18px rgba(245, 185, 56, 0.35));
+}
+
+.prayer-arabic {
+  font-size: 64px;
+  font-weight: 600;
+  line-height: 1.1;
+  color: #ffe7ad;
+  text-shadow: 0 2px 24px rgba(245, 185, 56, 0.25);
+}
+
+.prayer-name {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.prayer-msg {
+  font-size: 17px;
+  color: rgba(234, 242, 236, 0.82);
+  max-width: 30ch;
+}
+
+.prayer-time {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--gold-bright);
+  letter-spacing: 0.04em;
+}
+
+.prayer-dismiss {
+  margin-top: 14px;
+  padding: 12px 40px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0b1020;
+  background: linear-gradient(180deg, #ffe7ad, var(--gold));
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 6px 28px rgba(245, 185, 56, 0.3);
+  transition: transform 0.1s, box-shadow 0.15s;
+}
+
+.prayer-dismiss:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 34px rgba(245, 185, 56, 0.42);
+}
+
+.prayer-hint {
+  font-size: 12px;
+  color: rgba(234, 242, 236, 0.45);
+  margin-top: 2px;
+}
+
 /* ---- Friction prompt ---- */
 .friction-modal {
   max-width: 460px;
@@ -4240,6 +4328,27 @@ code {
 .prayer-settings .ps-hint {
   margin: -4px 0 0;
   font-size: 0.8rem;
+}
+
+.prayer-settings .ps-reminder input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--brand);
+  cursor: pointer;
+}
+
+.ps-preview {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--brand-bright);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ps-preview:hover {
+  color: var(--gold-bright);
 }
 
 /* Weekly Review — a calm "Your week" recap card on the Dashboard. Narrative +

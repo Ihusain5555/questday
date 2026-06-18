@@ -37,7 +37,8 @@ export default defineConfig({
         input: {
           index: resolve(__dirname, 'src/renderer/index.html'),
           widget: resolve(__dirname, 'src/renderer/widget.html'),
-          friction: resolve(__dirname, 'src/renderer/friction.html')
+          friction: resolve(__dirname, 'src/renderer/friction.html'),
+          prayer: resolve(__dirname, 'src/renderer/prayer.html')
         }
       }
     }

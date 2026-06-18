@@ -53,6 +53,8 @@ export function createDefaultDatabase(): Database {
       widgetBounds: null,
       widgetExpanded: false,
       pinnedQuestId: null,
+      // Prayer reminder OFF by default — a faith feature is opt-in only (see faithChecklist note).
+      prayerReminderEnabled: false,
       launchOnLogin: false,
       focusPreset: 'pomodoro',
       // faithChecklist seeded false: a faith feature must be OFF until opted in
