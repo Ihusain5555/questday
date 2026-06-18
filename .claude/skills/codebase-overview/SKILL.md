@@ -71,13 +71,41 @@ ONLY writer of the data file. This is why edits in one window appear live in oth
   knob — lowering it lowers the XP. (This bit v1.12: seeding prayers at 5 min silently gave 1 XP instead of
   the intended 2; 10 min → 2 XP. The audit caught it; typecheck/build/driver did not.) When you set a
   time estimate programmatically, check the XP it implies.
-- **LANDMINE — the widget "current quest" scorer ignores `dueAt` and only ranks WITHIN the active frame.**
-  `selectCurrentQuest.ts` `scoreQuest` ranks by importance/urgency/quick-win; it does NOT read `dueAt`, and
-  `rankCandidates` only considers quests whose time frame is currently active. Consequences: (1) a quest with
-  a near due-time does NOT auto-rise as its time approaches; (2) a quest pinned to the wrong frame can never
-  be "current" in another part of the day (v1.12: prayers had to be placed in the frame containing their
-  actual time, via `frameForTime`, or Maghrib/Isha would never surface). A real due-time-driven "current"
-  feature needs an explicit due-soon term added here.
+- **The widget "current quest" scorer IS deadline-aware (v1.13) — but still only ranks WITHIN the active frame.**
+  `selectCurrentQuest.ts` `scoreQuest(quest, now)` ranks by importance/urgency/quick-win PLUS a `dueSoon`
+  term: a cubic rise (≈0 far out → 1 at the due time, `weights.dueSoon` 1.8) that lets a near-due quest
+  cross importance levels right at its deadline, then DECAYS over `dueSoonOverdueHours` so a stale dated
+  quest (e.g. a recurring quest with a frozen past `dueAt`) can't dominate. Tunables in `balance.selection`
+  (`dueSoonWithinHours`/`dueSoonRisePower`/`dueSoonOverdueHours`). Verified by `scripts/check-scoring.mjs`
+  (pure-engine, 12/12). STILL TRUE: `rankCandidates` only considers quests whose time frame is currently
+  active, so a quest pinned to the wrong frame can't be "current" elsewhere — prayers are placed in the frame
+  containing their time via `frameForTime`. **Pin override (v1.13):** `resolveCurrentQuest(quests, frames, now,
+  pinnedQuestId)` honors a user "pin" (`settings.pinnedQuestId`, set by tapping a quest in the widget list)
+  when it's a valid in-frame candidate; used by Widget, Dashboard, AND the Active Mode scheduler so every
+  "current quest" surface agrees. `pinnedQuestId` is a SEALED settings key — never read by reward/civilization
+  math (↩ Restore stays exact); cleared on completion + day change.
+- **v1.13 added a 4th BrowserWindow: the prayer reminder** (`src/main/prayer/reminder.ts` + the prayer window
+  in `main/index.ts` + `src/renderer/prayer/`). A main-process poll (every 30s) fires a gentle, SILENT,
+  full-screen `prayer.html` overlay when a prayer time arrives (95s window, deduped per day), reusing the pure
+  on-device `computePrayerDay` (zero network). Opt-in: `settings.prayerReminderEnabled` (default OFF — faith
+  feature). New `prayer:show/dismiss/test/requestPending` IPC + preload `window.questday.prayer.*`. Same
+  hardening as the friction window (`sandbox:false` + contextIsolation). Driver: `scripts/pw-prayer-reminder.mjs`.
+- **Completion treasure bonus (v1.13) — folded into the award so ↩ Restore stays exact.** Every completion
+  rolls a gains-only surprise XP bonus (`rollCompletionBonus` in `rewards.ts`, pure/rng-injected, tuned in
+  `balance.completionBonus`: small/big/rare-jackpot). It's added INSIDE `applyCompletion`'s `xpGained` before
+  the level-up loop, so the single stored `completionAward.xp` reverses exactly on Restore (proven: a +36
+  jackpot restored to seed). `pw-rewards.mjs` now asserts INVARIANTS (base floor + state recomputed from the
+  actual award + exact restore), not a frozen XP number. Completion sound via `arcade/sound.ts` ('complete'/
+  'jackpot' tones), played from `CompletionCelebration`.
+- **First-run starter quests (v1.13):** `createDefaultDatabase()` seeds 3 example quests (`createStarterQuests`
+  in `defaults.ts`). Only brand-new installs get them — `migrate()` uses `db.quests ?? fresh.quests`, so an
+  existing user with `[]` is untouched, and pw drivers write their own seed. Quick-add lives at the top of the
+  Quests tab (`QuestsView.tsx`): title + Enter → instant quest in the active frame; "More options" → full form.
+- **Driver gotcha — to import a `.ts` engine into a `.mjs` pw driver, use esbuild's JS API, not the bin.**
+  `pw-prayer.mjs` transpiles `prayerTimes.ts` to a temp `.mjs` to compute expected times. Spawning
+  `node_modules/.bin/esbuild.cmd` via `execFileSync` fails on Windows (Node 24: `EINVAL` on `.cmd`). Use
+  `import { buildSync } from 'esbuild'; buildSync({ entryPoints, outfile, format:'esm', absWorkingDir })`
+  then dynamic-`import(pathToFileURL(outfile))`. esbuild is present (electron-vite dep), so zero new deps.
 - **Driver gotcha — to import a `.ts` engine into a `.mjs` pw driver, use esbuild's JS API, not the bin.**
   `pw-prayer.mjs` transpiles `prayerTimes.ts` to a temp `.mjs` to compute expected times. Spawning
   `node_modules/.bin/esbuild.cmd` via `execFileSync` fails on Windows (Node 24: `EINVAL` on `.cmd`). Use
