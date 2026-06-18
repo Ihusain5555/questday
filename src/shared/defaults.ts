@@ -1,4 +1,4 @@
-import type { Database, TimeFrame } from './types'
+import type { Database, Quest, TimeFrame } from './types'
 
 export const DB_VERSION = 1
 
@@ -12,10 +12,57 @@ export function createDefaultTimeFrames(): TimeFrame[] {
   ]
 }
 
+/**
+ * First-run "starter day" (v1.13). A brand-new install lands on a few friendly example
+ * quests instead of an empty app — they teach the core loop (complete a quest, quick-add
+ * your own) and are ordinary, deletable quests. Seeded ONLY in createDefaultDatabase, so a
+ * fresh file gets them once; deleting them is permanent (migrate keeps existing []), and
+ * the pw drivers write their own seeds, so they're never affected. Easy + ~10 min = a
+ * gentle 2 XP each (XP is derived from the time estimate — see rewards.ts).
+ */
+export function createStarterQuests(): Quest[] {
+  const createdAt = new Date().toISOString()
+  const base = {
+    subTasks: [],
+    difficulty: 'Easy' as const,
+    importance: 'Medium' as const,
+    urgency: 'Medium' as const,
+    timeEstimateMinutes: 10,
+    dueAt: null,
+    status: 'active' as const,
+    createdAt,
+    completedAt: null
+  }
+  return [
+    {
+      ...base,
+      id: 'starter-welcome',
+      title: 'Welcome to QuestDay! Complete me to see your realm grow 🎉',
+      timeFrameId: 'tf-morning',
+      sortOrder: 0,
+      subTasks: [{ id: 'starter-welcome-s1', title: 'Tap this step to check it off', order: 0, done: false }]
+    },
+    {
+      ...base,
+      id: 'starter-quickadd',
+      title: 'Add your own quest — type a title up top and press Enter',
+      timeFrameId: 'tf-morning',
+      sortOrder: 1
+    },
+    {
+      ...base,
+      id: 'starter-plan',
+      title: 'Plan your day: pick your top 3 things to get done',
+      timeFrameId: 'tf-midday',
+      sortOrder: 2
+    }
+  ]
+}
+
 export function createDefaultDatabase(): Database {
   return {
     version: DB_VERSION,
-    quests: [],
+    quests: createStarterQuests(),
     timeFrames: createDefaultTimeFrames(),
     player: {
       xp: 0,

@@ -301,6 +301,49 @@ body:not(.widget-body) {
   margin-bottom: 12px;
 }
 
+/* One-keystroke quick-add (v1.13): low-friction capture at the top of the Quests tab. */
+.quick-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.quick-add-input {
+  flex: 1;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  outline: none;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.quick-add-input::placeholder {
+  color: var(--muted);
+}
+
+.quick-add-input:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgb(var(--brand-rgb) / 0.15);
+}
+
+.quick-add-more {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.quick-add-more:hover {
+  color: var(--brand-bright);
+}
+
 .view-head h2,
 h2 {
   margin: 0;

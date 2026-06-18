@@ -50,6 +50,8 @@ export function QuestsView(): JSX.Element {
   const now = useNow(20000)
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Quest | null>(null)
+  // One-keystroke quick-add (v1.13): type a title, Enter → a quest with sensible defaults.
+  const [quickTitle, setQuickTitle] = useState('')
   const [showDropped, setShowDropped] = useState(false)
   const [showCompleted, setShowCompleted] = useState(false)
   const [dragId, setDragId] = useState<string | null>(null)
@@ -145,6 +147,37 @@ export function QuestsView(): JSX.Element {
     await createQuest(input)
     setTapAddInitial(null)
   }
+
+  // Quick-add (v1.13): title + Enter → instant quest with sensible defaults, in the
+  // active frame (so it surfaces now), else the first frame. Low-friction capture is the
+  // #1 thing that keeps people coming back — "More options" opens the full form prefilled.
+  const submitQuickAdd = async () => {
+    const title = quickTitle.trim()
+    if (!title) return
+    await createQuest({
+      title,
+      difficulty: 'Medium',
+      importance: 'Medium',
+      urgency: 'Medium',
+      timeEstimateMinutes: 15,
+      dueAt: null,
+      timeFrameId: activeFrameId ?? frames[0]?.id ?? '',
+      subTasks: [],
+      recurDays: []
+    })
+    setQuickTitle('')
+  }
+  const openMoreOptions = () => {
+    setTapAddInitial({
+      title: quickTitle.trim(),
+      difficulty: 'Medium',
+      importance: 'Medium',
+      urgency: 'Medium',
+      timeEstimateMinutes: 15,
+      subTasks: []
+    })
+    setQuickTitle('')
+  }
   /** Drag a template card onto a frame: instant create in that frame, no due date. */
   const addTemplateToFrame = (templateId: string, frameId: string) => {
     const t = db.questTemplates.find((x) => x.id === templateId)
@@ -179,6 +212,28 @@ export function QuestsView(): JSX.Element {
           <h2>Quests</h2>
           <button className="primary" onClick={openNew}>
             + New quest
+          </button>
+        </div>
+
+        <div className="quick-add">
+          <input
+            className="quick-add-input"
+            type="text"
+            placeholder="Add a quest — type and press Enter…"
+            value={quickTitle}
+            onChange={(e) => setQuickTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') void submitQuickAdd()
+            }}
+            aria-label="Quick add a quest"
+          />
+          <button
+            className="quick-add-more"
+            type="button"
+            onClick={openMoreOptions}
+            title="Open the full form — frame, repeat, sub-tasks, due time, notes…"
+          >
+            More options
           </button>
         </div>
 
