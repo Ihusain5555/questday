@@ -5,6 +5,7 @@ import { useStore } from '../state/store'
 import { CountUp } from './CountUp'
 import { FlameIcon } from './RewardIcons'
 import { BUILDING_SVG } from '../app/townBuildings'
+import { play } from '../app/arcade/sound'
 
 // viewBox framing the 'hall' building art (drawn around local origin) as a small badge.
 const HALL_VIEWBOX = '-64 -116 128 144'
@@ -32,6 +33,9 @@ export function CompletionCelebration(): JSX.Element {
 
   useEffect(() => {
     if (!celebration) return
+    // A satisfying completion chime (a brighter flourish on a jackpot bonus). The sound
+    // module self-checks mute, so this stays silent when the user has muted SFX.
+    play(celebration.bonus?.kind === 'jackpot' ? 'jackpot' : 'complete')
     // A mutation is a jackpot moment — let it land a beat longer.
     const id = setTimeout(
       clearCelebration,
@@ -122,6 +126,20 @@ export function CompletionCelebration(): JSX.Element {
                   +<CountUp value={celebration.award.xpGained} /> XP
                 </motion.span>
               </div>
+
+              {celebration.bonus && (
+                <motion.div
+                  className={`celebrate-bonus celebrate-bonus-${celebration.bonus.kind}`}
+                  {...enter(
+                    { scale: 0, opacity: 0 },
+                    { scale: 1, opacity: 1 },
+                    { delay: 0.26, type: 'spring', stiffness: 300, damping: 12 }
+                  )}
+                >
+                  {celebration.bonus.kind === 'jackpot' ? '🎁 Jackpot bonus' : '✨ Bonus'} +
+                  {celebration.bonus.xp} XP
+                </motion.div>
+              )}
 
               {celebration.award.leveledUp && (
                 <motion.div

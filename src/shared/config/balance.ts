@@ -28,6 +28,23 @@ export const balance = {
   /** +5% per consecutive day, capped at +25%. Never punitive. */
   streak: { bonusPerDay: 0.05, maxBonus: 0.25 },
 
+  // --- Completion treasure bonus (v1.13) -----------------------------------
+  // Every completion rolls a small surprise XP bonus — gains-only (never negative),
+  // baked into the stored completionAward so ↩ Restore claws it back exactly. The
+  // chances sum to <1 on purpose: sometimes there's no bonus, which makes the
+  // small/big/jackpot rolls feel like a genuine surprise rather than a fixed tax-rebate.
+  completionBonus: {
+    smallChance: 0.5, // +smallMin..smallMax
+    smallMin: 1,
+    smallMax: 2,
+    bigChance: 0.28, // +bigMin..bigMax
+    bigMin: 3,
+    bigMax: 6,
+    jackpotChance: 0.08, // a jackpot: ≈ the quest's base XP again (a "double"), min 5
+    jackpotMult: 1,
+    jackpotMin: 5
+  },
+
   // --- Active mode (§8) cadences -------------------------------------------
   // How "present" the coach is. Kept here (not buried in the scheduler) so the
   // interruption feel can be re-tuned in one place, like every other knob.

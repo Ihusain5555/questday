@@ -3,7 +3,7 @@
 // missing/blocked audio device never throws and never breaks gameplay or tests.
 // Mute is a per-window preference in localStorage (no DB model change).
 
-type Sfx = 'good' | 'bad' | 'best'
+type Sfx = 'good' | 'bad' | 'best' | 'complete' | 'jackpot'
 
 let ctx: AudioContext | null = null
 let muted = false
@@ -33,7 +33,11 @@ export function toggleMuted(): boolean {
 const NOTES: Record<Sfx, number[]> = {
   good: [660],
   bad: [160],
-  best: [523, 659, 784]
+  best: [523, 659, 784],
+  // A warm major arpeggio for finishing a quest, and a brighter, longer flourish for
+  // a jackpot bonus. Still quiet taps (tone rule) — celebratory, never a blaring fanfare.
+  complete: [523, 659, 784, 1047],
+  jackpot: [523, 659, 784, 1047, 1319, 1568]
 }
 
 export function play(kind: Sfx): void {

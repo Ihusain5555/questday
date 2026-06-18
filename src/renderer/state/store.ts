@@ -11,7 +11,13 @@ import type {
   TimeFrame,
   Urgency
 } from '@shared/types'
-import { applyCompletion, xpForLevel, type CompletionAward } from '@shared/engine/rewards'
+import {
+  applyCompletion,
+  xpForLevel,
+  questXP,
+  rollCompletionBonus,
+  type CompletionAward
+} from '@shared/engine/rewards'
 import { computeDayChange, ymd, type DayChange } from '@shared/engine/rollover'
 import { computePrayerDay, localTzHours } from '@shared/engine/prayerTimes'
 import {
@@ -47,6 +53,9 @@ export interface Celebration {
   mutation?: { name: string; emoji: string; mult: number } | null
   /** True when this completion earned an arcade ticket (within the daily cap). */
   ticket?: boolean
+  /** Surprise treasure bonus rolled this completion (v1.13), or null when none. The xp
+   *  is already folded into award.xpGained — this is just for the celebration to show. */
+  bonus?: { xp: number; kind: 'small' | 'big' | 'jackpot' } | null
   /** Expeditions (region claims) ready to spend after this completion — the reward
    *  artifact prompt — or null when none are available / the realm is fully charted. */
   expedition?: number | null
@@ -643,7 +652,13 @@ export const useStore = create<AppStore>((set, get) => ({
     const quest = db.quests.find((q) => q.id === id && q.status === 'active')
     if (!quest) return
     const today = ymd(new Date())
-    const award = applyCompletion(quest, db.player, today)
+    // Roll a surprise treasure bonus (gains-only). Tiers: small / big / rare jackpot —
+    // chances sum to <1 so "no bonus" is a real outcome (keeps it a genuine surprise).
+    // The bonus is folded into applyCompletion's xpGained and stored in completionAward,
+    // so ↩ Restore claws it back exactly. Randomness lives here (like the garden rolls),
+    // keeping the rewards engine pure.
+    const bonusRoll = rollCompletionBonus(questXP(quest), Math.random)
+    const award = applyCompletion(quest, db.player, today, bonusRoll.xp)
     const completedAt = new Date().toISOString()
     const quests = db.quests.map((q) =>
       q.id === id
@@ -745,6 +760,7 @@ export const useStore = create<AppStore>((set, get) => ({
         grew,
         mutation,
         ticket,
+        bonus: bonusRoll.kind !== 'none' ? { xp: bonusRoll.xp, kind: bonusRoll.kind } : null,
         expedition: expeditions > 0 ? expeditions : null,
         civ
       }

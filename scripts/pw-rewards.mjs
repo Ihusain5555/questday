@@ -6,8 +6,11 @@
 // Deterministic seed (computed against balance.ts defaults):
 //   quest: Hard(x2.5) / Critical(+20%) / 60 min  => baseXP 30, questXP 36
 //   player starts level 1, xp 80, streak 0 (lastCompletionDate null => streak 1, x1.05)
-//   xpGained = round(36 * 1.05) = 38  -> xp 80+38=118 >= 100 => LEVEL UP to 2, xp 18
-//   Restore: 18-38 = -20 -> level 1, xp += xpForLevel(1)=100 => xp 80  (exact revert)
+//   base xpGained = round(36 * 1.05) = 38  -> xp 80+38=118 >= 100 => LEVEL UP to 2, xp 18
+//   v1.13: a random treasure bonus ONLY ADDS to the award (folded into completionAward),
+//   so the post-completion XP varies — the test recomputes the expected player state from
+//   the ACTUAL stored award and still asserts an EXACT restore back to the seed (xp 80).
+//   Restore subtracts the full stored award -> level 1, xp 80  (exact revert, bonus included)
 import { _electron as electron } from 'playwright-core'
 import { mkdirSync, writeFileSync, readFileSync } from 'fs'
 import { tmpdir } from 'os'
@@ -126,12 +129,25 @@ try {
   db = readDb()
   const p = db.player
   const cq = db.quests.find((q) => q.id === 'q-reward')
+  // Base award = round(36 * 1.05) = 38. v1.13 adds a random "treasure" bonus that ONLY
+  // increases the award (gains-only) and is folded into completionAward.xp, so the test
+  // verifies INVARIANTS (base floor + player-state consistency + exact restore), not a
+  // frozen number. Expected player state is recomputed from the ACTUAL stored award.
+  const award = cq?.completionAward?.xp ?? 0
+  const bonus = award - 38
+  let eLvl = 1
+  let eXp = 80 + award
+  while (eXp >= 100 * eLvl) {
+    eXp -= 100 * eLvl
+    eLvl += 1
+  }
   result('REWARD_MATH_TEST',
-    p.xp === 18 && p.level === 2 && p.streakCount === 1 && p.currency === 0 && p.lastCompletionDate === today,
-    `xp=${p.xp} level=${p.level} streak=${p.streakCount} currency=${p.currency} last=${p.lastCompletionDate}`)
-  result('LEVEL_UP_TEST', p.level === 2, `level=${p.level}`)
-  result('COMPLETION_AWARD_TEST', cq?.status === 'completed' && cq?.completionAward?.xp === 38,
-    `status=${cq?.status} award.xp=${cq?.completionAward?.xp}`)
+    p.xp === eXp && p.level === eLvl && p.streakCount === 1 && p.currency === 0 && p.lastCompletionDate === today,
+    `xp=${p.xp}/${eXp} level=${p.level}/${eLvl} bonus=${bonus} streak=${p.streakCount} last=${p.lastCompletionDate}`)
+  result('LEVEL_UP_TEST', p.level === eLvl && eLvl >= 2, `level=${p.level}`)
+  result('COMPLETION_AWARD_TEST',
+    cq?.status === 'completed' && award >= 38 && bonus >= 0 && bonus <= 40,
+    `status=${cq?.status} award.xp=${award} (base 38 + bonus ${bonus})`)
   await main.screenshot({ path: path.join(shots, 'rewards-complete.png') })
 
   // dismiss the celebration to reach the Quests tab
