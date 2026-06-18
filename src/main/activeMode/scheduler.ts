@@ -13,7 +13,7 @@
 import { Notification, BrowserWindow } from 'electron'
 import { minimizeApp, restoreApp } from './detector'
 import { getDatabase } from '../db/store'
-import { selectCurrentQuest, activeTimeFrame } from '@shared/engine/selectCurrentQuest'
+import { resolveCurrentQuest, activeTimeFrame } from '@shared/engine/selectCurrentQuest'
 import { minutesUntilFrameEnd } from '@shared/engine/activeMode'
 import { ymd } from '@shared/engine/rollover'
 import { balance } from '@shared/config/balance'
@@ -135,7 +135,7 @@ export function handleForeground(app: string, title: string): void {
   if (now < snoozeUntil) return
 
   const isDistracting = s.distractingApps.some((e) => matchesEntry(app, title, e))
-  const current = selectCurrentQuest(db.quests, db.timeFrames, new Date())
+  const current = resolveCurrentQuest(db.quests, db.timeFrames, new Date(), db.settings.pinnedQuestId)
   const label = app || 'that app'
 
   // Hard block (tier 4) — supersedes nudge/friction for flagged apps. Fires on
@@ -218,7 +218,7 @@ function tick(): void {
   }
   if (now.getTime() < snoozeUntil) return
 
-  const current = selectCurrentQuest(db.quests, db.timeFrames, now)
+  const current = resolveCurrentQuest(db.quests, db.timeFrames, now, db.settings.pinnedQuestId)
 
   // Awareness — quiet periodic reminder of the current quest.
   if (s.activeModeTiers.awareness && current) {
@@ -271,6 +271,6 @@ export function snooze(minutes: number): void {
 /** Fire an immediate awareness reminder (used by the "Send test reminder" button). */
 export function testReminder(): void {
   const db = getDatabase()
-  const current = selectCurrentQuest(db.quests, db.timeFrames, new Date())
+  const current = resolveCurrentQuest(db.quests, db.timeFrames, new Date(), db.settings.pinnedQuestId)
   fire('awareness', 'Current quest', current ? current.title : 'No current quest right now')
 }

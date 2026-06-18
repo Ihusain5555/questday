@@ -27,9 +27,10 @@ const DIFFS: Record<Mode, { pairs: number; timeDelta: number }> = {
   hard: { pairs: 15, timeDelta: -45 }
 }
 
-// Each face carries its own vivid colour so the board reads as a lively mosaic (not a
-// wall of gold). Colour is tied to the face, so a matched pair shares it — a satisfying
-// confirmation, while more pairs (not fewer colours) is what makes it harder.
+// One vivid colour PER face (18 faces -> 18 colours) so the board reads as a lively
+// mosaic and colour is a true per-face signature: a matched pair shares its colour, and
+// two different shapes never share one (even on a 15-pair Hard board). More pairs — not
+// fewer colours — is what makes it harder.
 const FACE_COLORS = [
   '#3fe0a8', // emerald
   '#f5b938', // gold
@@ -39,7 +40,16 @@ const FACE_COLORS = [
   '#ff8fb0', // rose
   '#7ee081', // leaf
   '#ffd166', // amber
-  '#5ad1c8' // teal
+  '#5ad1c8', // teal
+  '#9b8cff', // periwinkle
+  '#ff6b6b', // coral
+  '#4dd4f0', // cyan
+  '#c2e85a', // lime
+  '#ffb454', // orange
+  '#e879c7', // magenta
+  '#6ee7b7', // mint
+  '#f0a868', // peach
+  '#8ad6ff' // ice
 ]
 const colorFor = (face: number): string => FACE_COLORS[face % FACE_COLORS.length]
 
