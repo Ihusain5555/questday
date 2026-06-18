@@ -1574,6 +1574,46 @@ select:focus {
   background: rgb(var(--gold-rgb) / 0.1);
 }
 
+/* Per-game how-to-play strip (shown under every game while playing) + the
+   brain-benefit line on each game card. */
+.game-howto {
+  margin: 18px auto 0;
+  max-width: 520px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.game-howto strong {
+  color: var(--text);
+}
+
+.game-howto svg {
+  color: var(--gold);
+  flex-shrink: 0;
+}
+
+.arcade-brain {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.arcade-brain svg {
+  color: var(--brand-bright);
+  flex-shrink: 0;
+}
+
 .arcade-empty {
   margin: 10px 0;
 }

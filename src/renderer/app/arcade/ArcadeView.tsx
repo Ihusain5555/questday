@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useStore } from '../../state/store'
 import { balance } from '@shared/config/balance'
-import { GameController, Ticket, Trophy, Play, SpeakerSimpleHigh, SpeakerSimpleSlash, ShareNetwork } from '@phosphor-icons/react'
+import { GameController, Ticket, Trophy, Play, SpeakerSimpleHigh, SpeakerSimpleSlash, ShareNetwork, Info, Brain } from '@phosphor-icons/react'
 import { play as playSfx, isMuted, toggleMuted } from './sound'
 import { ShareCardModal } from '../ShareCardModal'
 import { AimTrainer } from './games/AimTrainer'
@@ -107,6 +107,15 @@ export function ArcadeView(): JSX.Element {
           </span>
         </div>
         <Game onFinish={(s) => void onFinish(s)} />
+        {/* Persistent how-to-play strip — shown under every game while playing, so a
+            new player always has the rules in front of them (bug-list: "instructions
+            for each minigame at bottom while playing"). */}
+        <div className="game-howto">
+          <Info size={15} weight="bold" />
+          <span>
+            <strong>How to play:</strong> {cfg.howToPlay}
+          </span>
+        </div>
       </div>
     )
   }
@@ -176,6 +185,9 @@ export function ArcadeView(): JSX.Element {
               <GameBadge k={key} size={26} lg />
               <div className="arcade-name">{cfg.name}</div>
               <div className="meta-dim arcade-blurb">{cfg.blurb}</div>
+              <div className="arcade-brain" title="What this game trains">
+                <Brain size={12} weight="fill" /> {cfg.brainBenefit}
+              </div>
               <div className="meta-dim arcade-card-meta">
                 {best !== undefined ? (
                   <>
