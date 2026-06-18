@@ -19,11 +19,29 @@ interface Card {
 // renders cleanly for each count (the CSS auto-fills the row). 'medium' is the
 // default so Playwright can drive the round straight after the countdown.
 type Mode = 'easy' | 'medium' | 'hard'
+// v1.13 overhaul: bigger boards + a much tighter Hard. cfg.seconds is 90, so timeLeft =
+// 90 + timeDelta → Easy 90s / Medium 75s / Hard 45s. Pair counts jump 8 / 12 / 15.
 const DIFFS: Record<Mode, { pairs: number; timeDelta: number }> = {
-  easy: { pairs: 6, timeDelta: 30 },
-  medium: { pairs: 8, timeDelta: 0 },
-  hard: { pairs: 10, timeDelta: -20 }
+  easy: { pairs: 8, timeDelta: 0 },
+  medium: { pairs: 12, timeDelta: -15 },
+  hard: { pairs: 15, timeDelta: -45 }
 }
+
+// Each face carries its own vivid colour so the board reads as a lively mosaic (not a
+// wall of gold). Colour is tied to the face, so a matched pair shares it — a satisfying
+// confirmation, while more pairs (not fewer colours) is what makes it harder.
+const FACE_COLORS = [
+  '#3fe0a8', // emerald
+  '#f5b938', // gold
+  '#ff7a59', // fire
+  '#54c8f0', // sky
+  '#b98fd9', // plum
+  '#ff8fb0', // rose
+  '#7ee081', // leaf
+  '#ffd166', // amber
+  '#5ad1c8' // teal
+]
+const colorFor = (face: number): string => FACE_COLORS[face % FACE_COLORS.length]
 
 function buildDeck(pairs: number): Card[] {
   const pick = [...FACES].sort(() => Math.random() - 0.5).slice(0, pairs)
@@ -166,16 +184,21 @@ export function MemoryMatch({ onFinish }: { onFinish: (score: number) => void })
           <span className="cc-ready-count">{count > 0 ? count : 'Go!'}</span>
         </div>
       ) : (
-        <div className="memory-grid">
+        <div className="memory-grid memory-board">
           {deck.map((card) => {
             const up = flipped.includes(card.id) || matched.has(card.id)
             return (
               <button
                 key={card.id}
                 className={`memory-card ${up ? 'up' : ''} ${matched.has(card.id) ? 'matched' : ''}`}
+                style={{ ['--card-color' as string]: colorFor(card.face) }}
                 onClick={() => flip(card.id)}
               >
-                {up ? <MemoryFace face={card.face} size={30} /> : <Question size={26} weight="bold" />}
+                {up ? (
+                  <MemoryFace face={card.face} size={28} color={colorFor(card.face)} />
+                ) : (
+                  <Question size={24} weight="bold" />
+                )}
               </button>
             )
           })}

@@ -30,6 +30,12 @@ import {
   Key,
   Planet,
   Compass,
+  Star,
+  Cloud,
+  Cube,
+  Flower,
+  Fish,
+  Gift,
   type Icon,
   type IconWeight
 } from '@phosphor-icons/react'
@@ -106,11 +112,27 @@ const MEMORY_FACES: Icon[] = [
   Bell,
   Key,
   Planet,
-  Compass
+  Compass,
+  Star,
+  Cloud,
+  Cube,
+  Flower,
+  Fish,
+  Gift
 ]
 export const MEMORY_FACE_COUNT = MEMORY_FACES.length
 
-export function MemoryFace({ face, size = 30 }: { face: number; size?: number }): JSX.Element {
+/** A Memory-Match card face. `color` (v1.13) tints the glyph so the board is vivid —
+ *  each face carries its own signature colour, set by the caller. */
+export function MemoryFace({
+  face,
+  size = 30,
+  color
+}: {
+  face: number
+  size?: number
+  color?: string
+}): JSX.Element {
   const I = MEMORY_FACES[face % MEMORY_FACES.length]
-  return <I size={size} weight="fill" />
+  return <I size={size} weight="fill" style={color ? { color } : undefined} />
 }
