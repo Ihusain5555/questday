@@ -150,6 +150,12 @@ function migrate(db: Database): Database {
     // Quest Library: tolerate old saves (missing) and corruption (non-array) by
     // failing safe to []. Per-entry validation happens on the WRITE path (validate()).
     questTemplates: Array.isArray(db.questTemplates) ? db.questTemplates : fresh.questTemplates,
+    // End-of-day reflections: tolerate old saves (missing) and corruption (non-object /
+    // array) by failing safe to {}. Per-entry validation happens on the WRITE path.
+    dailyNotes:
+      db.dailyNotes && typeof db.dailyNotes === 'object' && !Array.isArray(db.dailyNotes)
+        ? db.dailyNotes
+        : fresh.dailyNotes,
     lastSeenDate: db.lastSeenDate ?? fresh.lastSeenDate
   }
 }
@@ -215,6 +221,17 @@ function applyPatch(current: Database, patch: DatabasePatch): Database {
 function validate(db: Database): string | null {
   if (!Array.isArray(db.quests)) return 'quests must be an array'
   if (!Array.isArray(db.timeFrames)) return 'timeFrames must be an array'
+  // The new optional quest fields (v1.13) are display/selection-only and fail safe when
+  // malformed, but reject a corrupt shape so the save stays structurally sound (mirrors
+  // the per-entry checks for townLayouts/questTemplates/dailyNotes).
+  for (const q of db.quests as unknown[]) {
+    const quest = q as { snoozedUntil?: unknown; notes?: unknown } | null
+    if (quest && typeof quest === 'object') {
+      if (quest.snoozedUntil != null && typeof quest.snoozedUntil !== 'string')
+        return 'quest snoozedUntil must be a string or null'
+      if (quest.notes != null && typeof quest.notes !== 'string') return 'quest notes must be a string'
+    }
+  }
   if (!db.player || typeof db.player !== 'object') return 'player must be an object'
   if (!db.settings || typeof db.settings !== 'object') return 'settings must be an object'
   // townLayouts is optional-shaped on disk; if present it must be an object map
@@ -247,6 +264,17 @@ function validate(db: Database): string | null {
       if (typeof tpl.id !== 'string') return 'questTemplates entry needs a string id'
       if (typeof tpl.title !== 'string') return 'questTemplates entry needs a string title'
       if (!Array.isArray(tpl.subTasks)) return 'questTemplates entry needs a subTasks array'
+    }
+  }
+  // dailyNotes (End-of-day reflections) is optional-shaped on disk; if present it must be
+  // an object map of date → string. Reject the whole save on malformed data so a renderer
+  // bug can't persist corruption (the reward engine never reads it, but the save must stay
+  // structurally sound). Checked as `unknown` — runtime data may defy types.
+  const notes = db.dailyNotes as unknown
+  if (notes != null) {
+    if (typeof notes !== 'object' || Array.isArray(notes)) return 'dailyNotes must be an object'
+    for (const [day, text] of Object.entries(notes as Record<string, unknown>)) {
+      if (typeof text !== 'string') return `dailyNotes.${day} must be a string`
     }
   }
   return null

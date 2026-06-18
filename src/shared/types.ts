@@ -52,6 +52,14 @@ export interface Quest {
   /** Completion history (YYYY-MM-DD) for recurring quests — the daily reset
    *  never erases a win; Stats counts these. */
   completionDates?: string[]
+  /** Snooze (v1.13): ISO datetime until which this quest is tucked away — hidden from
+   *  the "current quest" spotlight (but still listed, with a calm badge) until it lifts.
+   *  Non-punitive: it only hides, never penalizes. null/absent = not snoozed. NEVER read
+   *  by the rewards/civilization engine → ↩ Restore stays exact. */
+  snoozedUntil?: string | null
+  /** Optional free-text note (v1.13) — context, links, or detail beyond the title and
+   *  sub-tasks. Display/edit only; never read by reward math. */
+  notes?: string
 }
 
 /** A reusable quest blueprint (Quest Library v1). Stores ONLY the reusable parts
@@ -266,6 +274,11 @@ export interface Database {
    *  save like townLayouts; NEVER read by reward/civilization math, so ↩ Restore
    *  stays exact. Old/absent saves migrate to []. */
   questTemplates: QuestTemplate[]
+  /** End-of-day reflections (v1.13), keyed by local YYYY-MM-DD → the note text. A
+   *  SEALED key like townLayouts/questTemplates: wholesale-replaced on save, tolerant
+   *  migrate, strict validate, and NEVER read by reward/civilization math, so ↩ Restore
+   *  stays exact. Old/absent saves → {}. */
+  dailyNotes: Record<string, string>
   /** Last local date (YYYY-MM-DD) the app processed a daily rollover. */
   lastSeenDate: string | null
 }

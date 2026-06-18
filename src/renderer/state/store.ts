@@ -85,6 +85,8 @@ export interface QuestInput {
   subTasks: { id?: string; title: string; timeEstimateMinutes?: number }[]
   /** Recurring schedule: weekdays (0=Sun..6=Sat); empty = one-off (v1.5). */
   recurDays: number[]
+  /** Optional free-text note (v1.13). Absent/empty = no note. */
+  notes?: string
 }
 
 const uid = (): string =>
@@ -175,6 +177,12 @@ interface AppStore {
   deleteQuest: (id: string) => Promise<void>
   /** Clone a quest as a fresh ACTIVE one (new ids/dates, steps un-done) to tweak. */
   duplicateQuest: (id: string) => Promise<void>
+  /** Snooze a quest until `untilIso` — hidden from the spotlight (still listed) until then. */
+  snoozeQuest: (id: string, untilIso: string) => Promise<void>
+  /** Lift a snooze immediately (the quest returns to the spotlight pool). */
+  unsnoozeQuest: (id: string) => Promise<void>
+  /** Save (or clear, when blank) the end-of-day reflection for a local YYYY-MM-DD. */
+  setDailyNote: (dateYmd: string, text: string) => Promise<void>
   dropQuest: (id: string) => Promise<void>
   moveQuestToFrame: (id: string, timeFrameId: string) => Promise<void>
   moveQuestBefore: (id: string, targetId: string) => Promise<void>
@@ -310,7 +318,8 @@ export const useStore = create<AppStore>((set, get) => ({
       createdAt: new Date().toISOString(),
       completedAt: null,
       sortOrder: maxOrder + 1,
-      recurDays: input.recurDays.length > 0 ? input.recurDays : undefined
+      recurDays: input.recurDays.length > 0 ? input.recurDays : undefined,
+      notes: input.notes?.trim() ? input.notes.trim() : undefined
     }
     await get().save({ quests: [...db.quests, quest] })
   },
@@ -334,7 +343,8 @@ export const useStore = create<AppStore>((set, get) => ({
             timeEstimateMinutes: Math.max(0, Math.round(input.timeEstimateMinutes)),
             dueAt: input.dueAt,
             timeFrameId: input.timeFrameId,
-            recurDays: input.recurDays.length > 0 ? input.recurDays : undefined
+            recurDays: input.recurDays.length > 0 ? input.recurDays : undefined,
+            notes: input.notes?.trim() ? input.notes.trim() : undefined
           }
         : q
     )
@@ -374,9 +384,37 @@ export const useStore = create<AppStore>((set, get) => ({
       createdAt: new Date().toISOString(),
       completedAt: null,
       sortOrder: maxOrder + 1,
-      recurDays: src.recurDays
+      recurDays: src.recurDays,
+      notes: src.notes
     }
     await get().save({ quests: [...db.quests, copy] })
+  },
+
+  snoozeQuest: async (id, untilIso) => {
+    const db = get().db
+    if (!db) return
+    const quests = db.quests.map((q) => (q.id === id ? { ...q, snoozedUntil: untilIso } : q))
+    await get().save({ quests })
+  },
+
+  unsnoozeQuest: async (id) => {
+    const db = get().db
+    if (!db) return
+    const quests = db.quests.map((q) => (q.id === id ? { ...q, snoozedUntil: null } : q))
+    await get().save({ quests })
+  },
+
+  // ---- End-of-day reflections (v1.13) -------------------------------------
+  // A sealed map (local date → note). NEVER read by the reward/civilization engine,
+  // so ↩ Restore stays exact. Blank text clears the day's entry (no empty noise).
+  setDailyNote: async (dateYmd, text) => {
+    const db = get().db
+    if (!db) return
+    const next = { ...db.dailyNotes }
+    const trimmed = text.trim()
+    if (trimmed) next[dateYmd] = trimmed
+    else delete next[dateYmd]
+    await get().save({ dailyNotes: next })
   },
 
   // ---- Quest Library (templates, v1) --------------------------------------
@@ -825,6 +863,8 @@ export const useStore = create<AppStore>((set, get) => ({
           status: 'active' as const,
           completedAt: null,
           completionAward: undefined,
+          // A renewed recurring quest is a fresh chance — don't carry yesterday's snooze.
+          snoozedUntil: null,
           subTasks: q.subTasks.map((s) => ({ ...s, done: false }))
         }
       } else if (carriedIds.has(q.id)) {
@@ -835,7 +875,20 @@ export const useStore = create<AppStore>((set, get) => ({
         FAITH_PRAYER_TITLE_SET.has(nq.title) &&
         (nq.recurDays?.length ?? 0) === 7
       ) {
-        nq = { ...nq, dueAt: prayerInfo[nq.title as PrayerTitle].due.toISOString() }
+        const info = prayerInfo[nq.title as PrayerTitle]
+        nq = {
+          ...nq,
+          dueAt: info.due.toISOString(),
+          // Re-home the prayer in the frame that actually contains its time today, so it
+          // drifts with the seasons (sunrise/sunset move across the year) instead of
+          // staying pinned to its seed-day frame. Falls back to the current frame.
+          timeFrameId: frameForTime(db.timeFrames, info.at) ?? nq.timeFrameId
+        }
+      }
+      // Lift a snooze that has elapsed (cosmetic tidy — the spotlight filter already
+      // ignores an expired snooze; this clears the stale field + badge). Gains-only.
+      if (nq.snoozedUntil && Date.parse(nq.snoozedUntil) <= now.getTime()) {
+        nq = { ...nq, snoozedUntil: null }
       }
       return nq
     })
@@ -907,12 +960,19 @@ export const useStore = create<AppStore>((set, get) => ({
     const nextPt = { ...prev, ...patch }
     // Recompute due-times for the NEW location/method and re-stamp the existing prayer
     // quests so a city/method change takes effect immediately (not just next midnight).
-    // null = no location yet → leave quests as-is. dueAt only → ↩ Restore stays exact.
+    // null = no location yet → leave quests as-is. dueAt + frame only → ↩ Restore stays exact.
     const info = prayerDayInfo({ ...db.settings, prayerTimes: nextPt }, new Date())
     const quests = info
       ? db.quests.map((q) =>
           FAITH_PRAYER_TITLE_SET.has(q.title) && (q.recurDays?.length ?? 0) === 7
-            ? { ...q, dueAt: info[q.title as PrayerTitle].due.toISOString() }
+            ? {
+                ...q,
+                dueAt: info[q.title as PrayerTitle].due.toISOString(),
+                // Re-home the frame too (mirrors the daily restamp) so a city/method change
+                // moves the prayer into the right part of the day right away.
+                timeFrameId:
+                  frameForTime(db.timeFrames, info[q.title as PrayerTitle].at) ?? q.timeFrameId
+              }
             : q
         )
       : db.quests

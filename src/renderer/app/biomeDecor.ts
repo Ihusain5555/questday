@@ -107,7 +107,7 @@ export const BIOME_GROUND: Record<BiomeKey, BiomeGround> = {
 
 // Which biome each Terra Questa region's town wears. Missing -> meadow.
 export const REGION_BIOME: Record<string, BiomeKey> = {
-  "embergreen": "meadow",
+  "embergreen": "forest",
   "goldfield": "meadow",
   "sunmeadow": "meadow",
   "larkholt": "forest",

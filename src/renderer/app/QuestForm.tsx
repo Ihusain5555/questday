@@ -10,7 +10,7 @@ import { X, ArrowsClockwise, CaretUp, CaretDown } from '@phosphor-icons/react'
  *  mode) — letting ONE form serve both quests and Library templates. */
 export type QuestFormInitial = Pick<
   Quest,
-  'title' | 'difficulty' | 'importance' | 'urgency' | 'timeEstimateMinutes' | 'subTasks'
+  'title' | 'difficulty' | 'importance' | 'urgency' | 'timeEstimateMinutes' | 'subTasks' | 'notes'
 > &
   Partial<Pick<Quest, 'dueAt' | 'timeFrameId' | 'recurDays'>>
 
@@ -72,6 +72,8 @@ export function QuestForm({
   )
   // Recurring (v1.5): weekdays the quest repeats on. Empty = one-off.
   const [recurDays, setRecurDays] = useState<number[]>(initial?.recurDays ?? [])
+  // Optional free-text note (v1.13). Hidden in template mode (templates don't carry notes).
+  const [notes, setNotes] = useState<string>(initial?.notes ?? '')
 
   // Focus the sub-task row inserted by Enter once it exists in the DOM.
   const subInputRefs = useRef<(HTMLInputElement | null)[]>([])
@@ -102,7 +104,8 @@ export function QuestForm({
         title: s.title,
         timeEstimateMinutes: Number(s.estimate) > 0 ? Math.round(Number(s.estimate)) : undefined
       })),
-      recurDays: hideScheduling ? [] : recurDays
+      recurDays: hideScheduling ? [] : recurDays,
+      notes: hideScheduling ? undefined : notes.trim() || undefined
     })
   }
 
@@ -339,6 +342,19 @@ export function QuestForm({
               + Add sub-task
             </button>
           </div>
+
+          {!hideScheduling && (
+            <label className="field">
+              <span>Notes (optional)</span>
+              <textarea
+                className="quest-notes-input"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Any extra detail, links, or context…"
+                rows={2}
+              />
+            </label>
+          )}
 
           <div className="modal-actions">
             <button type="button" onClick={onCancel}>

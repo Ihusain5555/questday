@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useStore } from '../state/store'
 import { useNow } from '../hooks/useNow'
 import { weeklyReview } from '@shared/engine/stats'
+import { ymd } from '@shared/engine/rollover'
+import { isFeatureEnabled } from './features'
 import { CalendarCheck, ShareNetwork } from '@phosphor-icons/react'
 import { ShareCardModal } from './ShareCardModal'
 
@@ -28,6 +30,17 @@ export function WeeklyReviewCard(): JSX.Element | null {
 
   const wr = weeklyReview(db.quests, db.timeFrames, now)
   const streak = db.player.streakCount
+
+  // This week's end-of-day reflections (sealed dailyNotes map — display only, never read
+  // by reward math), most recent first.
+  const reflections: { date: string; text: string }[] = []
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now)
+    d.setDate(d.getDate() - i)
+    const key = ymd(d)
+    const note = db.dailyNotes?.[key]
+    if (note) reflections.push({ date: key, text: note })
+  }
 
   return (
     <div className="card weekly-review">
@@ -74,6 +87,20 @@ export function WeeklyReviewCard(): JSX.Element | null {
             <ShareNetwork size={16} weight="bold" /> Share my week
           </button>
         </>
+      )}
+
+      {reflections.length > 0 && isFeatureEnabled(db.settings.enabledFeatures, 'endOfDayNote') && (
+        <div className="wr-reflections">
+          <div className="wr-reflections-head">This week’s reflections</div>
+          <ul>
+            {reflections.map((r) => (
+              <li key={r.date}>
+                <span className="wr-refl-day">{fullDayName(r.date)}</span>
+                <span className="wr-refl-text">{r.text}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       {sharing && (

@@ -103,6 +103,43 @@ function atClockHours(year: number, month: number, day: number, clockHours: numb
   return dt
 }
 
+/** Integer Julian Day Number (noon-based) for a Gregorian date (month 1..12). */
+function julianDayNumber(year: number, month: number, day: number): number {
+  return Math.floor(julianDate(year, month, day) + 0.5)
+}
+
+/** Gregorian → tabular ("arithmetic"/civil) Islamic calendar. Dependency-free and
+ *  fully on-device (no network — honours the local-only rule). The tabular calendar
+ *  can differ from an official sighting-based date by ±1 day near a month boundary,
+ *  which is fine here: it's used only to widen the Umm al-Qura Isha interval in Ramadan. */
+function hijriFromGregorian(
+  year: number,
+  month0: number,
+  day: number
+): { year: number; month: number; day: number } {
+  const jd = julianDayNumber(year, month0 + 1, day)
+  const l0 = jd - 1948440 + 10632
+  const n = Math.floor((l0 - 1) / 10631)
+  let l = l0 - 10631 * n + 354
+  const j =
+    Math.floor((10985 - l) / 5316) * Math.floor((50 * l) / 17719) +
+    Math.floor(l / 5670) * Math.floor((43 * l) / 15238)
+  l =
+    l -
+    Math.floor((30 - j) / 15) * Math.floor((17719 * j) / 50) -
+    Math.floor(j / 16) * Math.floor((15238 * j) / 43) +
+    29
+  const month = Math.floor((24 * l) / 709)
+  const hDay = l - Math.floor((709 * month) / 24)
+  const hYear = 30 * n + j - 30
+  return { year: hYear, month, day: hDay }
+}
+
+/** True when `date` falls in Ramadan (the 9th Hijri month) by the tabular calendar. */
+export function isRamadan(date: Date): boolean {
+  return hijriFromGregorian(date.getFullYear(), date.getMonth(), date.getDate()).month === 9
+}
+
 export function computePrayerDay(opts: PrayerOptions): PrayerDayTimes {
   const { lat, lon, date, tzHours, method, asr } = opts
   const year = date.getFullYear()
@@ -138,8 +175,12 @@ export function computePrayerDay(opts: PrayerOptions): PrayerDayTimes {
   const dhuhrH = midDay + 1 / 60 + adjust // ~1 min past solar noon (sun fully clears meridian)
   const asrH = midDay + asrHourAngle + adjust
   const maghribH = sunsetH // Sunni methods: Maghrib = sunset
+  // Umm al-Qura sets Isha a fixed interval after Maghrib; during Ramadan that interval
+  // widens to 120 min (vs 90 the rest of the year) — the published Umm al-Qura rule.
+  const ishaMinutes =
+    m.ishaMinutes != null && method === 'ummAlQura' && isRamadan(date) ? 120 : m.ishaMinutes
   const ishaH =
-    m.ishaMinutes != null ? sunsetH + m.ishaMinutes / 60 : midDay + T(m.isha) + adjust
+    ishaMinutes != null ? sunsetH + ishaMinutes / 60 : midDay + T(m.isha) + adjust
 
   // Islamic midnight = midpoint between sunset and the next day's Fajr (≈ today's Fajr + 24h).
   const islamicMidnightH = (sunsetH + (fajrH + 24)) / 2

@@ -148,7 +148,10 @@ export function AimTrainer({ onFinish }: { onFinish: (score: number) => void }):
             onClick={hit}
             aria-label="target"
           >
-            <GameIcon k="aim" size={40} />
+            {/* Icon must scale WITH the (shrinking) target — a fixed 40px icon overflows
+                the button as it shrinks toward the 28px floor, so its edges land outside
+                the clickable box and taps miss. Keep it inside the button bounds. */}
+            <GameIcon k="aim" size={Math.min(40, Math.round(size * 0.8))} />
           </button>
         )}
       </div>

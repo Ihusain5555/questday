@@ -388,7 +388,7 @@ export const balance = {
       spanrecall: { name: 'Span Recall', icon: 'Stairs', color: 'var(--skill-memory)', blurb: 'Repeat the growing sequence — stretch your memory span (Corsi).', seconds: 75, maxLen: 9, litMs: 600, gapMs: 220 },
       memory: { name: 'Memory Match', icon: 'Cards', color: 'var(--skill-memory)', blurb: 'Pair the cards from memory — a light visual-memory warm-up.', seconds: 90 },
       // Processing speed & attention — gold
-      flashrecall: { name: 'Flash Recall', icon: 'Eye', color: 'var(--skill-speed)', blurb: 'Catch the flash, then place it — processing speed & attention (UFOV).', trials: 16, startMs: 420, minMs: 90, maxMs: 650, stepDownMs: 40, stepUpMs: 55 },
+      flashrecall: { name: 'Flash Recall', icon: 'Eye', color: 'var(--skill-speed)', blurb: 'Catch the flash, then place it — processing speed & attention (UFOV).', trials: 16, startMs: 360, minMs: 80, maxMs: 650, stepDownMs: 45, stepUpMs: 55 },
       aim: { name: 'Aim Trainer', icon: 'Crosshair', color: 'var(--skill-speed)', blurb: 'Hit the targets fast — sharpens visual attention & hand-eye speed.', seconds: 45 },
       reaction: { name: 'Reaction Time', icon: 'Lightning', color: 'var(--skill-speed)', blurb: 'Wait for green, then tap — measures your reaction speed.', trials: 5 },
       // Executive control: inhibition — emerald
@@ -460,14 +460,24 @@ export const balance = {
       /** Weight on hand-set urgency. */
       urgency: 1.0,
       /** Small nudge toward quick wins so a fast must-do can slot ahead. */
-      quickWin: 0.4
+      quickWin: 0.4,
+      /** Gentle promotion as a dated quest's due time nears (a bounded 0..1 ramp ×
+       *  this weight). Deliberately SMALLER than the smallest importance gap (0.3 =
+       *  Low→Medium) so on its own it acts as a tie-breaker between equally-ranked
+       *  quests and can never invert an importance level (a due Medium can't leapfrog a
+       *  High). Raise toward 0.5+ to let due dates promote across importance levels; 0
+       *  disables it. */
+      dueSoon: 0.25
     },
     /** Score per importance level — the higher, the more it leads. */
     importanceScore: { Low: 0.2, Medium: 0.5, High: 1.0 } as Record<Importance, number>,
     /** Score per urgency level (hand-set; no longer derived from the due date). */
     urgencyScore: { Low: 0.2, Medium: 0.5, High: 1.0 } as Record<Urgency, number>,
     /** A quest at or under this estimate counts as a "quick win". */
-    quickWinThresholdMinutes: 15
+    quickWinThresholdMinutes: 15,
+    /** Hours-before-due window over which the due-soon nudge ramps 0→1 (then stays
+     *  capped at 1 once the quest is due/overdue). */
+    dueSoonWithinHours: 6
   }
 } as const
 

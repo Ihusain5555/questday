@@ -18,10 +18,12 @@ import { GameIcon } from '../gameIcons'
 
 const SLOTS = 8 // positions around the ring (clock face)
 // Start exposure by difficulty (chosen during "ready"); it still adapts from there.
+// Start exposure (ms) per difficulty. Lowered so the game actually bites — the
+// staircase then shortens further from here on each hit (down to balance.minMs).
 const STARTS = [
-  { key: 'easy', name: 'Easy', ms: 540 },
-  { key: 'medium', name: 'Medium', ms: 420 },
-  { key: 'hard', name: 'Hard', ms: 300 }
+  { key: 'easy', name: 'Easy', ms: 500 },
+  { key: 'medium', name: 'Medium', ms: 360 },
+  { key: 'hard', name: 'Hard', ms: 200 }
 ] as const
 type Mode = (typeof STARTS)[number]['key']
 // Staircase tunables live in balance.ts (arcade.games.flashrecall).

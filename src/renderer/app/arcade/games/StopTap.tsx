@@ -106,7 +106,15 @@ export function StopTap({ onFinish }: { onFinish: (score: number) => void }): JS
   // avoids dispatching a parent setState from inside a setState updater).
   useEffect(() => {
     if (phase !== 'playing') return
-    const id = setInterval(() => setTimeLeft((t) => Math.max(0, t - 1)), 1000)
+    const id = setInterval(() => {
+      // Once the round has ended (finish() set done), stop ticking — otherwise this
+      // interval keeps running after the round is over.
+      if (done.current) {
+        clearInterval(id)
+        return
+      }
+      setTimeLeft((t) => Math.max(0, t - 1))
+    }, 1000)
     return () => clearInterval(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])

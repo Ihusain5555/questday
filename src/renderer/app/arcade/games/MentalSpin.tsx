@@ -216,7 +216,10 @@ export function MentalSpin({ onFinish }: { onFinish: (score: number) => void }):
                 Hard
               </button>
             </div>
-            <span className="meta-dim">Same shape — just rotated, or mirrored?</span>
+            <span className="meta-dim">
+              Left = the original shape. Right = the same shape turned — or its mirror image.
+              Tap “Same” if it’s only rotated, “Mirror” if it’s flipped.
+            </span>
             <span className="ms-ready-count">{count > 0 ? count : 'Go!'}</span>
           </div>
         ) : (

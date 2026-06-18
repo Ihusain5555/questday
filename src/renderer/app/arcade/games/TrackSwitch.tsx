@@ -206,7 +206,9 @@ export function TrackSwitch({ onFinish }: { onFinish: (score: number) => void })
                 </button>
               ))}
             </div>
-            <span className="ts-ready-label">1 → A → 2 → B … number, letter, number…</span>
+            <span className="ts-ready-label">
+              Tap the nodes in order — 1, A, 2, B, 3, C… — alternating number, letter, number.
+            </span>
             <span className="ts-ready-count">{count > 0 ? count : 'Go!'}</span>
           </div>
         ) : (

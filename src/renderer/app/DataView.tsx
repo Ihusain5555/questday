@@ -17,6 +17,7 @@ import {
   Books,
   Mosque,
   CalendarCheck,
+  PencilSimple,
   type Icon
 } from '@phosphor-icons/react'
 
@@ -28,7 +29,8 @@ const FEATURE_ICON: Record<string, Icon> = {
   MapTrifold,
   Books,
   Mosque,
-  CalendarCheck
+  CalendarCheck,
+  PencilSimple
 }
 
 const PRAYER_METHODS: { id: PrayerMethod; label: string }[] = [

@@ -73,6 +73,15 @@ export const TOGGLEABLE_FEATURES: ToggleableFeature[] = [
     label: 'Weekly review',
     blurb:
       'A calm weekly recap on the Dashboard — your completions, best day, and power hour. Pure celebration, never targets or misses.'
+  },
+  {
+    // A Dashboard reflection CARD, not a tab — read via isFeatureEnabled. Default ON
+    // (missing key = on). A calm once-a-day "how did today go?" note; never a target.
+    id: 'endOfDayNote',
+    icon: 'PencilSimple',
+    label: 'End-of-day reflection',
+    blurb:
+      'A calm daily wind-down on the Dashboard — jot one line about how today went. Optional, private, never counted against you.'
   }
 ]
 

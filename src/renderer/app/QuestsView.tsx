@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Quest, QuestTemplate } from '@shared/types'
 import { useStore, type QuestInput, FAITH_PRAYER_TITLES, FAITH_QURAN_TITLE } from '../state/store'
 import { useNow } from '../hooks/useNow'
@@ -8,7 +8,7 @@ import { TEMPLATE_DRAG_MIME } from './TemplateCard'
 import { IMPORTANCE_COLOR, URGENCY_COLOR } from './options'
 import { isFeatureEnabled } from './features'
 import { formatDue, formatMinutes } from '@shared/format'
-import { activeTimeFrame } from '@shared/engine/selectCurrentQuest'
+import { activeTimeFrame, isSnoozed } from '@shared/engine/selectCurrentQuest'
 import { questXP } from '@shared/engine/rewards'
 import { isRecurring, isResting, recurLabel, ymdOf } from '@shared/engine/recurrence'
 import {
@@ -20,6 +20,7 @@ import {
   DotsSixVertical,
   FloppyDisk,
   Copy,
+  Clock,
   Mosque,
   PencilSimple,
   Archive,
@@ -33,6 +34,8 @@ export function QuestsView(): JSX.Element {
     updateQuest,
     deleteQuest,
     duplicateQuest,
+    snoozeQuest,
+    unsnoozeQuest,
     dropQuest,
     completeQuest,
     restoreQuest,
@@ -58,6 +61,16 @@ export function QuestsView(): JSX.Element {
     template: QuestTemplate | null
   } | null>(null)
   const [tapAddInitial, setTapAddInitial] = useState<QuestFormInitial | null>(null)
+  // Snooze (v1.13): which quest's "snooze until…" mini-menu is open (null = none).
+  const [snoozeFor, setSnoozeFor] = useState<string | null>(null)
+  // Close the snooze mini-menu on any outside click (the .snooze-wrap stops propagation
+  // so clicks on the button/menu don't self-close before their handlers run).
+  useEffect(() => {
+    if (!snoozeFor) return
+    const close = (): void => setSnoozeFor(null)
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [snoozeFor])
 
   const activeFrameId = db ? activeTimeFrame(db.timeFrames, now)?.id ?? null : null
 
@@ -86,6 +99,26 @@ export function QuestsView(): JSX.Element {
     else await createQuest(input)
     setShowForm(false)
     setEditing(null)
+  }
+
+  // Snooze a quest until a friendly preset time. Non-punitive: it only hides the quest
+  // from the spotlight until then — it's still listed (dimmed) and returns on its own.
+  const doSnooze = (id: string, kind: 'hour' | 'evening' | 'tomorrow') => {
+    const base = new Date()
+    let until: Date
+    if (kind === 'hour') {
+      until = new Date(base.getTime() + 60 * 60 * 1000)
+    } else if (kind === 'evening') {
+      until = new Date(base)
+      until.setHours(18, 0, 0, 0)
+      if (until.getTime() <= base.getTime()) until.setDate(until.getDate() + 1)
+    } else {
+      until = new Date(base)
+      until.setDate(until.getDate() + 1)
+      until.setHours(9, 0, 0, 0)
+    }
+    void snoozeQuest(id, until.toISOString())
+    setSnoozeFor(null)
   }
 
   // ---- Quest Library handlers ----
@@ -300,7 +333,9 @@ export function QuestsView(): JSX.Element {
                     <li
                       className={`quest-row ${q.status} ${dragId === q.id ? 'dragging' : ''} ${
                         dragId && dragId !== q.id && overQuest === q.id ? 'drop-before' : ''
-                      } ${q.status === 'active' && isResting(q, now) ? 'resting' : ''}`}
+                      } ${q.status === 'active' && isResting(q, now) ? 'resting' : ''} ${
+                        q.status === 'active' && isSnoozed(q, now) ? 'snoozed' : ''
+                      }`}
                       key={q.id}
                       draggable={q.status === 'active'}
                       onDragStart={(e) => {
@@ -355,6 +390,14 @@ export function QuestsView(): JSX.Element {
                               rests today
                             </span>
                           )}
+                          {q.status === 'active' && isSnoozed(q, now) && (
+                            <span
+                              className="badge muted"
+                              title="Snoozed — tucked away; it returns to your spotlight at this time, on its own. No penalty."
+                            >
+                              <Clock size={11} weight="bold" /> snoozed · {formatDue(q.snoozedUntil ?? null)}
+                            </span>
+                          )}
                           {q.status === 'dropped' && <span className="badge muted">dropped</span>}
                           {q.status === 'completed' && (
                             <span
@@ -396,6 +439,7 @@ export function QuestsView(): JSX.Element {
                             </span>
                           )}
                         </div>
+                        {q.notes && <div className="quest-notes">{q.notes}</div>}
                       </div>
                       <div className="quest-actions">
                         {q.status === 'active' && (
@@ -442,6 +486,41 @@ export function QuestsView(): JSX.Element {
                         >
                           <Copy size={16} weight="bold" />
                         </button>
+                        {q.status === 'active' && !isSnoozed(q, now) && (
+                          <div className="snooze-wrap" onMouseDown={(e) => e.stopPropagation()}>
+                            <button
+                              className="ghost icon-btn"
+                              aria-label="Snooze"
+                              title="Snooze — tuck away until later (it returns on its own, no penalty)"
+                              onClick={() => setSnoozeFor(snoozeFor === q.id ? null : q.id)}
+                            >
+                              <Clock size={16} weight="bold" />
+                            </button>
+                            {snoozeFor === q.id && (
+                              <div className="snooze-menu" role="menu">
+                                <button type="button" onClick={() => doSnooze(q.id, 'hour')}>
+                                  In 1 hour
+                                </button>
+                                <button type="button" onClick={() => doSnooze(q.id, 'evening')}>
+                                  This evening
+                                </button>
+                                <button type="button" onClick={() => doSnooze(q.id, 'tomorrow')}>
+                                  Tomorrow
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {q.status === 'active' && isSnoozed(q, now) && (
+                          <button
+                            className="ghost icon-btn"
+                            aria-label="Wake"
+                            title="Wake now — return it to your spotlight"
+                            onClick={() => void unsnoozeQuest(q.id)}
+                          >
+                            <ArrowUUpLeft size={16} weight="bold" />
+                          </button>
+                        )}
                         {q.status === 'active' && (
                           <button
                             className="ghost icon-btn"

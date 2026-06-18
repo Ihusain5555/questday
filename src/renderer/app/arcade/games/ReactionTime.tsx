@@ -41,11 +41,13 @@ export function ReactionTime({ onFinish }: { onFinish: (score: number) => void }
   const arm = () => {
     setPhase('waiting')
     setMessage('Wait for green…')
+    // Random hold of 2-6s before the go-signal, so the wait is unpredictable every
+    // trial (you can't time it) — the whole point of a reaction test.
     timer.current = setTimeout(() => {
       goAt.current = performance.now()
       setPhase('go')
       setMessage('CLICK!')
-    }, 900 + Math.random() * 2200)
+    }, 2000 + Math.random() * 4000)
   }
 
   const finish = (all: number[]) => {

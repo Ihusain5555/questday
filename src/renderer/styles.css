@@ -4673,6 +4673,158 @@ code {
   white-space: nowrap;
 }
 
+/* --- Quest notes (v1.13) — free-text detail under a quest's meta row. --------- */
+.quest-notes {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.quest-notes-input {
+  width: 100%;
+  resize: vertical;
+  min-height: 48px;
+  font: inherit;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 8px 10px;
+}
+.quest-notes-input:focus {
+  outline: none;
+  border-color: var(--brand);
+}
+
+/* --- Snooze (v1.13) — tuck a quest away until later (non-punitive). ----------- */
+.quest-row.snoozed {
+  opacity: 0.6;
+}
+.snooze-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.snooze-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  min-width: 132px;
+  padding: 4px;
+  background: var(--panel-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-2);
+}
+.snooze-menu button {
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--text);
+  cursor: pointer;
+}
+.snooze-menu button:hover {
+  background: rgb(var(--brand-rgb) / 0.16);
+}
+
+/* --- End-of-day reflection card (v1.13) — calm Dashboard wind-down. ----------- */
+.eod-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.eod-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--brand-bright);
+}
+.eod-head strong {
+  color: var(--text);
+}
+.eod-date {
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.eod-prompt {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+.eod-input {
+  width: 100%;
+  resize: vertical;
+  min-height: 52px;
+  font: inherit;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+}
+.eod-input:focus {
+  outline: none;
+  border-color: var(--brand);
+}
+.eod-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.eod-saved {
+  font-size: 0.82rem;
+  color: var(--brand-bright);
+}
+
+/* --- Weekly review — this week's reflections list (v1.13). -------------------- */
+.wr-reflections {
+  margin-top: 14px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+.wr-reflections-head {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.wr-reflections ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.wr-reflections li {
+  display: flex;
+  gap: 10px;
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+.wr-refl-day {
+  flex: 0 0 auto;
+  min-width: 74px;
+  color: var(--gold);
+  font-weight: 600;
+}
+.wr-refl-text {
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 /* Data tab as a right-aligned settings gear (declutters the primary nav). */
 .tab.gear-tab {
   margin-left: auto;

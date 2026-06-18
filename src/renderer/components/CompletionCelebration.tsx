@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion, type Target, type Transition } from 'framer-motion'
 import { Star, Ticket, Flag } from '@phosphor-icons/react'
 import { useStore } from '../state/store'
 import { CountUp } from './CountUp'
@@ -17,12 +17,18 @@ const DISMISS_MS = 2400
  * Juicy, brief, rewarding completion animation (§6). Renders over whichever
  * window completed the quest. Auto-dismisses; click to dismiss early. Purely
  * celebratory — never punitive.
+ *
+ * Respects the OS "reduce motion" preference (tone + accessibility): when it's on,
+ * the same reward card still appears, but instantly — no flying confetti, no spring
+ * pops. The animations are framer-motion JS transforms, so a CSS prefers-reduced-
+ * motion rule can't reach them; `useReducedMotion()` is the only correct gate.
  */
 export function CompletionCelebration(): JSX.Element {
   // Subscribe to just these slices so a celebration toast doesn't re-render on
   // every unrelated data change (and vice-versa).
   const celebration = useStore((s) => s.celebration)
   const clearCelebration = useStore((s) => s.clearCelebration)
+  const reduce = useReducedMotion()
 
   useEffect(() => {
     if (!celebration) return
@@ -34,9 +40,10 @@ export function CompletionCelebration(): JSX.Element {
     return () => clearTimeout(id)
   }, [celebration, clearCelebration])
 
-  // Stable particle field per celebration instance.
+  // Stable particle field per celebration instance. Suppressed entirely under
+  // reduced motion (the confetti is the most motion-heavy element).
   const particles = useMemo(() => {
-    if (!celebration) return []
+    if (!celebration || reduce) return []
     return Array.from({ length: 18 }, (_, i) => {
       const angle = (i / 18) * Math.PI * 2 + Math.random() * 0.4
       const dist = 80 + Math.random() * 120
@@ -49,7 +56,14 @@ export function CompletionCelebration(): JSX.Element {
         delay: Math.random() * 0.12
       }
     })
-  }, [celebration])
+  }, [celebration, reduce])
+
+  // Reduced-motion: render at the final state with no entrance animation/delay.
+  // Otherwise use the supplied spring/scale entrance unchanged.
+  const enter = (initial: Target, animate: Target, transition: Transition) =>
+    reduce
+      ? { initial: false as const, animate, transition: { duration: 0 } as Transition }
+      : { initial, animate, transition }
 
   return (
     <AnimatePresence>
@@ -59,7 +73,7 @@ export function CompletionCelebration(): JSX.Element {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.18 }}
+          transition={{ duration: reduce ? 0.08 : 0.18 }}
           onClick={clearCelebration}
         >
           <div className="celebrate-stage">
@@ -76,16 +90,20 @@ export function CompletionCelebration(): JSX.Element {
 
             <motion.div
               className="celebrate-card"
-              initial={{ scale: 0.5, opacity: 0, y: 10 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 360, damping: 18 }}
+              {...enter(
+                { scale: 0.5, opacity: 0, y: 10 },
+                { scale: 1, opacity: 1, y: 0 },
+                { type: 'spring', stiffness: 360, damping: 18 }
+              )}
+              exit={reduce ? { opacity: 0 } : { scale: 0.8, opacity: 0 }}
             >
               <motion.div
                 className="celebrate-emoji"
-                initial={{ scale: 0, rotate: -30 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 12, delay: 0.05 }}
+                {...enter(
+                  { scale: 0, rotate: -30 },
+                  { scale: 1, rotate: 0 },
+                  { type: 'spring', stiffness: 300, damping: 12, delay: 0.05 }
+                )}
               >
                 🎉
               </motion.div>
@@ -95,9 +113,11 @@ export function CompletionCelebration(): JSX.Element {
               <div className="celebrate-rewards">
                 <motion.span
                   className="reward-xp"
-                  initial={{ scale: 0.6, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.18, type: 'spring', stiffness: 320, damping: 14 }}
+                  {...enter(
+                    { scale: 0.6, opacity: 0 },
+                    { scale: 1, opacity: 1 },
+                    { delay: 0.18, type: 'spring', stiffness: 320, damping: 14 }
+                  )}
                 >
                   +<CountUp value={celebration.award.xpGained} /> XP
                 </motion.span>
@@ -106,22 +126,22 @@ export function CompletionCelebration(): JSX.Element {
               {celebration.award.leveledUp && (
                 <motion.div
                   className="celebrate-level"
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.34, type: 'spring', stiffness: 300, damping: 12 }}
+                  {...enter(
+                    { scale: 0, opacity: 0 },
+                    { scale: 1, opacity: 1 },
+                    { delay: 0.34, type: 'spring', stiffness: 300, damping: 12 }
+                  )}
                 >
-<Star size={17} weight="fill" /> Level up! → {celebration.award.newPlayer.level}
+                  <Star size={17} weight="fill" /> Level up! → {celebration.award.newPlayer.level}
                 </motion.div>
               )}
 
               {celebration.award.newStreak > 1 && (
                 <motion.div
                   className="celebrate-streak"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4 }}
+                  {...enter({ opacity: 0 }, { opacity: 1 }, { delay: 0.4 })}
                 >
-<FlameIcon size={16} /> {celebration.award.newStreak}-day streak
+                  <FlameIcon size={16} /> {celebration.award.newStreak}-day streak
                   {celebration.award.streakMultiplier > 1 &&
                     ` (+${Math.round((celebration.award.streakMultiplier - 1) * 100)}% bonus)`}
                 </motion.div>
@@ -130,9 +150,11 @@ export function CompletionCelebration(): JSX.Element {
               {celebration.expedition && (
                 <motion.div
                   className="celebrate-region"
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.5, type: 'spring', stiffness: 280, damping: 12 }}
+                  {...enter(
+                    { scale: 0, opacity: 0 },
+                    { scale: 1, opacity: 1 },
+                    { delay: 0.5, type: 'spring', stiffness: 280, damping: 12 }
+                  )}
                 >
                   <Flag size={16} weight="fill" /> Expedition earned — chart a region in your Realm
                 </motion.div>
@@ -141,9 +163,11 @@ export function CompletionCelebration(): JSX.Element {
               {celebration.civ?.grewBuildings ? (
                 <motion.div
                   className="celebrate-civ-grew"
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.52, type: 'spring', stiffness: 280, damping: 12 }}
+                  {...enter(
+                    { scale: 0, opacity: 0 },
+                    { scale: 1, opacity: 1 },
+                    { delay: 0.52, type: 'spring', stiffness: 280, damping: 12 }
+                  )}
                 >
                   <span className="celebrate-building-sprite" aria-hidden>
                     <svg viewBox={HALL_VIEWBOX} role="img">
@@ -158,9 +182,11 @@ export function CompletionCelebration(): JSX.Element {
               ) : celebration.civ?.atCap ? (
                 <motion.div
                   className="celebrate-civ-full"
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.52, type: 'spring', stiffness: 280, damping: 12 }}
+                  {...enter(
+                    { scale: 0, opacity: 0 },
+                    { scale: 1, opacity: 1 },
+                    { delay: 0.52, type: 'spring', stiffness: 280, damping: 12 }
+                  )}
                 >
                   <span className="celebrate-building-sprite" aria-hidden>
                     <svg viewBox={HALL_VIEWBOX} role="img">
@@ -172,9 +198,7 @@ export function CompletionCelebration(): JSX.Element {
               ) : celebration.civ && celebration.civ.toNext != null ? (
                 <motion.div
                   className="celebrate-civ-progress"
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.52 }}
+                  {...enter({ opacity: 0, y: 6 }, { opacity: 1, y: 0 }, { delay: 0.52 })}
                 >
                   <span className="civ-progress-bar" aria-hidden>
                     <span
@@ -189,11 +213,9 @@ export function CompletionCelebration(): JSX.Element {
               {celebration.ticket && (
                 <motion.div
                   className="celebrate-ticket"
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 }}
+                  {...enter({ opacity: 0, y: 6 }, { opacity: 1, y: 0 }, { delay: 0.6 })}
                 >
-<Ticket size={16} weight="fill" /> +1 arcade ticket
+                  <Ticket size={16} weight="fill" /> +1 arcade ticket
                 </motion.div>
               )}
             </motion.div>

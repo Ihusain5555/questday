@@ -8,6 +8,7 @@ import {
 import { RealmPeek } from './RealmView'
 import { StatsView } from './StatsView'
 import { WeeklyReviewCard } from './WeeklyReviewCard'
+import { EndOfDayCard } from './EndOfDayCard'
 import { PlayerBar } from '../components/PlayerBar'
 import { isFeatureEnabled } from './features'
 import { questXP } from '@shared/engine/rewards'
@@ -56,6 +57,8 @@ export function Dashboard(): JSX.Element {
       <RealmPeek />
 
       {isFeatureEnabled(db.settings.enabledFeatures, 'weeklyReview') && <WeeklyReviewCard />}
+
+      {isFeatureEnabled(db.settings.enabledFeatures, 'endOfDayNote') && <EndOfDayCard />}
 
       <div className="dash-stats">
         <StatsView />

@@ -67,6 +67,7 @@ export function createDefaultDatabase(): Database {
     },
     townLayouts: {},
     questTemplates: [],
+    dailyNotes: {},
     lastSeenDate: null
   }
 }
