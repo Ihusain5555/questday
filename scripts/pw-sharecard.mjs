@@ -57,7 +57,7 @@ const seed = () => ({
     recur('c', 'tf-evening', [yest])
   ],
   timeFrames: frames,
-  player: { xp: 120, level: 7, currency: 0, streakCount: 12, lastCompletionDate: today, arcadeTickets: 0 },
+  player: { xp: 120, level: 7, currency: 0, streakCount: 12, lastCompletionDate: today, arcadeTickets: 5 },
   garden: { theme: 'garden', items: [], visitors: [], bestStreak: 14 },
   arcade: { best: {}, ticketsEarnedOn: null, ticketsEarnedCount: 0, freeGrantedOn: null },
   settings,
@@ -102,6 +102,27 @@ try {
   result('PNG_RENDERED', isPng && big, `isPng=${isPng} len=${src.length}`)
 
   await main.locator('.share-modal').screenshot({ path: path.join(shots, 'share-card-inapp.png') })
+
+  // close the week modal
+  await main.locator('.share-close').click()
+  await main.waitForTimeout(200)
+
+  // --- ARCADE_SHARE --- play a quick Flash Recall round (it has an End round button),
+  // then share the score card.
+  await main.getByRole('button', { name: 'Arcade', exact: true }).click()
+  await main.waitForTimeout(400)
+  await main.locator('.arcade-card', { hasText: 'Flash Recall' }).getByRole('button', { name: 'Play' }).click()
+  await main.waitForTimeout(600)
+  await main.getByRole('button', { name: 'End round' }).click()
+  await main.waitForSelector('.arcade-result', { timeout: 5000 })
+  await main.getByRole('button', { name: 'Share score' }).click()
+  await main.waitForSelector('.share-modal', { timeout: 4000 })
+  await main.waitForSelector('[data-share-img]', { timeout: 8000 })
+  await main.waitForTimeout(400)
+  const asrc = (await main.locator('[data-share-img]').getAttribute('src')) ?? ''
+  const aPng = asrc.startsWith('data:image/png') && asrc.length > 10000
+  result('ARCADE_SHARE', aPng, `isPng=${asrc.startsWith('data:image/png')} len=${asrc.length}`)
+  await main.locator('.share-modal').screenshot({ path: path.join(shots, 'share-card-arcade.png') })
 } catch (err) {
   console.log('ERROR:', err?.stack ?? err?.message ?? err)
   process.exitCode = 1

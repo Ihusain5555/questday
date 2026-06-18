@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useStore } from '../../state/store'
 import { balance } from '@shared/config/balance'
-import { GameController, Ticket, Trophy, Play, SpeakerSimpleHigh, SpeakerSimpleSlash } from '@phosphor-icons/react'
+import { GameController, Ticket, Trophy, Play, SpeakerSimpleHigh, SpeakerSimpleSlash, ShareNetwork } from '@phosphor-icons/react'
 import { play as playSfx, isMuted, toggleMuted } from './sound'
+import { ShareCardModal } from '../ShareCardModal'
 import { AimTrainer } from './games/AimTrainer'
 import { ReactionTime } from './games/ReactionTime'
 import { MemoryMatch } from './games/MemoryMatch'
@@ -37,6 +38,19 @@ interface RoundResult {
   newBest: boolean
 }
 
+/** Resolve a CSS colour expression (including nested `var(--x)`) to a concrete rgb()
+ *  string. Canvas `fillStyle` can't resolve CSS custom properties, so the arcade
+ *  share-card needs the game's accent colour pre-resolved before it's drawn. */
+function resolveCssColor(expr: string): string {
+  const probe = document.createElement('span')
+  probe.style.color = expr
+  probe.style.display = 'none'
+  document.body.appendChild(probe)
+  const rgb = getComputedStyle(probe).color
+  probe.remove()
+  return rgb || '#3fe0a8'
+}
+
 /**
  * 🕹️ The Arcade (v1.4): ticket-gated minigames. Tickets come ONLY from quest
  * completions (capped per day, never expire) — the arcade is an earned reward.
@@ -46,6 +60,7 @@ export function ArcadeView(): JSX.Element {
   const { db, spendArcadeTicket, finishArcadeRound } = useStore()
   const [playing, setPlaying] = useState<GameKey | null>(null)
   const [result, setResult] = useState<RoundResult | null>(null)
+  const [sharing, setSharing] = useState(false)
   const [muted, setMuted] = useState(isMuted())
 
   if (!db) return <div>Loading…</div>
@@ -126,7 +141,24 @@ export function ArcadeView(): JSX.Element {
               <Trophy size={13} weight="fill" color="var(--gold)" /> new best!
             </span>
           )}
+          <button className="ghost arcade-share-btn" onClick={() => setSharing(true)}>
+            <ShareNetwork size={14} weight="bold" /> Share score
+          </button>
         </div>
+      )}
+
+      {sharing && result && (
+        <ShareCardModal
+          data={{
+            kind: 'arcade',
+            gameName: balance.arcade.games[result.key].name,
+            accent: resolveCssColor(balance.arcade.games[result.key].color),
+            score: result.score,
+            best: db.arcade.best[result.key] ?? result.score,
+            isBest: result.newBest
+          }}
+          onClose={() => setSharing(false)}
+        />
       )}
 
       {tickets === 0 && (

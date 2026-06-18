@@ -1560,6 +1560,20 @@ select:focus {
   font-weight: 700;
 }
 
+.arcade-share-btn {
+  margin-left: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  vertical-align: middle;
+  font-size: 13px;
+}
+
+.arcade-share-btn:hover {
+  color: var(--gold-bright);
+  background: rgb(var(--gold-rgb) / 0.1);
+}
+
 .arcade-empty {
   margin: 10px 0;
 }

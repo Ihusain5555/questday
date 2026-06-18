@@ -106,6 +106,7 @@ export function WeeklyReviewCard(): JSX.Element | null {
       {sharing && (
         <ShareCardModal
           data={{
+            kind: 'week',
             weekTotal: wr.total,
             activeDays: wr.activeDays,
             streak,

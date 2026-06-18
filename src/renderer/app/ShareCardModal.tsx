@@ -3,9 +3,9 @@ import { renderShareCardPng, type ShareCardData } from './shareCard'
 import { X, DownloadSimple, Copy, Check } from '@phosphor-icons/react'
 
 /**
- * Share-card preview modal. Renders the weekly recap to a PNG (canvas, zero deps)
- * and lets the user Save it or Copy it to the clipboard to drop into any chat.
- * Image-only: counts/streak/level/best-day + realm art — never quest titles.
+ * Share-card preview modal. Renders a recap to a PNG (canvas, zero deps) and lets the
+ * user Save it or Copy it to the clipboard to drop into any chat. Image-only — never
+ * quest titles. Handles two card kinds: the weekly recap and a single arcade score.
  */
 export function ShareCardModal({
   data,
@@ -17,6 +17,19 @@ export function ShareCardModal({
   const [url, setUrl] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+
+  const ui =
+    data.kind === 'arcade'
+      ? {
+          title: 'Share your score',
+          note: 'Image only — your arcade score and QuestDay.',
+          filename: 'questday-arcade-score.png'
+        }
+      : {
+          title: 'Share your week',
+          note: 'Image only — your counts, streak and realm. Never your quest titles or notes.',
+          filename: 'questday-my-week.png'
+        }
 
   useEffect(() => {
     let alive = true
@@ -32,7 +45,7 @@ export function ShareCardModal({
     if (!url) return
     const a = document.createElement('a')
     a.href = url
-    a.download = 'questday-my-week.png'
+    a.download = ui.filename
     document.body.appendChild(a)
     a.click()
     a.remove()
@@ -56,10 +69,8 @@ export function ShareCardModal({
         <button className="share-close" aria-label="Close" onClick={onClose}>
           <X size={18} weight="bold" />
         </button>
-        <h3>Share your week</h3>
-        <p className="share-note">
-          Image only — your counts, streak and realm. Never your quest titles or notes.
-        </p>
+        <h3>{ui.title}</h3>
+        <p className="share-note">{ui.note}</p>
         <div className="share-preview">
           {url ? (
             <img src={url} alt="Your week — share card" data-share-img />
