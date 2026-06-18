@@ -169,6 +169,10 @@ export interface Settings {
   blockBreakPassMin: number
   widgetBounds: { x: number; y: number; width: number; height: number } | null
   widgetExpanded: boolean
+  /** Quest the user "pinned" as current by tapping it in the widget (click-to-switch,
+   *  v1.13). Honored only while it's a valid candidate in the active frame; otherwise the
+   *  scorer's pick wins. Cleared on completion / day change. Never read by reward math. */
+  pinnedQuestId?: string | null
   /** Start QuestDay at Windows sign-in (widget only; main window stays in the tray). */
   launchOnLogin: boolean
   /** Chosen focus-timer preset key (see balance.focus.presets). */

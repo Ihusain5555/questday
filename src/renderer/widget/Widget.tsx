@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useStore } from '../state/store'
 import { useNow } from '../hooks/useNow'
 import {
-  selectCurrentQuest,
+  resolveCurrentQuest,
   activeTimeFrame,
   rankCandidates
 } from '@shared/engine/selectCurrentQuest'
@@ -46,7 +46,9 @@ export function Widget(): JSX.Element {
 
   const expanded = db?.settings.widgetExpanded ?? false
   const frame = db ? activeTimeFrame(db.timeFrames, now) : null
-  const current = db ? selectCurrentQuest(db.quests, db.timeFrames, now) : null
+  const current = db
+    ? resolveCurrentQuest(db.quests, db.timeFrames, now, db.settings.pinnedQuestId)
+    : null
   // Resting / welcome-back greeting on a genuine return (see isRealmResting).
   const resting = db ? isRealmResting(db.player.lastCompletionDate, now) : false
 

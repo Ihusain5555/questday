@@ -120,6 +120,25 @@ export function selectCurrentQuest(quests: Quest[], timeFrames: TimeFrame[], now
   return rankCandidates(quests, timeFrames, now)[0]?.quest ?? null
 }
 
+/** The current quest, honoring a user "pin" (widget click-to-switch, v1.13) when the
+ *  pinned quest is still a valid candidate in the active frame; otherwise the scored
+ *  pick. Because the pin is only honored among rankCandidates (already gated by frame +
+ *  active + not resting/snoozed), a stale or out-of-frame pin simply falls back to the
+ *  scorer — "pin overrides WITHIN the active frame". Pure: never mutates the pin. */
+export function resolveCurrentQuest(
+  quests: Quest[],
+  timeFrames: TimeFrame[],
+  now: Date,
+  pinnedQuestId?: string | null
+): Quest | null {
+  const ranked = rankCandidates(quests, timeFrames, now)
+  if (pinnedQuestId) {
+    const pinned = ranked.find((r) => r.quest.id === pinnedQuestId)
+    if (pinned) return pinned.quest
+  }
+  return ranked[0]?.quest ?? null
+}
+
 /** The immediate (first not-done, by order) sub-task of a quest. */
 export function immediateSubTask(quest: Quest | null) {
   if (!quest) return null

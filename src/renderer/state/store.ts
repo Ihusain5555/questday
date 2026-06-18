@@ -181,6 +181,9 @@ interface AppStore {
   snoozeQuest: (id: string, untilIso: string) => Promise<void>
   /** Lift a snooze immediately (the quest returns to the spotlight pool). */
   unsnoozeQuest: (id: string) => Promise<void>
+  /** Pin a quest as the widget's "current" (click-to-switch), or null to return to
+   *  the automatic scored pick. Honored only while it's a valid in-frame candidate. */
+  pinQuest: (id: string | null) => Promise<void>
   /** Save (or clear, when blank) the end-of-day reflection for a local YYYY-MM-DD. */
   setDailyNote: (dateYmd: string, text: string) => Promise<void>
   dropQuest: (id: string) => Promise<void>
@@ -402,6 +405,15 @@ export const useStore = create<AppStore>((set, get) => ({
     if (!db) return
     const quests = db.quests.map((q) => (q.id === id ? { ...q, snoozedUntil: null } : q))
     await get().save({ quests })
+  },
+
+  // ---- Widget click-to-switch (v1.13) ------------------------------------
+  // The pin lives in settings (deep-merged on save) — no new IPC needed. The
+  // current-quest resolver only honors it while the quest is a valid in-frame
+  // candidate, so it never overshadows the task or breaks ↩ Restore (reward math
+  // never reads it). Pass null to return to the automatic scored pick.
+  pinQuest: async (id) => {
+    await get().save({ settings: { pinnedQuestId: id } })
   },
 
   // ---- End-of-day reflections (v1.13) -------------------------------------
@@ -722,7 +734,10 @@ export const useStore = create<AppStore>((set, get) => ({
         }
       : null
 
-    await get().save({ quests, player, garden, arcade })
+    // If the completed quest was the pinned "current", clear the pin so the widget
+    // returns to the automatic pick (settings deep-merges, so this touches only the pin).
+    const clearPin = db.settings.pinnedQuestId === id ? { settings: { pinnedQuestId: null } } : {}
+    await get().save({ quests, player, garden, arcade, ...clearPin })
     set({
       celebration: {
         award,
@@ -918,7 +933,9 @@ export const useStore = create<AppStore>((set, get) => ({
       }
     }
 
-    await get().save({ quests, garden, player, arcade, lastSeenDate: today })
+    // A new day starts on the automatic pick — clear any leftover widget pin.
+    const clearPin = db.settings.pinnedQuestId ? { settings: { pinnedQuestId: null } } : {}
+    await get().save({ quests, garden, player, arcade, lastSeenDate: today, ...clearPin })
     if (dewGrown.length > 0) {
       set({ dewNews: `🌅 Overnight dew: ${dewGrown.join(' and ')} grew while you were away.` })
     }

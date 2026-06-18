@@ -52,6 +52,7 @@ export function createDefaultDatabase(): Database {
       blockBreakPassMin: 5,
       widgetBounds: null,
       widgetExpanded: false,
+      pinnedQuestId: null,
       launchOnLogin: false,
       focusPreset: 'pomodoro',
       // faithChecklist seeded false: a faith feature must be OFF until opted in

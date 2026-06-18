@@ -1,7 +1,9 @@
 import type { Database, Quest } from '@shared/types'
 import { rankCandidates } from '@shared/engine/selectCurrentQuest'
+import { useStore } from '../state/store'
 import { IMPORTANCE_COLOR } from '../app/options'
 import { formatMinutes } from '@shared/format'
+import { PushPin } from '@phosphor-icons/react'
 
 interface Props {
   db: Database
@@ -9,8 +11,13 @@ interface Props {
   currentId: string | null
 }
 
-/** Full quest list grouped by time frame, shown when the widget is expanded. */
+/** Full quest list grouped by time frame, shown when the widget is expanded. Tapping a
+ *  quest in the ACTIVE frame "pins" it as the current quest (click-to-switch, v1.13);
+ *  tapping the pinned one again returns to the automatic pick. Quests in other frames
+ *  aren't tappable — a pin only takes effect within the active frame. */
 export function WidgetList({ db, now, currentId }: Props): JSX.Element {
+  const pinQuest = useStore((s) => s.pinQuest)
+  const pinnedId = db.settings.pinnedQuestId ?? null
   const frames = [...db.timeFrames].sort((a, b) => a.order - b.order)
   const activeFrameId = rankCandidates(db.quests, db.timeFrames, now)[0]?.quest.timeFrameId ?? null
 
@@ -35,13 +42,37 @@ export function WidgetList({ db, now, currentId }: Props): JSX.Element {
             {quests.length === 0 ? (
               <div className="wlist-empty">—</div>
             ) : (
-              quests.map((q) => (
-                <div className={`wlist-item ${q.id === currentId ? 'current' : ''}`} key={q.id}>
-                  <span className="pri-dot" style={{ background: IMPORTANCE_COLOR[q.importance] }} />
-                  <span className="wlist-title">{q.title}</span>
-                  <span className="wlist-est">{formatMinutes(q.timeEstimateMinutes)}</span>
-                </div>
-              ))
+              quests.map((q) => {
+                const isCurrent = q.id === currentId
+                const isPinned = q.id === pinnedId
+                const dot = <span className="pri-dot" style={{ background: IMPORTANCE_COLOR[q.importance] }} />
+                const title = <span className="wlist-title">{q.title}</span>
+                const est = <span className="wlist-est">{formatMinutes(q.timeEstimateMinutes)}</span>
+                // Only the active frame is tappable — pinning a quest in another frame
+                // would have no effect (a pin is honored only within the active frame).
+                if (!isActive) {
+                  return (
+                    <div className="wlist-item" key={q.id}>
+                      {dot}
+                      {title}
+                      {est}
+                    </div>
+                  )
+                }
+                return (
+                  <button
+                    className={`wlist-item clickable${isCurrent ? ' current' : ''}${isPinned ? ' pinned' : ''}`}
+                    key={q.id}
+                    title={isPinned ? 'Tap to return to the automatic pick' : 'Make this the current quest'}
+                    onClick={() => void pinQuest(isPinned ? null : q.id)}
+                  >
+                    {dot}
+                    {title}
+                    {isPinned && <PushPin size={11} weight="fill" className="wlist-pin" />}
+                    {est}
+                  </button>
+                )
+              })
             )}
           </div>
         )

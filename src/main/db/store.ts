@@ -234,6 +234,11 @@ function validate(db: Database): string | null {
   }
   if (!db.player || typeof db.player !== 'object') return 'player must be an object'
   if (!db.settings || typeof db.settings !== 'object') return 'settings must be an object'
+  // pinnedQuestId (widget click-to-switch, v1.13) is optional; if present it must be a
+  // string quest id or null. The current-quest resolver ignores a pin that doesn't match
+  // an active in-frame quest, so a stale id is harmless — but keep the save sound.
+  const pinned = (db.settings as { pinnedQuestId?: unknown }).pinnedQuestId
+  if (pinned != null && typeof pinned !== 'string') return 'settings.pinnedQuestId must be a string or null'
   // townLayouts is optional-shaped on disk; if present it must be an object map
   // of { overrides: object }. Reject anything malformed so a renderer bug can't
   // persist a corrupt arrangement (the engine never reads it, but the save must

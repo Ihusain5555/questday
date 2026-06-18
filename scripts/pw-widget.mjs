@@ -100,6 +100,16 @@ try {
     `${await widget.locator('.wlist-item').count()} rows`)
   await widget.locator('.widget').screenshot({ path: path.join(shots, 'widget-3-expanded.png') })
 
+  // --- PIN: click-to-switch the current quest (v1.13) ---
+  await widget.locator('.wlist-item.clickable', { hasText: 'Reply to design feedback' }).click()
+  await widget.waitForTimeout(400)
+  const afterPin = (await widget.locator('.quest-title').textContent()) ?? ''
+  result('WIDGET_PIN_SWITCH', afterPin.includes('Reply to design feedback'), `"${afterPin.trim()}"`)
+  await widget.locator('.wlist-item.pinned', { hasText: 'Reply to design feedback' }).click()
+  await widget.waitForTimeout(400)
+  const afterUnpin = (await widget.locator('.quest-title').textContent()) ?? ''
+  result('WIDGET_PIN_TOGGLE_OFF', afterUnpin.includes('Ship the widget redesign'), `"${afterUnpin.trim()}"`)
+
   // collapse again for the ready shot
   await widget.evaluate(() => window.questday.widget.setExpanded(false))
   await widget.waitForTimeout(400)
@@ -118,6 +128,16 @@ try {
   result('WIDGET_READY', (await widget.locator('.widget-complete.ready').count()) === 1,
     'complete button is in ready (teal) state')
   await widget.locator('.widget').screenshot({ path: path.join(shots, 'widget-2-ready.png') })
+
+  // --- REOPEN: the Dashboard "Show widget" path (widget:show IPC -> createWidgetWindow) ---
+  const winHandle = await app.browserWindow(widget)
+  await widget.evaluate(() => window.questday.widget.hide())
+  await widget.waitForTimeout(350)
+  const hidden = !(await winHandle.evaluate((w) => w.isVisible()))
+  await widget.evaluate(() => window.questday.widget.show())
+  await widget.waitForTimeout(450)
+  const shown = await winHandle.evaluate((w) => w.isVisible())
+  result('WIDGET_REOPEN', hidden && shown, `hidden=${hidden} shown=${shown}`)
 
   await app.close()
 } finally {

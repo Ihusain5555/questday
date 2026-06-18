@@ -17,7 +17,9 @@ const api = {
   widget: {
     setExpanded: (expanded: boolean): Promise<void> =>
       ipcRenderer.invoke('widget:setExpanded', expanded),
-    hide: (): Promise<void> => ipcRenderer.invoke('widget:hide')
+    hide: (): Promise<void> => ipcRenderer.invoke('widget:hide'),
+    /** Re-open (or focus) the always-on-top widget — for the Dashboard reopen button. */
+    show: (): Promise<void> => ipcRenderer.invoke('widget:show')
   },
   friction: {
     dismiss: (proceeded: boolean): Promise<void> =>

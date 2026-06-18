@@ -265,6 +265,9 @@ function registerWindowIpc(): void {
     }
   })
   ipcMain.handle('widget:hide', () => widgetWindow?.hide())
+  // Re-open the widget from the Dashboard (createWidgetWindow shows it if it already
+  // exists, otherwise recreates it — same path the tray "Show/Hide Widget" uses).
+  ipcMain.handle('widget:show', () => createWidgetWindow())
   ipcMain.handle('friction:requestPending', () => pendingFriction)
   ipcMain.handle('friction:dismiss', (_e, proceeded: boolean) => {
     const kind = pendingFriction?.kind ?? 'soft'

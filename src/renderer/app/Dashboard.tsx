@@ -2,7 +2,7 @@ import { useStore } from '../state/store'
 import { useNow } from '../hooks/useNow'
 import {
   activeTimeFrame,
-  selectCurrentQuest,
+  resolveCurrentQuest,
   immediateSubTask
 } from '@shared/engine/selectCurrentQuest'
 import { RealmPeek } from './RealmView'
@@ -12,7 +12,7 @@ import { EndOfDayCard } from './EndOfDayCard'
 import { PlayerBar } from '../components/PlayerBar'
 import { isFeatureEnabled } from './features'
 import { questXP } from '@shared/engine/rewards'
-import { Lightning, Check } from '@phosphor-icons/react'
+import { Lightning, Check, AppWindow } from '@phosphor-icons/react'
 
 export function Dashboard(): JSX.Element {
   const { db, completeQuest } = useStore()
@@ -21,7 +21,7 @@ export function Dashboard(): JSX.Element {
   if (!db) return <div>Loading…</div>
 
   const frame = activeTimeFrame(db.timeFrames, now)
-  const current = selectCurrentQuest(db.quests, db.timeFrames, now)
+  const current = resolveCurrentQuest(db.quests, db.timeFrames, now, db.settings.pinnedQuestId)
   const sub = immediateSubTask(current)
   const activeCount = db.quests.filter((q) => q.status === 'active').length
 
@@ -30,7 +30,16 @@ export function Dashboard(): JSX.Element {
       <PlayerBar player={db.player} activeCount={activeCount} />
 
       <div className="card current-quest-card">
-        <div className="label">Current quest · {frame ? frame.name : 'no active frame'}</div>
+        <div className="cq-head">
+          <div className="label">Current quest · {frame ? frame.name : 'no active frame'}</div>
+          <button
+            className="ghost cq-show-widget"
+            title="Reopen the always-on-top widget if you closed it"
+            onClick={() => void window.questday.widget.show()}
+          >
+            <AppWindow size={15} weight="bold" /> Show widget
+          </button>
+        </div>
         {current ? (
           <>
             <div className="cq-title">{current.title}</div>
