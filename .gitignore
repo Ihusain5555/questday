@@ -22,3 +22,5 @@ opt*.png
 final*.png
 crop_*.png
 _crop_*.png
+# dev-only overworld art (unconfirmed bundle license — never commit to the public repo)
+src/renderer/assets/dev/

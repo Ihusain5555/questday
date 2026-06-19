@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { ArrowLeft, ArrowCounterClockwise, PencilSimple, Check } from '@phosphor-icons/react'
 import { BUILDING_SVG, type BuildingKind } from './townBuildings'
 import { BIOME_GROUND, type BiomeKey } from './biomeDecor'
+import { TOWN_ART_IMG } from './townArtImages'
 import type { PlotOverride, SwappableKind } from '@shared/types'
 
 // ---------------------------------------------------------------------------
@@ -394,10 +395,13 @@ export function TownView({
   overrides = {},
   onEditLayout,
   biome,
-  onExit
+  onExit,
+  townId
 }: {
   townName: string
   stageName: string
+  /** ATLAS region/town id — used to look up the placeholder interior art (dev only). */
+  townId?: string
   /** How many buildings to render — derived from all-time XP by the caller. */
   buildingCount: number
   /** The player's saved arrangement for this town: a sparse map of building index
@@ -600,6 +604,55 @@ export function TownView({
     }),
     ...decorationsFor(biome, occupied)
   ].sort((m, n) => m.sort - n.sort)
+
+  // DEV-ONLY: if this town has placeholder interior art, show it as the whole inside-page.
+  // Gated by import.meta.env.DEV so production tree-shakes the (unlicensed, heavy) images
+  // out entirely. Per-town building configuration is a later feature.
+  const placeholderArt = import.meta.env.DEV && townId ? TOWN_ART_IMG[townId] : undefined
+  if (placeholderArt) {
+    return (
+      <motion.div
+        className="town-overlay"
+        initial={{ opacity: 0, scale: 0.985 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.985 }}
+        transition={{ duration: reduce ? 0 : 0.32, ease: 'easeOut' }}
+      >
+        <div className="town-topbar">
+          <button className="town-back" onClick={onExit}>
+            <ArrowLeft size={15} weight="bold" /> Back to map
+          </button>
+          <span className="town-name">{townName}</span>
+          <span className="town-stage">{stageName}</span>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 8,
+            overflow: 'hidden',
+          }}
+        >
+          <img
+            src={placeholderArt}
+            alt={`${townName} (placeholder interior art)`}
+            draggable={false}
+            style={{
+              display: 'block',
+              maxWidth: '100%',
+              maxHeight: '70vh',
+              width: 'auto',
+              height: 'auto',
+              objectFit: 'contain',
+              borderRadius: 8,
+              userSelect: 'none',
+            }}
+          />
+        </div>
+      </motion.div>
+    )
+  }
 
   return (
     <motion.div

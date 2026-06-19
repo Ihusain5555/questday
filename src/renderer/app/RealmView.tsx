@@ -10,6 +10,7 @@ import type { ChronicleRecord } from '@shared/types'
 import { MapTrifold, Flag, Planet, Leaf, Scroll, Feather, Sparkle, X, type Icon } from '@phosphor-icons/react'
 import { CivilizationPanel } from './CivilizationPanel'
 import { TownView } from './TownView'
+import { TownPlacer } from './TownPlacer'
 import { REGION_BIOME } from './biomeDecor'
 import { MapIconSymbols } from './storybookMapIcons'
 
@@ -830,6 +831,7 @@ export function RealmView(): JSX.Element {
                 const overrides = db.townLayouts?.[enteredTown]?.overrides ?? {}
                 return (
                   <TownView
+                    townId={enteredTown}
                     townName={region?.name ?? 'Town'}
                     stageName={civ.stageName}
                     buildingCount={townBuildingCount}
@@ -841,6 +843,11 @@ export function RealmView(): JSX.Element {
                 )
               })()}
           </AnimatePresence>
+          {/* DEV-ONLY: tool to author town positions on the flat overworld image.
+              Compiled out of production by Vite (import.meta.env.DEV → false). */}
+          {import.meta.env.DEV && (
+            <TownPlacer towns={ATLAS.regions.map((r) => ({ id: r.id, name: r.name }))} />
+          )}
         </div>
 
         <div className="realm-meter">
