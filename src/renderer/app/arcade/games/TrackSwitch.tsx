@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { balance } from '@shared/config/balance'
 import { play } from '../sound'
-import { Timer } from '@phosphor-icons/react'
 import { GameIcon } from '../gameIcons'
+import { RoundTimer } from '../RoundTimer'
 
 /**
  * 🔀 Track Switch — task-switching / cognitive flexibility (the Trail-Making B
@@ -185,11 +185,9 @@ export function TrackSwitch({ onFinish }: { onFinish: (score: number) => void })
 
   return (
     <div className="game-shell">
+      <RoundTimer timeLeft={timeLeft} total={DURATION_S} />
       <div className="game-hud">
         <span><GameIcon k="trackswitch" size={15} /> {score}</span>
-        <span className="hud-timer">
-          <Timer size={14} weight="bold" /> {Math.max(0, timeLeft)}s
-        </span>
         <button onClick={endEarly}>End round</button>
       </div>
       <div className="ts-field" data-next={nextLabel}>
@@ -212,24 +210,42 @@ export function TrackSwitch({ onFinish }: { onFinish: (score: number) => void })
             <span className="ts-ready-count">{count > 0 ? count : 'Go!'}</span>
           </div>
         ) : (
-          nodes.map((n, i) => {
-            const isDone = i < ptr
-            const isNext = i === ptr
-            return (
-              <button
-                key={`${n.label}-${i}`}
-                className={`ts-node${isDone ? ' ts-done' : ''}${isNext ? ' ts-next' : ''}${
-                  shake === n.label ? ' ts-shake' : ''
-                }`}
-                data-label={n.label}
-                style={{ top: `${n.top}%`, left: `${n.left}%` }}
-                onClick={() => tap(n.label)}
-                disabled={isDone}
-              >
-                {isDone ? '✓' : n.label}
-              </button>
-            )
-          })
+          <>
+            {/* Guide line from the just-completed node to the next target — leads the
+                eye across the scattered field so the next node is easy to FIND (the
+                real cause of "stops working after 1": clicks land fine, but players
+                couldn't locate the next far-flung node). preserveAspectRatio="none"
+                maps the 0–100 viewBox onto the field so node %-coords line up. */}
+            {ptr > 0 && ptr < nodes.length && (
+              <svg className="ts-guide" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                <line
+                  x1={nodes[ptr - 1].left}
+                  y1={nodes[ptr - 1].top}
+                  x2={nodes[ptr].left}
+                  y2={nodes[ptr].top}
+                  vectorEffect="non-scaling-stroke"
+                />
+              </svg>
+            )}
+            {nodes.map((n, i) => {
+              const isDone = i < ptr
+              const isNext = i === ptr
+              return (
+                <button
+                  key={`${n.label}-${i}`}
+                  className={`ts-node${isDone ? ' ts-done' : ''}${isNext ? ' ts-next' : ''}${
+                    shake === n.label ? ' ts-shake' : ''
+                  }`}
+                  data-label={n.label}
+                  style={{ top: `${n.top}%`, left: `${n.left}%` }}
+                  onClick={() => tap(n.label)}
+                  disabled={isDone}
+                >
+                  {isDone ? '✓' : n.label}
+                </button>
+              )
+            })}
+          </>
         )}
       </div>
     </div>

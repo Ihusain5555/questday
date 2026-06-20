@@ -401,19 +401,36 @@ export const balance = {
       // (see theme.css --skill-*); the Arcade renders them as tinted badges
       // (app-wide icon convention — no emoji in UI chrome). Grouped by skill:
       // Memory & working memory — amethyst
-      nback: { name: 'N-Back', icon: 'Stack', color: 'var(--skill-memory)', blurb: 'Match the cell from 2 steps back — a working-memory workout.', howToPlay: 'Cells light up one at a time. Tap MATCH when the lit cell is the same as the one N steps back (Easy = 1 back, Hard = 3 back).', brainBenefit: 'Working memory — holding and updating a few things in mind at once. Your mental RAM.', trials: 24, stepMs: 2400, litMs: 1650, matchRate: 0.32 },
+      // N-back levels (Easy=2 / Medium=3 / Hard=5) live in NBack.tsx MODE_N. Hard=5
+      // is genuinely expert-tier, so trials + match-rate are bumped a touch and the
+      // step slowed so a 5-back stays playable (research: ~25-30 trials, higher match
+      // rate, >=2.5s pace at high n) — never a guessing wall (tone rule).
+      nback: { name: 'N-Back', icon: 'Stack', color: 'var(--skill-memory)', blurb: 'Match the cell from N steps back — a working-memory workout.', howToPlay: 'Cells light up one at a time. Tap MATCH when the lit cell is the same as the one N steps back (Easy = 2 back, Medium = 3 back, Hard = 5 back).', brainBenefit: 'Working memory — holding and updating a few things in mind at once. Your mental RAM.', trials: 26, stepMs: 2500, litMs: 1700, matchRate: 0.33 },
       spanrecall: { name: 'Span Recall', icon: 'Stairs', color: 'var(--skill-memory)', blurb: 'Repeat the growing sequence — stretch your memory span (Corsi).', howToPlay: 'Watch the cells flash in order, then tap them back in the same order. Each success adds one more to remember.', brainBenefit: 'Memory span — how many things you can hold in short-term memory at once.', seconds: 75, maxLen: 9, litMs: 600, gapMs: 220 },
       memory: { name: 'Memory Match', icon: 'Cards', color: 'var(--skill-memory)', blurb: 'Pair the cards from memory — a light visual-memory warm-up.', howToPlay: 'Flip two cards at a time to find matching pairs. Remember where each one is to clear the board.', brainBenefit: 'Visual memory — remembering what you saw and where it was.', seconds: 90 },
       // Processing speed & attention — gold
       flashrecall: { name: 'Flash Recall', icon: 'Eye', color: 'var(--skill-speed)', blurb: 'Catch the flash, then place it — processing speed & attention (UFOV).', howToPlay: 'Keep your eyes on the centre +. A dot flashes briefly on the ring — then tap where it appeared.', brainBenefit: 'Processing speed — how fast you take in a whole scene at a glance.', trials: 16, startMs: 360, minMs: 80, maxMs: 650, stepDownMs: 45, stepUpMs: 55 },
-      aim: { name: 'Aim Trainer', icon: 'Crosshair', color: 'var(--skill-speed)', blurb: 'Hit the targets fast — sharpens visual attention & hand-eye speed.', howToPlay: 'Tap the targets as fast as you can before time runs out. They shrink as you go.', brainBenefit: 'Visual attention and hand-eye speed — spotting and reacting to what matters, fast.', seconds: 45 },
+      // Aim modes (chosen before the round, like Aim Lab's task picker) live here so
+      // they're tunable: count = targets on screen at once, size = px, lifeMs = how long
+      // a target lasts before relocating (0 = until hit), pts = score per hit (Precision
+      // is smaller so it pays more — else nobody picks it). Read via STATIC key
+      // (balance.arcade.games.aim.modes.speed) to dodge the union-type narrowing.
+      aim: { name: 'Aim Trainer', icon: 'Crosshair', color: 'var(--skill-speed)', blurb: 'Hit the targets fast — sharpens visual attention & hand-eye speed.', howToPlay: 'Pick a mode, then tap the targets as fast as you can before time runs out. Classic = one target, Speed = three at once, Precision = small but worth double, Reflex = vanishes if you are too slow.', brainBenefit: 'Visual attention and hand-eye speed — spotting and reacting to what matters, fast.', seconds: 45, modes: { classic: { count: 1, size: 48, lifeMs: 0, pts: 1 }, speed: { count: 3, size: 52, lifeMs: 0, pts: 1 }, precision: { count: 1, size: 30, lifeMs: 0, pts: 2 }, reflex: { count: 1, size: 44, lifeMs: 1200, pts: 1 } } },
       reaction: { name: 'Reaction Time', icon: 'Lightning', color: 'var(--skill-speed)', blurb: 'Wait for green, then tap — measures your reaction speed.', howToPlay: 'Wait for the screen to turn green, then tap as fast as you can. Do not jump early.', brainBenefit: 'Reaction speed — how quickly your brain turns seeing something into moving.', trials: 5 },
       // Executive control: inhibition — emerald
-      colorclash: { name: 'Color Clash', icon: 'Palette', color: 'var(--skill-focus)', blurb: 'Tap the ink colour, not the word — focus & inhibition (Stroop).', howToPlay: 'Tap the colour the word is printed in — not what the word says.', brainBenefit: 'Focus and impulse control — overriding the automatic answer to give the right one.', seconds: 45 },
-      stoptap: { name: 'Stop Tap', icon: 'HandPalm', color: 'var(--skill-focus)', blurb: 'Tap on GO, freeze on STOP — trains response inhibition (go/no-go).', howToPlay: 'Tap on GO, but freeze the instant it says STOP. Hold back when you need to.', brainBenefit: 'Self-control — the mental brake that stops an action you have already started.', seconds: 45, minGapMs: 420, minWindowMs: 380 },
+      colorclash: { name: 'Color Clash', icon: 'Palette', color: 'var(--skill-focus)', blurb: 'Tap the ink colour, not the word — focus & inhibition (Stroop).', howToPlay: 'Tap the colour each word is printed in — not what it says. Medium shows 2 words and Hard 4 — answer them left to right (the glowing word is next).', brainBenefit: 'Focus and impulse control — overriding the automatic answer to give the right one.', seconds: 45 },
+      // Go/no-go timing now lives (per mode) in StopTap.tsx MODES; these are the ramp
+      // FLOORS so a long round can't shrink the window/gap below a humane limit. The
+      // window was far too long (650ms ≈ 2.6× the lab value) so STOP was trivially easy
+      // — Medium is now ~450ms on-screen, 25% no-go (the textbook 3:1). feedbackMs is the
+      // readable post-tap message duration (was a hardcoded 220ms = one word, unreadable).
+      stoptap: { name: 'Stop Tap', icon: 'HandPalm', color: 'var(--skill-focus)', blurb: 'Tap on GO, freeze on STOP — trains response inhibition (go/no-go).', howToPlay: 'Tap the moment GO shows, but freeze the instant it says STOP. The GO flashes are quick now — stay sharp.', brainBenefit: 'Self-control — the mental brake that stops an action you have already started.', seconds: 45, minGapMs: 400, minWindowMs: 260, feedbackMs: 800 },
       // Flexibility & spatial reasoning — sky
       trackswitch: { name: 'Track Switch', icon: 'ArrowsLeftRight', color: 'var(--skill-flex)', blurb: 'Hop 1-A-2-B… — trains mental flexibility (task-switching).', howToPlay: 'Tap the nodes in order, alternating number then letter: 1, A, 2, B, 3, C…', brainBenefit: 'Mental flexibility — switching between two rules without losing your place.', seconds: 50 },
-      mentalspin: { name: 'Mental Spin', icon: 'ArrowsClockwise', color: 'var(--skill-flex)', blurb: 'Same shape or mirror? Rotate it in your head — spatial reasoning.', howToPlay: 'The right shape is the left one turned — or flipped. Tap Same if it is only rotated, Mirror if it is flipped.', brainBenefit: 'Spatial reasoning — turning objects over in your head without moving them.', seconds: 45 }
+      // revealMs = how long the "watch the left shape rotate onto the right" answer
+      // animation plays (the satisfying aha + it teaches the transform); fastMs = answer
+      // under this many ms for a "Fast!" bonus that feeds the combo quicker.
+      mentalspin: { name: 'Mental Spin', icon: 'ArrowsClockwise', color: 'var(--skill-flex)', blurb: 'Same shape or mirror? Rotate it in your head — spatial reasoning.', howToPlay: 'The right shape is the left one turned — or flipped. Tap Same if it is only rotated, Mirror if it is flipped. Answer fast to build a combo.', brainBenefit: 'Spatial reasoning — turning objects over in your head without moving them.', seconds: 45, revealMs: 450, fastMs: 2500 }
     }
   },
 

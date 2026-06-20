@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { balance } from '@shared/config/balance'
 import { play } from '../sound'
-import { Timer, Question } from '@phosphor-icons/react'
+import { Question } from '@phosphor-icons/react'
 import { GameIcon, MemoryFace, MEMORY_FACE_COUNT } from '../gameIcons'
+import { RoundTimer } from '../RoundTimer'
 
 // Card faces are indices into the shared Phosphor face set (see gameIcons):
 // distinct shapes, all drawn in one gold tone, so you recall by shape + position
@@ -163,9 +164,9 @@ export function MemoryMatch({ onFinish }: { onFinish: (score: number) => void })
 
   return (
     <div className="game-shell">
+      <RoundTimer timeLeft={timeLeft} total={cfg.seconds + cur.timeDelta} />
       <div className="game-hud">
         <span><GameIcon k="memory" size={15} /> {pairs}/{pairCount} pairs</span>
-        <span className="hud-timer"><Timer size={14} weight="bold" /> {Math.max(0, timeLeft)}s</span>
         <button onClick={endEarly}>End round</button>
       </div>
       {phase === 'ready' ? (

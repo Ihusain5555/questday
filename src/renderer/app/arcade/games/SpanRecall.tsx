@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { balance } from '@shared/config/balance'
 import { play } from '../sound'
-import { Timer } from '@phosphor-icons/react'
 import { GameIcon } from '../gameIcons'
+import { RoundTimer } from '../RoundTimer'
 
 /**
  * 🪜 Span Recall — a memory-span workout (Corsi block-tapping). The grid flashes
@@ -199,12 +199,10 @@ export function SpanRecall({ onFinish }: { onFinish: (score: number) => void }):
 
   return (
     <div className="game-shell">
+      <RoundTimer timeLeft={timeLeft} total={DURATION_S} />
       <div className="game-hud">
         <span><GameIcon k="spanrecall" size={15} /> span {best}</span>
         <span className="meta-dim">now {span}</span>
-        <span className="hud-timer">
-          <Timer size={14} weight="bold" /> {Math.max(0, timeLeft)}s
-        </span>
         <button onClick={endEarly}>End round</button>
       </div>
       <div

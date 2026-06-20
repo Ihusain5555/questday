@@ -83,9 +83,14 @@ try {
   // (Wait out the "Ready" countdown — the word/swatches appear once play starts.)
   await playGame('Color Clash')
   await main.locator('.cc-swatch').first().waitFor({ timeout: 5000 })
-  result('COLORCLASH_LAUNCH_TEST', (await main.locator('.cc-word').count()) === 1, 'Stroop word rendered')
-  for (let i = 0; i < 6; i++) {
-    const ink = await main.locator('.cc-word').evaluate((el) => getComputedStyle(el).color)
+  // Multi-word now (Medium default = 2 words). Answer the ACTIVE (glowing) word each
+  // tap: read its ink colour, click the matching swatch; the pointer advances.
+  result('COLORCLASH_LAUNCH_TEST', (await main.locator('.cc-word').count()) >= 1, `${await main.locator('.cc-word').count()} word(s) (medium=2)`)
+  result('ROUNDTIMER_TEST', (await main.locator('.round-timer').count()) === 1, 'prominent round timer rendered')
+  for (let i = 0; i < 10; i++) {
+    const active = main.locator('.cc-word.active').first()
+    if (!(await active.count())) break
+    const ink = await active.evaluate((el) => getComputedStyle(el).color)
     const swatches = main.locator('.cc-swatch')
     const n = await swatches.count()
     let clicked = false
@@ -105,7 +110,7 @@ try {
   await main.waitForTimeout(500)
   result('COLORCLASH_PLAY_TEST',
     (await resultText()).includes('Color Clash') && (await resultText()).includes('new best'),
-    `result: "${(await resultText()).trim()}" (6 ink-matching taps -> scored + best)`)
+    `result: "${(await resultText()).trim()}" (active-word ink taps -> scored + best)`)
 
   // Flash Recall (UFOV): the flash is only ~400ms — poll in-page with rAF so we
   // catch the lit cell the frame it appears; -1 means we missed it (stuck in
@@ -162,9 +167,12 @@ try {
   await main.locator('.ms-choice').first().waitFor({ timeout: 6000 })
   result('MENTALSPIN_LAUNCH_TEST', (await main.locator('.ms-board').count()) === 1, 'two shapes rendered')
   for (let i = 0; i < 5; i++) {
+    // The Same/Mirror buttons vanish during the ~450ms verdict reveal between trials —
+    // wait for them, answer, then wait out the reveal before the next trial.
+    await main.locator('.ms-choice').first().waitFor({ timeout: 3000 }).catch(() => {})
     const ans = await main.locator('.ms-field').getAttribute('data-answer')
-    await main.locator(ans === 'mirror' ? '.ms-mirror' : '.ms-same').click()
-    await main.waitForTimeout(170)
+    await main.locator(ans === 'mirror' ? '.ms-mirror' : '.ms-same').click().catch(() => {})
+    await main.waitForTimeout(560)
   }
   await main.screenshot({ path: path.join(shots, 'arcade-mentalspin.png') })
   await endRound()
@@ -217,6 +225,22 @@ try {
   await endRound()
   await main.waitForTimeout(400)
   result('SPANRECALL_PLAY_TEST', (await resultText()).includes('Span Recall'), `result: "${(await resultText()).trim()}"`)
+
+  // --- Aim Trainer (modes): default = Speed (3 targets at once). Click targets fast. ---
+  await playGame('Aim Trainer')
+  await main.locator('.aim-field').waitFor({ timeout: 6000 })
+  await main.waitForTimeout(2300) // ready countdown
+  const aimTargets = await main.locator('.aim-target').count()
+  result('AIM_LAUNCH_TEST', aimTargets === 3, `${aimTargets} targets on screen (Speed default = 3)`)
+  for (let i = 0; i < 10; i++) {
+    const t = main.locator('.aim-target').first()
+    if (await t.count()) await t.click().catch(() => {})
+    await main.waitForTimeout(170)
+  }
+  await main.screenshot({ path: path.join(shots, 'arcade-aim.png') })
+  await endRound()
+  await main.waitForTimeout(400)
+  result('AIM_PLAY_TEST', (await resultText()).includes('Aim Trainer'), `result: "${(await resultText()).trim()}"`)
 
   await app.close()
 } catch (err) {

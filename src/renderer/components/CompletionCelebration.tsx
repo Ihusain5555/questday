@@ -6,6 +6,7 @@ import { CountUp } from './CountUp'
 import { FlameIcon } from './RewardIcons'
 import { BUILDING_SVG } from '../app/townBuildings'
 import { play } from '../app/arcade/sound'
+import { REALM_COMING_SOON } from '@shared/config/featureGates'
 
 // viewBox framing the 'hall' building art (drawn around local origin) as a small badge.
 const HALL_VIEWBOX = '-64 -116 128 144'
@@ -165,7 +166,7 @@ export function CompletionCelebration(): JSX.Element {
                 </motion.div>
               )}
 
-              {celebration.expedition && (
+              {!REALM_COMING_SOON && celebration.expedition && (
                 <motion.div
                   className="celebrate-region"
                   {...enter(
@@ -178,7 +179,7 @@ export function CompletionCelebration(): JSX.Element {
                 </motion.div>
               )}
 
-              {celebration.civ?.grewBuildings ? (
+              {!REALM_COMING_SOON && (celebration.civ?.grewBuildings ? (
                 <motion.div
                   className="celebrate-civ-grew"
                   {...enter(
@@ -226,7 +227,7 @@ export function CompletionCelebration(): JSX.Element {
                   </span>
                   {celebration.civ.toNext} to your next building
                 </motion.div>
-              ) : null}
+              ) : null)}
 
               {celebration.ticket && (
                 <motion.div

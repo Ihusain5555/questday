@@ -6,7 +6,7 @@ import { GameIcon } from '../gameIcons'
 /**
  * 🔢 N-Back — the classic working-memory workout. Cells light up one at a time;
  * press MATCH whenever the lit cell is the same as the one N steps back (Easy =
- * 1-back, Medium = 2-back, Hard = 3-back). You have to hold the last couple of
+ * 2-back, Medium = 3-back, Hard = 5-back). You have to hold the last few
  * positions in mind and update them every step. Score = correct catches minus
  * false alarms (floored at 0) — a
  * wrong tap costs a point in the round but never the product (no streak/level
@@ -39,8 +39,10 @@ function buildSequence(n: number): number[] {
 }
 
 type Mode = 'easy' | 'medium' | 'hard'
-// Modes set the n-level: Easy = 1-back, Medium = 2-back, Hard = 3-back.
-const MODE_N: Record<Mode, number> = { easy: 1, medium: 2, hard: 3 }
+// Modes set the n-level: Easy = 2-back, Medium = 3-back, Hard = 5-back. (Hard=5 is
+// expert-tier; balance.nback bumps trials/match-rate + slows the step so it stays
+// playable rather than a guessing wall — tone rule.)
+const MODE_N: Record<Mode, number> = { easy: 2, medium: 3, hard: 5 }
 
 export function NBack({ onFinish }: { onFinish: (score: number) => void }): JSX.Element {
   const [mode, setMode] = useState<Mode>('medium') // chosen during "ready"; default playable

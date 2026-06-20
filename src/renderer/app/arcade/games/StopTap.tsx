@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { balance } from '@shared/config/balance'
 import { play } from '../sound'
-import { Timer } from '@phosphor-icons/react'
 import { GameIcon } from '../gameIcons'
+import { RoundTimer } from '../RoundTimer'
 
 /**
  * ✋ Stop Tap — a GO/NO-GO inhibition drill (response stopping). Stimuli flash up
@@ -22,15 +22,20 @@ import { GameIcon } from '../gameIcons'
 const DURATION_S: number = balance.arcade.games.stoptap.seconds
 const MIN_GAP_MS: number = balance.arcade.games.stoptap.minGapMs // floor for the gap as the cadence ramps up
 const MIN_WINDOW_MS: number = balance.arcade.games.stoptap.minWindowMs // floor for the response window
+const FEEDBACK_MS: number = balance.arcade.games.stoptap.feedbackMs // how long the post-tap message lingers (readable)
 
 // Difficulty: cadence + how often a trial is the rare NO-GO stop signal.
 // `gap` is the blank before a stimulus, `window` how long it stays on screen,
 // `noGo` the share of trials that are STOP. Medium is the default the app drives.
+// Tightened (research): the old 650ms window was ~2.6× the lab value, so STOP was
+// trivially easy. The window IS the response deadline here, so a shorter window is
+// the primary difficulty lever; Medium is now ~450ms on-screen at the textbook 3:1
+// go:no-go ratio. Difficulty comes from speed/rarity, never punishment (tone rule).
 type Mode = 'easy' | 'medium' | 'hard'
 const MODES: { key: Mode; name: string; gap: number; window: number; noGo: number }[] = [
-  { key: 'easy', name: 'Easy', gap: 1150, window: 750, noGo: 0.15 },
-  { key: 'medium', name: 'Medium', gap: 950, window: 650, noGo: 0.22 },
-  { key: 'hard', name: 'Hard', gap: 750, window: 520, noGo: 0.32 }
+  { key: 'easy', name: 'Easy', gap: 1000, window: 600, noGo: 0.18 },
+  { key: 'medium', name: 'Medium', gap: 850, window: 450, noGo: 0.25 },
+  { key: 'hard', name: 'Hard', gap: 650, window: 350, noGo: 0.3 }
 ]
 
 type Stim = 'go' | 'nogo' | 'none'
@@ -51,7 +56,8 @@ export function StopTap({ onFinish }: { onFinish: (score: number) => void }): JS
   const respondedRef = useRef(false) // did the player tap during this stimulus?
   const done = useRef(false)
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
-  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null) // brief colour flash
+  const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null) // longer, readable message
   // The chosen difficulty's params, read fresh inside the self-chaining loop.
   const cfgRef = useRef(MODES.find((m) => m.key === 'medium') ?? MODES[1])
 
@@ -65,6 +71,7 @@ export function StopTap({ onFinish }: { onFinish: (score: number) => void }): JS
     done.current = true
     clearTimers()
     if (flashTimer.current) clearTimeout(flashTimer.current)
+    if (hintTimer.current) clearTimeout(hintTimer.current)
     onFinish(scoreRef.current)
   }
 
@@ -77,10 +84,11 @@ export function StopTap({ onFinish }: { onFinish: (score: number) => void }): JS
     setFlash(kind)
     setHint(msg ?? null)
     if (flashTimer.current) clearTimeout(flashTimer.current)
-    flashTimer.current = setTimeout(() => {
-      setFlash(null)
-      setHint(null)
-    }, 220)
+    if (hintTimer.current) clearTimeout(hintTimer.current)
+    // The colour flash is brief (gentle); the MESSAGE lingers long enough to read
+    // (FEEDBACK_MS ≈ 800ms — the old 220ms was ~one word, unreadable).
+    flashTimer.current = setTimeout(() => setFlash(null), 250)
+    hintTimer.current = setTimeout(() => setHint(null), FEEDBACK_MS)
   }
 
   // Difficulty is chosen during the "ready" countdown, then locked once play starts.
@@ -191,11 +199,9 @@ export function StopTap({ onFinish }: { onFinish: (score: number) => void }): JS
 
   return (
     <div className="game-shell">
+      <RoundTimer timeLeft={timeLeft} total={DURATION_S} />
       <div className="game-hud">
         <span><GameIcon k="stoptap" size={15} /> {score}</span>
-        <span className="hud-timer">
-          <Timer size={14} weight="bold" /> {Math.max(0, timeLeft)}s
-        </span>
         <button onClick={endEarly}>End round</button>
       </div>
       <div

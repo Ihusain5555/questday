@@ -102,7 +102,13 @@ export function FlashRecall({ onFinish }: { onFinish: (score: number) => void })
   }
 
   const choose = (slot: number) => {
-    if (phase !== 'respond' || done.current) return
+    if (done.current) return
+    // Accept the tap as soon as the dot FLASHES — a fast, confident click on the lit
+    // dot should count — as well as during the respond phase. Cancel the pending
+    // flash→respond timer so an early click resolves cleanly instead of being dropped.
+    // (Bug-list: "Flash recall doesn't always work when you press the dot".)
+    if (phase !== 'flash' && phase !== 'respond') return
+    clearTimers()
     const correct = slot === target
     play(correct ? 'good' : 'bad')
     const usedMs = exposure.current // the exposure this flash was shown at

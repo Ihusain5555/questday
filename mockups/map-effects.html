@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Terra Questa — Living Map: weather effects + new map features (approval mockup)</title>
+<style>
+  /* ===== Inked-watercolor palette (matches mockups/world-map-final.html) ===== */
+  :root{
+    --parch1:#f6eed4; --parch2:#ecdfba; --parch3:#ddca9c;
+    --sea1:#bfe0e0; --sea2:#90c0c4; --sea3:#6ba0a6;
+    --forest:#74a84e; --forest2:#86b85c; --forestInk:#4f7e3a;
+    --ink:#5a4a2e; --ink2:#6b5236; --inkSoft:#9c7e4a;
+    --gold:#e6be63; --goldBright:#f4d77a; --goldDeep:#b98a2e;
+    --snow:#f3ead2; --stone:#b9a98a; --amethyst:#9b6fd0; --emeraldGem:#3fcaa0; --citrine:#f0c24a;
+  }
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:#1e3a36;color:#e8f2ea;font-family:"Segoe UI",system-ui,sans-serif;padding:26px 18px 80px;line-height:1.5}
+  h1{font-family:"Iowan Old Style","Palatino Linotype","Georgia",serif;color:#f4d77a;font-size:26px;margin:0 0 4px;text-align:center}
+  .sub{color:#cfe7da;font-size:13.5px;text-align:center;max-width:980px;margin:0 auto 18px}
+  .sub b{color:#f4d77a}
+  .bar{display:flex;gap:10px;justify-content:center;align-items:center;margin:0 auto 26px;flex-wrap:wrap}
+  .bar button{font:inherit;font-size:13px;padding:7px 14px;border-radius:999px;border:1px solid #3c6b62;background:#234b45;color:#e8f2ea;cursor:pointer}
+  .bar button.on{background:linear-gradient(180deg,#f4d77a,#e6be63);color:#3a2d0c;border-color:#e6be63}
+  h2{font-family:"Iowan Old Style","Georgia",serif;color:#f4d77a;font-size:18px;margin:30px auto 4px;max-width:1280px;border-bottom:1px solid #3c6b62;padding-bottom:6px}
+  h2 .note{font-family:"Segoe UI",sans-serif;font-size:12px;color:#9fc2b6;font-weight:normal;float:right}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;max-width:1280px;margin:14px auto 0}
+  .tile{background:#14201a;border:1px solid #2c4a3e;border-radius:12px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.35)}
+  .scene{position:relative;width:100%;aspect-ratio:3/2;overflow:hidden}
+  .scene svg{display:block;width:100%;height:100%}
+  .fx{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+  .cap{padding:9px 12px 11px}
+  .cap .t{font-weight:600;font-size:14px;color:#f4d77a}
+  .cap .d{font-size:12px;color:#a9c4ba;margin-top:2px}
+  .cap .use{font-size:11px;color:#8aa79c;margin-top:5px;font-style:italic}
+  .tag{display:inline-block;font-size:10px;letter-spacing:.4px;text-transform:uppercase;padding:1px 7px;border-radius:999px;margin-left:6px;vertical-align:middle}
+  .tag.amb{background:#1d3a52;color:#8fd4ff}
+  .tag.poi{background:#3a2e12;color:#f4d77a}
+  .tag.evt{background:#3a1f2e;color:#ff9ec4}
+  .tone{max-width:1280px;margin:22px auto 0;background:#241a12;border:1px solid #5a431f;border-radius:12px;padding:14px 18px;color:#f0dcae;font-size:13px}
+  .tone b{color:#f4d77a}
+
+  /* ============================ EFFECT KEYFRAMES ============================ */
+  /* Particle layers (snow/rain/embers/fireflies) are tiny divs whose box-shadow
+     is generated in JS (the single-element multi-shadow trick) and moved with
+     transform only (compositor-friendly). */
+  @keyframes fall   { from{transform:translateY(0)}      to{transform:translateY(var(--span,200px))} }
+  @keyframes sway   { from{transform:translateX(-9px)}   to{transform:translateX(9px)} }
+  @keyframes rise   { from{transform:translateY(0)}      to{transform:translateY(calc(-1 * var(--span,200px)))} }
+  @keyframes drift  { from{transform:translateX(-12%)}   to{transform:translateX(12%)} }
+  @keyframes driftX { 0%{opacity:0;transform:translateX(-20%)} 18%{opacity:.5} 78%{opacity:.5} 100%{opacity:0;transform:translateX(120%)} }
+  @keyframes grainShift{0%,100%{transform:translate(0,0)}10%{transform:translate(-4%,-8%)}30%{transform:translate(-12%,4%)}50%{transform:translate(6%,-6%)}70%{transform:translate(-8%,8%)}90%{transform:translate(4%,2%)}}
+  @keyframes bolt   { 0%,92%,100%{opacity:0} 93%{opacity:.55} 94.5%{opacity:.12} 96%{opacity:.6} 98%{opacity:0} }
+  @keyframes smoke  { 0%{transform:translateY(0) translateX(0) scale(.4);opacity:.55;filter:blur(2px)} 100%{transform:translateY(-58px) translateX(10px) scale(1.5);opacity:0;filter:blur(8px)} }
+  @keyframes flick  { 0%,100%{transform:scaleY(1) skewX(-3deg)} 50%{transform:scaleY(1.18) skewX(3deg)} }
+  @keyframes glow   { 0%,100%{opacity:.45;transform:scale(1)} 50%{opacity:.8;transform:scale(1.12)} }
+  @keyframes twinkle{ 0%,100%{opacity:.25} 50%{opacity:1} }
+  @keyframes sweep  { from{transform:rotate(-32deg)} to{transform:rotate(32deg)} }
+  @keyframes water  { from{background-position-y:0} to{background-position-y:14px} }
+  @keyframes fly    { 0%{opacity:0;transform:translate(-15%,6%)} 12%{opacity:1} 88%{opacity:1} 100%{opacity:0;transform:translate(120%,-10%)} }
+  @keyframes flap   { 0%,100%{d:path('M0 4 Q5 0 10 4 Q5 2 0 4')} 50%{d:path('M0 2 Q5 6 10 2 Q5 4 0 2')} }
+  @keyframes shoot  { 0%{opacity:0;transform:translate(0,0)} 8%{opacity:1} 30%{opacity:1} 45%{opacity:0;transform:translate(150px,90px)} 100%{opacity:0;transform:translate(150px,90px)} }
+  @keyframes aurora { 0%,100%{transform:translateX(-6%) skewX(-6deg);opacity:.5} 50%{transform:translateX(6%) skewX(6deg);opacity:.85} }
+  /* (seasonal "fire→regrowth" keyframes are injected near the bottom as seasonsK) */
+
+  .layer{position:absolute;left:0;top:0;width:6px;height:6px;border-radius:50%}
+  .snow  {animation:fall linear infinite, sway 3.2s ease-in-out infinite alternate}
+  .rainL {animation:fall linear infinite}
+  .emberL{animation:rise linear infinite, sway 1.8s ease-in-out infinite alternate}
+  .fireflyL{animation:twinkle ease-in-out infinite}
+  .blob  {position:absolute;border-radius:50%;filter:blur(18px);animation:drift ease-in-out infinite alternate}
+  .windS {position:absolute;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,#f3ead2,transparent);animation:driftX linear infinite}
+  .grainO{position:absolute;inset:-50%;width:200%;height:200%;opacity:.18;animation:grainShift 1.1s steps(8) infinite;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E")}
+  .boltO {position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 0%, rgba(220,235,255,.9), transparent 70%);animation:bolt 9s linear infinite}
+  .cloud {position:absolute;border-radius:50%;background:rgba(255,255,255,.5);filter:blur(10px);animation:drift ease-in-out infinite alternate}
+
+  @media (prefers-reduced-motion: reduce){
+    .snow,.rainL,.emberL,.fireflyL,.blob,.windS,.grainO,.boltO,.cloud,.smokeP,.flame,.fglow,.gemHi,.beam,.water,.flock,.shootS,.auroraB,.seasonsT{animation:none!important}
+  }
+  body.paused .scene *{animation-play-state:paused!important}
+</style>
+</head>
+<body>
+  <h1>Terra Questa — Living Map</h1>
+  <div class="sub"><b>Approval mockup.</b> Weather effects per biome + new map features, all pure CSS/SVG in the inked-watercolor style (zero new code dependencies). Each tile shows the effect and a one-line note on how it'd be used in the real map. Nothing here touches the app yet — <b>approve the looks you want and I'll wire the chosen ones into the real RealmView, per biome.</b> Everything respects <i>reduce-motion</i> and the gains-only tone rule.</div>
+  <div class="bar">
+    <button id="pause">⏸ Pause motion</button>
+    <span style="font-size:12px;color:#9fc2b6">Tags:
+      <span class="tag amb">ambient</span> always-on mood ·
+      <span class="tag poi">landmark</span> permanent reward that appears as the world grows ·
+      <span class="tag evt">rare event</span> occasional, self-resolving, purely beautiful</span>
+  </div>
+
+  <h2>Weather &amp; atmosphere <span class="note">biome-scoped — only the matching region animates</span></h2>
+  <div class="grid" id="weather"></div>
+
+  <h2>New map features <span class="note">hand-authored inked SVG · gems &amp; mines you asked for, plus more</span></h2>
+  <div class="grid" id="features"></div>
+
+  <div class="tone">
+    <b>On your "random forest on fire" idea —</b> a fire that <i>destroys</i> a forest breaks the project's gains-only integrity line (your own rule: a missed day is cozy resting, never decay or loss; the Bonfire never goes out). Watching your reward burn is the opposite of motivating. So I reframed it two ways for you to choose from in the gallery above: a <b>Cozy bonfire</b> (warmth that flickers but never spreads) and a <b>Seasonal turn → bloom</b> (a grove cross-fades summer → warm autumn glow → fresh spring blossoms — the "event" is the colour cycle and it always lands on <i>more</i>). If you still want literal flames somewhere, the safe version is a brief warm glow that resolves into a burst of new saplings in ~6s — net positive, nothing mourned. Tell me which you like.
+  </div>
+
+<script>
+/* ---------- particle-field generator (single-element multi-shadow trick) ----------
+   Builds a box-shadow string of N dots across a band of height H, then a second
+   identical band shifted by H, so a translateY of exactly H loops seamlessly. */
+function field(el, {n=26, w=300, h=200, color='#f3ead2', size=2, blur=0}={}){
+  const parts=[];
+  for(let i=0;i<n;i++){
+    const x=Math.round(Math.random()*w);
+    const y=Math.round(Math.random()*h);
+    parts.push(`${x}px ${y}px 0 ${color}`);
+    parts.push(`${x}px ${y+h}px 0 ${color}`); // second band for seamless wrap
+  }
+  el.style.width=size+'px'; el.style.height=size+'px'; el.style.background=color;
+  if(blur) el.style.filter=`blur(${blur}px)`;
+  el.style.boxShadow=parts.join(',');
+  el.style.setProperty('--span', h+'px');
+}
+/* fireflies: each is its own dot so they twinkle out of phase */
+function motes(host, {n=9, w=300, h=200, color='#f7e08a'}={}){
+  for(let i=0;i<n;i++){
+    const m=document.createElement('div');
+    m.className='layer fireflyL';
+    m.style.cssText=`width:3px;height:3px;background:${color};box-shadow:0 0 5px 1px ${color};`;
+    m.style.left=Math.round(Math.random()*w)+'px';
+    m.style.top=Math.round(40+Math.random()*(h-40))+'px';
+    m.style.animationDuration=(2+Math.random()*2.5).toFixed(2)+'s';
+    m.style.animationDelay=(-Math.random()*4).toFixed(2)+'s';
+    host.appendChild(m);
+  }
+}
+
+/* ---------- reusable inked mini-scenes (compact SVG backgrounds) ---------- */
+const F='filter="url(#wc)"';
+const defs=`<defs>
+  <radialGradient id="parch" cx="50%" cy="40%" r="80%"><stop offset="0%" stop-color="#f6eed4"/><stop offset="66%" stop-color="#ecdfba"/><stop offset="100%" stop-color="#ddca9c"/></radialGradient>
+  <radialGradient id="sea" cx="50%" cy="46%" r="76%"><stop offset="0%" stop-color="#bfe0e0"/><stop offset="55%" stop-color="#90c0c4"/><stop offset="100%" stop-color="#6ba0a6"/></radialGradient>
+  <linearGradient id="dusk" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2b2350"/><stop offset="60%" stop-color="#5a4a6e"/><stop offset="100%" stop-color="#caa86e"/></linearGradient>
+  <linearGradient id="night" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0f1838"/><stop offset="100%" stop-color="#33406a"/></linearGradient>
+  <filter id="wc" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="1.4"/></filter>
+</defs>`;
+function pine(x,y,s){return `<g transform="translate(${x} ${y}) scale(${s})"><path d="M0 26 v-5" stroke="#6a5a36" stroke-width="1.6"/><path d="M-9 22 L0 1 L9 22 Z" fill="#74a84e" stroke="#4f7e3a" stroke-width="0.8"/><path d="M-7 14 L0 2 L7 14 Z" fill="#86b85c" stroke="#4f7e3a" stroke-width="0.6"/></g>`}
+function hill(){return `<path d="M0 200 Q150 120 300 165 L300 200 Z" fill="#cde0a8" ${F}/><path d="M0 200 Q120 150 300 185 L300 200 Z" fill="#bcd494"/>`}
+function house(x,y){return `<g transform="translate(${x} ${y})"><rect x="0" y="0" width="26" height="20" fill="#2c4a38" stroke="#0d1411" stroke-width="1.4"/><path d="M-4 0 L13 -14 L30 0 Z" fill="#b98a2e" stroke="#0d1411" stroke-width="1.4"/><rect x="9" y="9" width="8" height="11" fill="#f4d77a"/></g>`}
+function scene(inner, bg='url(#parch)'){return `<svg viewBox="0 0 300 200" preserveAspectRatio="xMidYMid slice"><rect width="300" height="200" fill="${bg}"/>${defs}${inner}</svg>`}
+
+/* ============================ WEATHER TILES ============================ */
+const weather=[
+  {t:'Snow', tag:'ambient', d:'Soft flakes drift &amp; sway with wind.', use:'Snowy / tundra regions (e.g. Frostmere). 30–40 flakes, parallax layers.',
+   svg:scene(`${hill()}${pine(60,176,1.1)}${pine(230,178,0.95)}<ellipse cx="150" cy="60" rx="200" ry="60" fill="#fff" opacity="0.18" ${F}/>`,'#e9eef2'),
+   fx:`<div class="layer snow" data-field='{"n":24,"color":"#ffffff","size":3}' style="animation-duration:9s"></div>
+       <div class="layer snow" data-field='{"n":18,"color":"#eef3f6","size":2,"blur":1}' style="animation-duration:13s;animation-delay:-4s"></div>`},
+
+  {t:'Rain', tag:'ambient', d:'Light angled drizzle.', use:'Some grassland regions on a rare timer; keep it a gentle shower, never a storm.',
+   svg:scene(`${hill()}${pine(70,176,1)}<path d="M0 150 Q150 130 300 150 L300 200 L0 200 Z" fill="#9fc28a" opacity="0.5"/>`,'#bcd0c4'),
+   fx:`<div class="layer rainL" data-field='{"n":30,"color":"rgba(180,210,225,.6)","size":1}' style="height:13px;border-radius:1px;transform:skewX(12deg);animation-duration:0.8s"></div>`},
+
+  {t:'Sandstorm', tag:'ambient', d:'Amber haze + dust grain drifts across.', use:'Desert regions. Warm tint, low opacity — a haze, never a whiteout.',
+   svg:scene(`<path d="M0 150 Q80 120 150 150 Q220 178 300 148 L300 200 L0 200 Z" fill="#e3c98a"/><path d="M0 170 Q150 150 300 172 L300 200 L0 200 Z" fill="#d8b86a"/><g transform="translate(120 120)"><path d="M0 30 L8 6 L16 30 Z" fill="#caa85e" stroke="#9c7e4a"/></g>`,'#ecdcae'),
+   fx:`<div class="blob" style="left:-20%;top:20%;width:70%;height:70%;background:radial-gradient(closest-side,rgba(214,180,120,.5),transparent);animation-duration:14s"></div>
+       <div class="blob" style="left:30%;top:0;width:80%;height:90%;background:radial-gradient(closest-side,rgba(224,196,140,.45),transparent);animation-duration:18s;animation-delay:-6s"></div>
+       <div class="grainO" style="opacity:.16"></div>`},
+
+  {t:'Ocean wind', tag:'ambient', d:'Pale streaks race across the waves.', use:'Open sea around the continent. Pairs with the existing lapping waves.',
+   svg:scene(`<g stroke="#dcf0f0" stroke-width="1.3" fill="none" opacity="0.7"><path d="M40 70 q8 -5 16 0"/><path d="M120 110 q8 -5 16 0"/><path d="M210 80 q8 -5 16 0"/><path d="M80 150 q8 -5 16 0"/><path d="M200 150 q8 -5 16 0"/><path d="M150 50 q8 -5 16 0"/></g>`,'url(#sea)'),
+   fx:`<div class="windS" style="left:0;top:38%;width:46%;opacity:.5;animation-duration:5s"></div>
+       <div class="windS" style="left:0;top:60%;width:40%;opacity:.4;animation-duration:6.5s;animation-delay:-2s"></div>
+       <div class="windS" style="left:0;top:22%;width:38%;opacity:.35;animation-duration:7s;animation-delay:-4s"></div>`},
+
+  {t:'Heat lightning', tag:'rare event', d:'A soft distant double-flicker behind clouds.', use:'Stormy moments — gentle, capped brightness, never a strobe. Disabled in reduce-motion.',
+   svg:scene(`<rect width="300" height="200" fill="url(#night)"/><ellipse cx="120" cy="70" rx="90" ry="34" fill="#3a4a6a" opacity="0.8" ${F}/><ellipse cx="200" cy="55" rx="70" ry="28" fill="#46577a" opacity="0.7" ${F}/>${hill()}`,'#1a2440'),
+   fx:`<div class="boltO"></div>`},
+
+  {t:'Fog / mist', tag:'ambient', d:'Slow drifting blurred veils.', use:'Moor / marsh (Quietfens). Oversized soft blobs on offset timers — seamless.',
+   svg:scene(`${hill()}${pine(60,178,0.9)}${pine(120,180,0.8)}${pine(210,176,1)}`,'#c2cfc2'),
+   fx:`<div class="blob" style="left:-10%;top:35%;width:60%;height:55%;background:radial-gradient(closest-side,rgba(255,255,255,.6),transparent);animation-duration:30s"></div>
+       <div class="blob" style="left:35%;top:45%;width:70%;height:60%;background:radial-gradient(closest-side,rgba(238,244,240,.5),transparent);animation-duration:46s;animation-delay:-12s"></div>`},
+
+  {t:'Chimney smoke', tag:'ambient', d:'Wisps rise &amp; fade from town roofs.', use:'Over any town with a hearth. One tiny element per chimney — cheap.',
+   svg:scene(`${hill()}${house(110,120)}${house(170,128)}`),
+   fx:`<div class="smokeP" style="position:absolute;left:38%;top:52%;width:12px;height:12px;border-radius:50%;background:radial-gradient(closest-side,rgba(120,120,120,.5),transparent);animation:smoke 5s ease-out infinite"></div>
+       <div class="smokeP" style="position:absolute;left:38%;top:52%;width:12px;height:12px;border-radius:50%;background:radial-gradient(closest-side,rgba(120,120,120,.5),transparent);animation:smoke 5s ease-out infinite;animation-delay:-2.5s"></div>
+       <div class="smokeP" style="position:absolute;left:58%;top:55%;width:10px;height:10px;border-radius:50%;background:radial-gradient(closest-side,rgba(130,130,130,.45),transparent);animation:smoke 6s ease-out infinite;animation-delay:-1s"></div>`},
+
+  {t:'Cozy bonfire', tag:'ambient', d:'Warm flame flickers, glow breathes, embers rise.', use:'The "Bonfire that never goes out" — warmth, never a wildfire. (Tone-safe fire.)',
+   svg:scene(`${hill()}${pine(50,180,0.9)}${pine(250,178,0.9)}<g transform="translate(140 150)"><path d="M-14 6 L14 6 L9 -2 L-9 -2 Z" fill="#6a5a36"/><path d="M-12 6 L12 6" stroke="#4a3c22" stroke-width="2"/></g>`),
+   fx:`<div class="fglow" style="position:absolute;left:50%;top:62%;width:90px;height:90px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(255,150,60,.55),transparent);animation:glow 2.2s ease-in-out infinite"></div>
+       <div class="flame" style="position:absolute;left:50%;top:64%;width:18px;height:30px;transform:translate(-50%,-100%);border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:radial-gradient(closest-side at 50% 70%,#ffd35a,#ff7a30 55%,transparent);transform-origin:bottom;animation:flick 0.3s ease-in-out infinite alternate"></div>
+       <div class="layer emberL" data-field='{"n":10,"color":"#ff9a4d","size":2}' style="top:55%;animation-duration:3.5s"></div>`},
+
+  {t:'Fireflies', tag:'ambient', d:'Gold motes blink near the treeline at dusk.', use:'Forest edges (Embergreen) in evening. Pure magic, zero tone risk.',
+   svg:scene(`${pine(60,180,1.1)}${pine(110,184,1)}${pine(230,180,1.1)}${pine(180,186,0.9)}<path d="M0 188 Q150 175 300 188 L300 200 L0 200 Z" fill="#3a4a2e"/>`,'url(#dusk)'),
+   fx:`<div data-motes='{"n":11,"color":"#f7e08a"}'></div>`},
+
+  {t:'Drifting clouds', tag:'ambient', d:'Soft clouds glide with faint land shadows.', use:'Across the whole map. The highest aliveness-per-line; very cheap.',
+   svg:scene(`${hill()}${pine(70,178,1)}${pine(220,180,1)}`,'#bcd6cf'),
+   fx:`<div class="cloud" style="left:5%;top:14%;width:90px;height:34px;animation-duration:70s"></div>
+       <div class="cloud" style="left:45%;top:8%;width:120px;height:40px;animation-duration:95s;animation-delay:-20s"></div>
+       <div class="cloud" style="left:25%;top:26%;width:70px;height:26px;opacity:.7;animation-duration:80s;animation-delay:-40s"></div>`},
+];
+
+/* ============================ FEATURE TILES ============================ */
+const features=[
+  {t:'Gem deposit &amp; mine', tag:'landmark', d:'Faceted gems + a timber mine entrance on a hillside.', use:'Crownspire mountains. Appears permanently once the region is charted. (You asked for this.)',
+   svg:scene(`<path d="M0 200 L70 70 L150 200 Z" fill="#9aa6ad" stroke="#5a4a2e"/><path d="M150 200 L230 90 L300 200 Z" fill="#aab4ba" stroke="#5a4a2e"/><path d="M70 70 L95 120 L45 120 Z" fill="#cdd6da"/>
+     <g transform="translate(196 150)"><path d="M-18 30 L-18 6 L0 -8 L18 6 L18 30 Z" fill="#3a2c1a" stroke="#5a4a2e" stroke-width="1.5"/><path d="M-18 6 L0 -8 L18 6" fill="none" stroke="#6a5a36" stroke-width="3"/><rect x="-9" y="10" width="18" height="20" fill="#1a120a"/></g>
+     <g transform="translate(95 150)">
+       <path class="gemHi" d="M-10 6 L-4 -8 L6 -8 L12 6 L1 16 Z" fill="#9b6fd0" stroke="#5a3a86" stroke-width="1.2"/>
+       <path d="M-4 -8 L1 6 L-10 6 Z" fill="#b58fe0"/><path d="M6 -8 L1 6 L12 6 Z" fill="#7e54b8"/>
+       <path d="M16 10 L20 0 L27 0 L31 10 L23 18 Z" fill="#3fcaa0" stroke="#2a8a6e" stroke-width="1"/>
+       <path d="M-22 12 L-19 4 L-13 4 L-10 12 L-16 18 Z" fill="#f0c24a" stroke="#b98a2e" stroke-width="1"/>
+     </g>`),
+   fx:`<div class="gemHi" style="position:absolute;left:31%;top:70%;width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.9);filter:blur(1px);animation:twinkle 2.4s ease-in-out infinite"></div>`},
+
+  {t:'Waterfall', tag:'landmark', d:'White water tumbles down a cliff into mist.', use:'Between a mountain and a river. Big payoff, naturally cozy.',
+   svg:scene(`<path d="M90 0 L90 200 L0 200 L0 0 Z" fill="#a8b6a0" stroke="#5a4a2e"/><path d="M90 0 L120 0 L120 200 L90 200 Z" fill="#8fa088"/>
+     <rect class="water" x="96" y="20" width="20" height="150" fill="url(#fallG)"/>
+     <defs><linearGradient id="fallG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eaf6f6"/><stop offset="1" stop-color="#bfe0e0"/></linearGradient></defs>
+     <ellipse cx="106" cy="178" rx="34" ry="12" fill="#dff0f0" opacity="0.7" ${F}/>`),
+   fx:`<div style="position:absolute;left:32%;top:8%;width:8%;height:78%;background:repeating-linear-gradient(0deg,rgba(255,255,255,.85) 0 4px,transparent 4px 9px);animation:water 0.5s linear infinite" class="water"></div>`},
+
+  {t:'Lighthouse', tag:'landmark', d:'A tower on a cape sweeps a soft beam.', use:'A coastline cape. Classic map anchor; the lamp pulses as it sweeps.',
+   svg:scene(`<path d="M0 200 Q80 160 300 175 L300 200 Z" fill="#cde0a8"/><g transform="translate(150 60)">
+     <path d="M-12 90 L-7 0 L7 0 L12 90 Z" fill="#eee" stroke="#5a4a2e" stroke-width="1.5"/>
+     <path d="M-9 60 L9 60 M-10 78 L10 78" stroke="#d65a5a" stroke-width="7" opacity="0.85"/>
+     <rect x="-8" y="-12" width="16" height="12" fill="#3a2c1a"/><circle cx="0" cy="-6" r="4" fill="#f7e08a"/></g>`,'url(#sea)'),
+   fx:`<div class="beam" style="position:absolute;left:50%;top:27%;width:120px;height:40px;transform-origin:0 50%;background:linear-gradient(90deg,rgba(247,224,138,.6),transparent);clip-path:polygon(0 40%,100% 0,100% 100%,0 60%);animation:sweep 4s ease-in-out infinite alternate"></div>`},
+
+  {t:'Glowing mushrooms', tag:'landmark', d:'Toadstools breathe a soft teal glow.', use:'A "magic" biome (marsh/fen). Whimsical, signals enchantment.',
+   svg:scene(`${pine(40,182,0.9)}${pine(260,182,0.9)}<path d="M0 188 Q150 176 300 188 L300 200 L0 200 Z" fill="#2e4a3e"/>
+     <g transform="translate(120 150)"><g class="mush"><path d="M-3 30 q3 -18 6 0 Z" fill="#e8e0cf"/><ellipse cx="0" cy="10" rx="16" ry="9" fill="#3fcaa0" stroke="#2a8a6e"/><circle cx="-6" cy="9" r="2" fill="#eafff6"/><circle cx="5" cy="11" r="1.6" fill="#eafff6"/></g></g>
+     <g transform="translate(165 162) scale(0.8)"><path d="M-3 30 q3 -18 6 0 Z" fill="#e8e0cf"/><ellipse cx="0" cy="10" rx="16" ry="9" fill="#54d0c8" stroke="#2a8a8a"/></g>`,'url(#dusk)'),
+   fx:`<div class="fglow" style="position:absolute;left:40%;top:74%;width:70px;height:50px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(63,202,160,.5),transparent);animation:glow 3.2s ease-in-out infinite"></div>`},
+
+  {t:'Ancient ruins', tag:'landmark', d:'A circle of standing stones with long shadows.', use:'Pairs with the Chronicle/lore layer. Zero tone risk — already old.',
+   svg:scene(`${hill()}<g fill="#b9a98a" stroke="#5a4a2e" stroke-width="1.2">
+     <ellipse cx="150" cy="170" rx="80" ry="20" fill="#000" opacity="0.12" stroke="none"/>
+     <rect x="80" y="120" width="14" height="44" rx="3"/><rect x="120" y="112" width="14" height="52" rx="3"/><rect x="168" y="116" width="14" height="48" rx="3"/><rect x="206" y="124" width="13" height="40" rx="3"/>
+     <rect x="138" y="96" width="40" height="12" rx="3"/></g>`),
+   fx:``},
+
+  {t:'Shipwreck', tag:'landmark', d:'A charming old hull &amp; broken mast at a reef.', use:'A coast or shoal. Reuses boat art; framed as a wreck explorers visit, not a tragedy.',
+   svg:scene(`<g transform="translate(150 130) rotate(-8)"><path d="M-50 0 Q0 34 50 0 L40 18 Q0 40 -40 18 Z" fill="#6a4a2e" stroke="#3a2616" stroke-width="1.5"/>
+     <path d="M-44 4 Q0 30 44 4" fill="none" stroke="#3a2616" stroke-width="1"/><path d="M0 0 L-6 -44" stroke="#3a2616" stroke-width="3"/><path d="M-6 -44 L18 -30" stroke="#3a2616" stroke-width="2"/></g>
+     <g opacity="0.6" fill="#dff0f0"><circle cx="120" cy="170" r="2"/><circle cx="170" cy="176" r="1.5"/><circle cx="145" cy="182" r="1.8"/></g>`,'url(#sea)'),
+   fx:``},
+
+  {t:'Aurora', tag:'rare event', d:'A green-violet ribbon drifts across a night sky.', use:'Rare night moment — could greet you when the day\'s quests are all done.',
+   svg:scene(`<rect width="300" height="200" fill="url(#night)"/><g fill="#fff"><circle cx="40" cy="30" r="1"/><circle cx="90" cy="50" r="1.2"/><circle cx="160" cy="28" r="1"/><circle cx="230" cy="46" r="1.3"/><circle cx="270" cy="24" r="1"/><circle cx="120" cy="70" r="0.9"/></g>${hill()}`,'#0f1838'),
+   fx:`<div class="auroraB" style="position:absolute;left:6%;top:14%;width:88%;height:60px;background:linear-gradient(90deg,transparent,rgba(80,230,160,.5),rgba(150,120,230,.5),transparent);filter:blur(10px);border-radius:50%;animation:aurora 8s ease-in-out infinite"></div>`},
+
+  {t:'Windmill', tag:'landmark', d:'Sails turn slowly beside a town.', use:'Farmland near a settlement. Signals a working, lived-in land.',
+   svg:scene(`${hill()}${house(60,130)}<g transform="translate(210 120)"><path d="M-16 60 L-10 0 L10 0 L16 60 Z" fill="#d8c8a0" stroke="#5a4a2e" stroke-width="1.5"/><rect x="-7" y="36" width="14" height="24" fill="#3a2c1a"/></g>`),
+   fx:`<div style="position:absolute;left:70%;top:11%;width:0;height:0"><svg width="80" height="80" style="position:absolute;left:-40px;top:-40px"><g style="transform-origin:40px 40px;animation:spin 9s linear infinite" transform-box="fill-box"><g transform="translate(40 40)" fill="#a88a4a" stroke="#5a4a2e"><rect x="-3" y="-34" width="6" height="30" rx="2"/><rect x="4" y="-3" width="30" height="6" rx="2"/><rect x="-3" y="4" width="6" height="30" rx="2"/><rect x="-34" y="-3" width="30" height="6" rx="2"/></g></g></svg></div>`},
+
+  {t:'Migrating birds', tag:'ambient', d:'A V-flock drifts across on a long loop.', use:'Across the sky on a 40–90s loop. Quiet sign of a living world.',
+   svg:scene(`${hill()}${pine(60,180,1)}${pine(240,180,1)}`,'#c6dccf'),
+   fx:`<div class="flock" style="position:absolute;left:0;top:18%;animation:fly 26s linear infinite"><svg width="70" height="40"><g fill="none" stroke="#3a3026" stroke-width="2" stroke-linecap="round"><path d="M6 14 Q11 9 16 14"/><path d="M22 10 Q27 5 32 10"/><path d="M38 14 Q43 9 48 14"/><path d="M16 20 Q21 15 26 20"/><path d="M30 22 Q35 17 40 22"/></g></svg></div>`},
+
+  {t:'Seasonal turn → bloom', tag:'rare event', d:'A grove cross-fades summer → autumn glow → spring blossoms.', use:'The gains-only "fire" reframe: the event is a colour cycle that always ends on MORE.',
+   svg:scene(`${hill()}<g transform="translate(150 150)"><path d="M0 30 v-14" stroke="#6a5a36" stroke-width="3"/><circle class="seasonsT" cx="0" cy="0" r="26" fill="#74a84e" stroke="#4f7e3a" stroke-width="1.5"/></g>${pine(60,182,1)}${pine(245,182,1)}`),
+   fx:`<div class="seasonGlow" style="position:absolute;left:50%;top:60%;width:70px;height:70px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(255,170,70,.0),transparent);animation:seasonGlowK 12s ease-in-out infinite"></div>`},
+];
+
+/* spin + season keyframes injected (kept out of the static CSS for clarity) */
+const extra=document.createElement('style');
+extra.textContent=`
+  @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  @keyframes seasonsK{0%,16%{fill:#74a84e}28%{fill:#cdbb5a}40%{fill:#e0913a}52%{fill:#d98a3a}64%{fill:#ffc46e}76%{fill:#cfe0a0}88%,100%{fill:#9fd47e}}
+  .seasonsT{animation:seasonsK 12s ease-in-out infinite}
+  @keyframes seasonGlowK{0%,30%{background:radial-gradient(closest-side,rgba(255,170,70,0),transparent)}50%{background:radial-gradient(closest-side,rgba(255,150,60,.5),transparent)}70%,100%{background:radial-gradient(closest-side,rgba(150,220,130,.35),transparent)}}
+  @media (prefers-reduced-motion: reduce){.seasonsT,.seasonGlow,[style*="spin"]{animation:none!important}}
+`;
+document.head.appendChild(extra);
+
+/* ---------- render ---------- */
+function build(list, hostId){
+  const host=document.getElementById(hostId);
+  for(const item of list){
+    const tile=document.createElement('div'); tile.className='tile';
+    const tagClass=item.tag==='ambient'?'amb':item.tag==='landmark'?'poi':'evt';
+    tile.innerHTML=`<div class="scene">${item.svg}<div class="fx">${item.fx||''}</div></div>
+      <div class="cap"><div class="t">${item.t}<span class="tag ${tagClass}">${item.tag}</span></div>
+      <div class="d">${item.d}</div><div class="use">${item.use}</div></div>`;
+    host.appendChild(tile);
+    // hydrate particle fields / motes
+    tile.querySelectorAll('[data-field]').forEach(el=>{
+      const o=JSON.parse(el.getAttribute('data-field')); o.w=300; o.h=200; field(el,o);
+    });
+    tile.querySelectorAll('[data-motes]').forEach(el=>{
+      const o=JSON.parse(el.getAttribute('data-motes')); o.w=300; o.h=200; motes(el,o);
+    });
+  }
+}
+build(weather,'weather');
+build(features,'features');
+
+/* pause toggle */
+const pauseBtn=document.getElementById('pause');
+pauseBtn.addEventListener('click',()=>{
+  document.body.classList.toggle('paused');
+  const on=document.body.classList.contains('paused');
+  pauseBtn.classList.toggle('on',on);
+  pauseBtn.textContent=on?'▶ Resume motion':'⏸ Pause motion';
+});
+</script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { renderShareCardPng, type ShareCardData } from './shareCard'
+import { renderShareCardPng, dataUrlToBlob, type ShareCardData } from './shareCard'
 import { X, DownloadSimple, Copy, Check } from '@phosphor-icons/react'
 
 /**
@@ -54,7 +54,9 @@ export function ShareCardModal({
   const copy = async (): Promise<void> => {
     if (!url) return
     try {
-      const blob = await (await fetch(url)).blob()
+      // Decode the data URL in-memory — NEVER fetch() it: the renderer CSP blocks
+      // fetch of a data: URL (no connect-src), which was the "Copy isn't available" bug.
+      const blob = dataUrlToBlob(url)
       await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
       setCopied(true)
       setTimeout(() => setCopied(false), 1800)

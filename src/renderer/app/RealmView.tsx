@@ -10,9 +10,10 @@ import type { ChronicleRecord } from '@shared/types'
 import { MapTrifold, Flag, Planet, Leaf, Scroll, Feather, Sparkle, X, type Icon } from '@phosphor-icons/react'
 import { CivilizationPanel } from './CivilizationPanel'
 import { TownView } from './TownView'
-import { TownPlacer } from './TownPlacer'
 import { REGION_BIOME } from './biomeDecor'
 import { MapIconSymbols } from './storybookMapIcons'
+import { MapEffects } from './mapEffects'
+import { REALM_COMING_SOON } from '@shared/config/featureGates'
 
 // The reward artifact: a fantasy realm charted YOUR way. Each completed quest
 // earns one expedition; you spend it by charting a region AND choosing what to
@@ -619,6 +620,9 @@ function RealmMap({
         </g>
       )}
 
+      {/* ===== AMBIENT EFFECTS · weather + points-of-interest (above terrain, below frame) ===== */}
+      {!lite && <MapEffects />}
+
       {/* ===== FRAME · COMPASS · TITLE ===== */}
       {/* Mountain-ring border: peaks face INWARD on all four sides (top→down,
           bottom→up, left→right, right→left), with solid corner medallions drawn
@@ -702,6 +706,36 @@ type Reveal = { topicId: string; picked: string; entry: ChronicleEntry; stage: '
  * the player charts a region of their choosing and their scouts return with a
  * piece of knowledge they pick. Gains-only (tone rule).
  */
+/** Temporary "Coming Soon" placeholder shown while the Realm is gated
+ *  (REALM_COMING_SOON). The reward engine keeps running silently — only the view is
+ *  replaced, so nothing is lost and ↩ Restore stays exact. `mini` = the Dashboard peek. */
+function RealmComingSoon({ mini = false }: { mini?: boolean }): JSX.Element {
+  if (mini) {
+    return (
+      <div className="realm-peek realm-soon-peek">
+        <MapTrifold size={24} weight="fill" />
+        <div className="realm-soon-peek-text">
+          <strong>Your Realm</strong>
+          <span>Coming soon ✦</span>
+        </div>
+      </div>
+    )
+  }
+  return (
+    <div className="realm-soon">
+      <div className="realm-soon-badge">
+        <MapTrifold size={46} weight="fill" />
+        <Sparkle className="realm-soon-spark" size={20} weight="fill" />
+      </div>
+      <h2>Coming Soon!</h2>
+      <p>
+        Your Realm — a living world that grows with every quest you complete — is being
+        charted. Keep finishing quests; each one is already saved toward it. ✦
+      </p>
+    </div>
+  )
+}
+
 export function RealmView(): JSX.Element {
   const { db, claimRegion, updateSettings, saveTownLayout } = useStore()
   const [claiming, setClaiming] = useState<{ id: string; name: string } | null>(null)
@@ -711,6 +745,8 @@ export function RealmView(): JSX.Element {
   const [enteredTown, setEnteredTown] = useState<string | null>(null)
 
   if (!db) return <div />
+  // Realm gated to a "Coming Soon" placeholder for now (engine still runs silently).
+  if (REALM_COMING_SOON) return <RealmComingSoon />
   const chronicle = db.settings.realmChronicle ?? []
   const completions = totalCompletions(db.quests)
   // The stage NAME (Camp..Empire) labels the era; the building COUNT is XP-driven
@@ -843,11 +879,12 @@ export function RealmView(): JSX.Element {
                 )
               })()}
           </AnimatePresence>
-          {/* DEV-ONLY: tool to author town positions on the flat overworld image.
-              Compiled out of production by Vite (import.meta.env.DEV → false). */}
-          {import.meta.env.DEV && (
-            <TownPlacer towns={ATLAS.regions.map((r) => ({ id: r.id, name: r.name }))} />
-          )}
+          {/* DEV-ONLY TownPlacer un-wired for release: its static asset import
+              (assets/dev/overworld.png) was NOT tree-shaken out of the production
+              bundle, which would (a) ship that dev image in the installer — a
+              licensing concern — and (b) break the macOS cloud build (the gitignored
+              asset is absent on a fresh checkout). Re-add `import { TownPlacer }` +
+              this `{import.meta.env.DEV && <TownPlacer …/>}` block to use it locally. */}
         </div>
 
         <div className="realm-meter">
@@ -1033,6 +1070,7 @@ export function RealmView(): JSX.Element {
 export function RealmPeek(): JSX.Element {
   const { db } = useStore()
   if (!db) return <div />
+  if (REALM_COMING_SOON) return <RealmComingSoon mini />
   const chronicle = db.settings.realmChronicle ?? []
   const completions = totalCompletions(db.quests)
   const revealed = chartedRegionIds(chronicle)
