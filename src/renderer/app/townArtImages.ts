@@ -1,30 +1,17 @@
-// DEV-ONLY placeholder art for the INSIDE of each town. Imported from the gitignored
-// dev folder (unconfirmed bundle license — never committed to the public repo).
+// DEV-ONLY placeholder art for the INSIDE of each town — keyed by ATLAS region/town id.
 //
-// This module is referenced ONLY inside an `import.meta.env.DEV` branch in TownView, so
-// production builds dead-code-eliminate that branch and tree-shake these imports out —
-// the images (incl. the heavy greenhaven.png) never ship until licensing is cleared.
+// The actual images live in a GITIGNORED dev folder (`assets/dev/towns/*.png`,
+// unconfirmed bundle license — never committed to the public repo). They were imported
+// statically here, but an asset import is treated as side-effectful, so Rollup did NOT
+// tree-shake them out of production even though TownView only reads this map inside an
+// `import.meta.env.DEV` branch. That meant production builds (a) shipped the unlicensed
+// images in the installer and (b) broke the macOS cloud build (the gitignored files are
+// absent on a fresh checkout: "Could not resolve ../assets/dev/towns/greenhaven.png").
 //
-// Keyed by ATLAS region/town id (what TownView receives via `townId`). Per-town building
-// placement / configuration is a LATER feature (a dev tool the user will drive); for now
-// the whole interior is just this flat image.
-
-import greenhaven from '../assets/dev/towns/greenhaven.png'
-import goldfield from '../assets/dev/towns/goldfield.png'
-import sunmeadow from '../assets/dev/towns/sunmeadow.png'
-import larkholt from '../assets/dev/towns/larkholt.png'
-import tidesend from '../assets/dev/towns/tidesend.png'
-import greymoor from '../assets/dev/towns/greymoor.png'
-import quietfens from '../assets/dev/towns/quietfens.png'
-import goldport from '../assets/dev/towns/goldport.png'
-
-export const TOWN_ART_IMG: Record<string, string> = {
-  embergreen: greenhaven, // "Greenhaven"
-  goldfield,
-  sunmeadow,
-  larkholt,
-  tidesend, // shows "Tide's End.png"
-  greymoor,
-  quietfens,
-  goldport, // shows "Goldport Harbor.png" (if/when the goldport town is entered)
-}
+// The town INTERIOR is gated behind the Realm "Coming Soon" placeholder for now, so this
+// map is intentionally EMPTY — production depends on no dev assets, and nothing
+// user-facing is lost. To use the placeholders again locally, restore the per-town
+// `import … from '../assets/dev/towns/<id>.png'` lines and map them below (the realm must
+// be un-gated to reach the town interior). Keep this map empty for any shipped build until
+// the art licensing is cleared.
+export const TOWN_ART_IMG: Record<string, string> = {}
