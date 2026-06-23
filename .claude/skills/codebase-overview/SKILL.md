@@ -156,6 +156,31 @@ ONLY writer of the data file. This is why edits in one window appear live in oth
 - Post-v1.7: UI chrome = Phosphor icons; emoji = content/decoration only (Twemoji webfont).
 
 ## Gotchas & landmines (non-obvious — saves re-exploration)
+- **Share card is a STUDIO (2026-06-20).** `shareCard.ts` renders a themeable, multi-format card → PNG,
+  renderer-only, ZERO deps. `renderShareCardPng(data, style?)`: `data` = CONTENT kind (`week`/`arcade`/`journey`),
+  `style` = `{theme,format,effect}`. Every kind is normalised to one `CardContent` by `toContent()`, so each
+  theme lays out ONCE for all kinds × formats × effects (avoids ~36 bespoke layouts). The **shared `ShareCardModal`
+  gives the picker to all three kinds** — so the weekly + arcade cards inherited themes/formats/effects for free.
+  Changing the renderer signature stayed backward-compatible because `style` defaults to `DEFAULT_STYLE`
+  (journey/square/none). Entry point for the all-time card: "Share my journey" button on the Dashboard.
+- **Share style persists in localStorage (`questday.shareStyle`), NOT db.json** — a UI-only preference, so it
+  deliberately avoids a schema change / stop-and-confirm. Reusable pattern: transient UI prefs → localStorage;
+  real user data → db.json.
+- **Effects are FROZEN on export, animated only in the preview.** The exported PNG draws a static particle
+  scatter on canvas via the `scatter()` sunflower math PORTED from `mapEffects.tsx`; the live preview uses a
+  SEPARATE CSS overlay (`PreviewEffect` in ShareCardModal + `.share-fx*` keyframes in styles.css). Animated
+  export (WebM/GIF/MP4) was REJECTED — won't paste into iMessage/WhatsApp, mangles quality, or needs a new dep.
+  Keep share artifacts **static PNG**; animated export is a parked v2 (would be a stop-and-confirm dep decision).
+- **Don't reuse `mapEffects.tsx` *components* for the card** — they're SVG+CSS coupled to world-map region
+  coords. Only the `scatter()` helper is portable; the card has its own canvas particle code.
+- **Multi-format trick:** `shareCard.ts` was authored at 600px, now renders at the format's W×H (square 1080²,
+  portrait 1080×1350, story 1080×1920). Top-anchored content gets `oy = (H-1080)*0.4` so tall formats keep
+  content out of the story safe-band (phone UI covers the top/bottom ~250px); realm art scales by `k = W/600`.
+- **`pw:sharestudio` driver gotcha — it reuses an iso `--user-data-dir` that PERSISTS localStorage between runs**,
+  so theme screenshots inherit the LAST effect from the prior run. The driver clicks "None" before the theme
+  loop to get clean shots — do the same if you add combos.
+- **Theme fonts are SYSTEM:** Night Watch serif = Georgia, Festival slab = `'Arial Black'` (no bundled display
+  fonts). Bundling dedicated OFL fonts is deferred (touches the art-licensing manifest = a separate decision).
 - **Quest Library (v1.11) — `questTemplates` is a SEALED db key.** Reusable quest templates live in a
   new top-level `questTemplates: QuestTemplate[]` (types.ts), wholesale-replaced on save, `migrate()`
   tolerant (missing/non-array → `[]`), `validate()` REJECTS the whole save on malformed (mirrors

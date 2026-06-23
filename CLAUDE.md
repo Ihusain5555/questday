@@ -112,6 +112,13 @@ Pure engines live in `src/shared/engine/` (current-quest scoring, rewards, **rea
   decoration and render via the bundled Twemoji color webfont.
 - **Toggleable features:** new optional feature = one `features.ts` entry + one App.tsx tab +
   one `enabledFeatures` key (data is never deleted, only the tab hidden — tone rule).
+- **Share/export images → the canvas STUDIO in `shareCard.ts`** (renderer-only, ZERO deps, never
+  leak quest titles). Themeable + multi-format + frozen-effects via `renderShareCardPng(data, style)`; the
+  shared `ShareCardModal` carries the picker for every card kind. **Share artifacts stay static PNG** —
+  animated export (WebM/GIF/MP4) is rejected (won't paste into iMessage/WhatsApp, or needs a new dep), so
+  revisiting it is a stop-and-confirm dep decision, not a quiet add. See the codebase-overview skill's gotchas.
+- **UI-only preferences (e.g. last-used share theme) → `localStorage`, NOT `db.json`** — it deliberately
+  avoids the save-schema deep-merge/validate path (no stop-and-confirm). Only real user data goes in `db.json`.
 - **Design mockups → `mockups/`** (self-contained OFFLINE HTML, inline SVG/CSS, no deps/network,
   double-click to view). The user is highly visual and can't read code — for any visual feature,
   build a mockup and get it APPROVED before coding the real thing (e.g. `mockups/worldmap-mockup.html`).
