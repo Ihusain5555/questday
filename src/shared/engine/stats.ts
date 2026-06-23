@@ -45,6 +45,13 @@ export function totalCompletions(quests: Quest[]): number {
   return quests.reduce((sum, q) => sum + completionDays(q).length, 0)
 }
 
+/** Distinct local days the player finished at least one quest, all-time. */
+export function activeDaysAllTime(quests: Quest[]): number {
+  const days = new Set<string>()
+  for (const q of quests) for (const d of completionDays(q)) days.add(d)
+  return days.size
+}
+
 /** Completions per local day over the trailing `days` days, oldest first. */
 export function completionsPerDay(quests: Quest[], days: number, now: Date): DayCount[] {
   const counts = new Map<string, number>()

@@ -1,0 +1,147 @@
+<!doctype html>
+<!-- QuestDay share-card studio — THEME 2 "Night Watch" mockup (all-time journey content).
+     Self-contained offline HTML (inline SVG+CSS, no deps/network). Double-click to view.
+     Genuinely different from "Journey": indigo NIGHT palette, CENTERED constellation layout
+     (vs Journey's top-anchored chip row), SERIF hero (vs geometric sans), moon/stars motif.
+     Same locked privacy rule: counts/level/streak + decorative art + brand ONLY. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>QuestDay — Night Watch theme</title>
+    <style>
+      :root {
+        --bg-top: #1b2342;
+        --bg-bot: #0c0f1c;
+        --silver: #c9d4e6;
+        --silver-bright: #eef3fb;
+        --pgold: #e6d6a4;
+        --pgold-bright: #f6ecc6;
+        --emerald: #3fe0a8;
+        --muted: #7e89a6;
+        --text: #eaf0fb;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        background: #0a0c14; min-height: 100vh; display: flex; flex-direction: column;
+        align-items: center; gap: 18px; padding: 40px 20px;
+        font-family: 'Satoshi', system-ui, -apple-system, Segoe UI, sans-serif; color: var(--text);
+      }
+      .stage-label { color: #6a7796; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+      .card {
+        position: relative; width: 600px; height: 600px; border-radius: 28px; overflow: hidden;
+        background:
+          radial-gradient(120% 80% at 50% 0%, rgba(120,140,210,0.20), transparent 55%),
+          radial-gradient(80% 60% at 50% 120%, rgba(230,214,164,0.10), transparent 60%),
+          linear-gradient(170deg, var(--bg-top), var(--bg-bot));
+        border: 1px solid rgba(150,170,220,0.16);
+        box-shadow: 0 30px 80px rgba(0,0,0,0.55);
+        display: flex; flex-direction: column; align-items: center;
+        padding: 40px 40px 0;
+      }
+      .card::after {
+        content: ''; position: absolute; inset: 14px; border: 1px solid rgba(201,212,230,0.20);
+        border-radius: 18px; pointer-events: none;
+      }
+      /* faint star field */
+      .stars { position: absolute; inset: 0; z-index: 0; }
+
+      .brand { display: flex; align-items: center; gap: 9px; z-index: 2; }
+      .brand .crown { color: var(--pgold); }
+      .brand .name { font-family: 'Clash Display', Georgia, serif; font-weight: 700; font-size: 22px; letter-spacing: 0.02em; }
+      .brand .name b { color: var(--emerald); }
+
+      .moon { position: absolute; top: 38px; right: 44px; z-index: 2; }
+
+      .eyebrow {
+        margin-top: 54px; z-index: 2; color: var(--pgold-bright);
+        font-size: 12px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase;
+      }
+      /* the centered serif hero — the highest-signal "different card" move */
+      .hero { z-index: 2; text-align: center; margin-top: 6px; }
+      .hero .num {
+        font-family: Georgia, 'Times New Roman', serif; font-weight: 700; font-size: 116px;
+        line-height: 0.95; color: var(--silver-bright);
+        text-shadow: 0 0 26px rgba(180,200,240,0.35);
+      }
+      .hero .label { font-size: 16px; color: var(--silver); letter-spacing: 0.04em; margin-top: 2px; }
+      .hero .sub { font-size: 12.5px; color: var(--muted); letter-spacing: 0.16em; text-transform: uppercase; margin-top: 10px; }
+
+      /* supporting stats as constellation points (NOT a chip row) */
+      .constellation { position: absolute; left: 0; right: 0; bottom: 96px; height: 150px; z-index: 2; }
+      .cpoint { position: absolute; text-align: center; transform: translate(-50%, -50%); }
+      .cpoint .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--pgold-bright); box-shadow: 0 0 10px rgba(246,236,198,0.8); margin: 0 auto 7px; }
+      .cpoint .v { font-family: Georgia, serif; font-weight: 700; font-size: 26px; color: var(--text); }
+      .cpoint .l { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
+      .cpoint.p1 { left: 24%; top: 42%; }
+      .cpoint.p2 { left: 50%; top: 16%; }
+      .cpoint.p3 { left: 76%; top: 48%; }
+
+      .footer {
+        position: absolute; left: 0; right: 0; bottom: 28px; z-index: 2; text-align: center;
+        color: var(--muted); font-size: 13px; font-weight: 600;
+      }
+      .footer b { color: var(--silver-bright); }
+      .footer .dot { display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: var(--pgold); margin-right: 7px; vertical-align: middle; }
+
+      .privacy { max-width: 600px; color: #6f7a96; font-size: 12.5px; line-height: 1.5; text-align: center; }
+    </style>
+  </head>
+  <body>
+    <div class="stage-label">QuestDay · theme 2 — “Night Watch” (calm / premium)</div>
+
+    <div class="card">
+      <!-- star field + faint constellation lines -->
+      <svg class="stars" viewBox="0 0 600 600" fill="none">
+        <g stroke="rgba(201,212,230,0.22)" stroke-width="1">
+          <line x1="150" y1="350" x2="300" y2="230" />
+          <line x1="300" y1="230" x2="456" y2="368" />
+          <line x1="300" y1="230" x2="300" y2="300" />
+        </g>
+        <g fill="#dfe7f6">
+          <circle cx="92" cy="120" r="1.4" opacity="0.7"/><circle cx="180" cy="86" r="1" opacity="0.5"/>
+          <circle cx="500" cy="150" r="1.5" opacity="0.7"/><circle cx="540" cy="250" r="1" opacity="0.5"/>
+          <circle cx="70" cy="300" r="1.1" opacity="0.6"/><circle cx="120" cy="470" r="1.3" opacity="0.6"/>
+          <circle cx="500" cy="430" r="1.2" opacity="0.6"/><circle cx="430" cy="120" r="1" opacity="0.45"/>
+          <circle cx="250" cy="500" r="1.1" opacity="0.5"/><circle cx="360" cy="520" r="1" opacity="0.45"/>
+        </g>
+      </svg>
+
+      <div class="brand">
+        <svg class="crown" width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M3 8l3.5 3L12 5l5.5 6L21 8l-1.6 9.2a1 1 0 0 1-1 .8H5.6a1 1 0 0 1-1-.8L3 8z"
+            fill="currentColor" stroke="#0c0f1c" stroke-width="0.6" stroke-linejoin="round"/>
+          <circle cx="3" cy="8" r="1.6" fill="currentColor"/><circle cx="21" cy="8" r="1.6" fill="currentColor"/>
+          <circle cx="12" cy="5" r="1.7" fill="currentColor"/>
+        </svg>
+        <div class="name">Quest<b>Day</b></div>
+      </div>
+
+      <!-- crescent moon (cool pale gold) -->
+      <svg class="moon" width="46" height="46" viewBox="0 0 46 46" fill="none">
+        <circle cx="23" cy="23" r="23" fill="rgba(246,236,198,0.10)"/>
+        <path d="M30 7a18 18 0 1 0 0 32A22 22 0 0 1 30 7z" fill="#f1e6bd"/>
+      </svg>
+
+      <div class="eyebrow">My journey so far</div>
+      <div class="hero">
+        <div class="num">247</div>
+        <div class="label">quests completed</div>
+        <div class="sub">all-time · and counting</div>
+      </div>
+
+      <div class="constellation">
+        <div class="cpoint p2"><div class="dot"></div><div class="v">12</div><div class="l">Level</div></div>
+        <div class="cpoint p1"><div class="dot"></div><div class="v">12</div><div class="l">Streak</div></div>
+        <div class="cpoint p3"><div class="dot"></div><div class="v">28</div><div class="l">Best</div></div>
+      </div>
+
+      <div class="footer"><span class="dot"></span>Made with <b>QuestDay</b></div>
+    </div>
+
+    <p class="privacy">
+      Night Watch — the calm, premium card. Centered serif hero, your stats as a small constellation, a crescent
+      moon. Image only; lifetime counts + art + brand, never quest titles. (Mockup — real fonts/spacing match the app.)
+    </p>
+  </body>
+</html>

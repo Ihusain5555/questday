@@ -4967,16 +4967,26 @@ code {
 .share-preview {
   border-radius: 14px;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.25);
-  aspect-ratio: 1 / 1;
+  background: rgba(0, 0, 0, 0.28);
+  padding: 14px;
+  min-height: 300px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
+.share-preview-frame {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
 .share-preview img {
-  width: 100%;
-  height: 100%;
   display: block;
+  height: clamp(260px, 44vh, 392px);
+  width: auto;
+  max-width: 100%;
   object-fit: contain;
 }
 .share-loading {
@@ -4998,6 +5008,173 @@ code {
   margin: 10px 0 0;
   color: var(--candy);
   font-size: 12.5px;
+}
+
+/* ---- Share-card STUDIO: wider modal, theme/format/effect picker, live preview FX ---- */
+.share-studio {
+  max-width: 470px;
+  max-height: 92vh;
+  overflow-y: auto;
+}
+.share-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+.share-pick-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.share-pick-label {
+  flex: 0 0 50px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.share-pick-opts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  flex: 1;
+}
+.share-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.12s, box-shadow 0.12s, background 0.12s;
+}
+.share-opt:hover {
+  border-color: var(--brand);
+}
+.share-opt.on {
+  border-color: #c9a24a;
+  box-shadow: 0 0 0 1px #c9a24a;
+  background: rgba(201, 162, 74, 0.12);
+}
+.share-theme-swatch {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+.share-theme-journey .share-theme-swatch {
+  background: linear-gradient(135deg, #2fb380, #f5b938);
+}
+.share-theme-nightwatch .share-theme-swatch {
+  background: linear-gradient(135deg, #1b2342, #c9d4e6);
+}
+.share-theme-festival .share-theme-swatch {
+  background: linear-gradient(135deg, #1f8a60, #c5403a 55%, #f5b938);
+}
+.share-fmt-icon {
+  display: inline-block;
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+  opacity: 0.7;
+}
+.share-fmt-icon.fmt-square {
+  width: 13px;
+  height: 13px;
+}
+.share-fmt-icon.fmt-portrait {
+  width: 11px;
+  height: 14px;
+}
+.share-fmt-icon.fmt-story {
+  width: 9px;
+  height: 15px;
+}
+.dash-journey-share {
+  display: flex;
+  justify-content: center;
+  margin: 18px 0 6px;
+}
+.dash-journey-share .ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* live preview effects (decorative; the exported PNG holds the FROZEN version) */
+.share-fx-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.share-fx {
+  position: absolute;
+  top: -8%;
+}
+.share-fx-snow .share-fx {
+  background: #fff;
+  border-radius: 50%;
+  opacity: 0.85;
+  animation: share-snow linear infinite;
+}
+.share-fx-confetti .share-fx {
+  border-radius: 2px;
+  animation: share-confetti linear infinite;
+}
+.share-fx-sparkle .share-fx {
+  background: radial-gradient(circle, #fff 0%, #f7e08a 60%, transparent 72%);
+  border-radius: 50%;
+  animation: share-sparkle ease-in-out infinite;
+}
+@keyframes share-snow {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(460px) translateX(var(--drift, 0px));
+    opacity: 0.15;
+  }
+}
+@keyframes share-confetti {
+  0% {
+    transform: translateY(0) rotate(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(460px) translateX(var(--drift, 0px)) rotate(560deg);
+    opacity: 0.6;
+  }
+}
+@keyframes share-sparkle {
+  0%,
+  100% {
+    transform: scale(0.4);
+    opacity: 0.2;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .share-fx {
+    animation: none !important;
+    opacity: 0.5;
+  }
 }
 
 .library-rail {

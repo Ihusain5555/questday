@@ -1,0 +1,131 @@
+<!doctype html>
+<!-- QuestDay share-card studio — THEME 3 "Festival Banner" mockup (all-time journey content).
+     Self-contained offline HTML (inline SVG+CSS, no deps/network). Double-click to view.
+     Genuinely different: FLAT bold colour blocks (no washes), giant hero in a LAUREL WREATH,
+     pennant BUNTING across the top, heavy slab type, heraldry motif. Loud / celebratory —
+     the opposite visual system from Journey's soft inked depth. Same locked privacy rule. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>QuestDay — Festival Banner theme</title>
+    <style>
+      :root {
+        --emerald: #1f8a60;
+        --emerald-deep: #156547;
+        --crimson: #c5403a;
+        --crimson-deep: #9c2f2a;
+        --gold: #f3b73a;
+        --gold-bright: #ffd564;
+        --cream: #fbf3df;
+        --ink: #2a1c14;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        background: #241a12; min-height: 100vh; display: flex; flex-direction: column;
+        align-items: center; gap: 18px; padding: 40px 20px;
+        font-family: 'Satoshi', system-ui, -apple-system, Segoe UI, sans-serif; color: var(--cream);
+      }
+      .stage-label { color: #b9956a; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+      .card {
+        position: relative; width: 600px; height: 600px; border-radius: 28px; overflow: hidden;
+        background: var(--emerald);
+        border: 1px solid rgba(0,0,0,0.2);
+        box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+      }
+      /* flat decorative corner blocks (no gradients — high-contrast heraldry feel) */
+      .card .block-tl { position: absolute; top: 0; left: 0; width: 220px; height: 60px; background: var(--emerald-deep); }
+      .card::after {
+        content: ''; position: absolute; inset: 16px; border: 3px solid var(--gold);
+        border-radius: 14px; pointer-events: none;
+      }
+
+      /* pennant bunting across the top */
+      .bunting { position: absolute; top: 22px; left: 22px; right: 22px; height: 40px; display: flex; justify-content: space-between; z-index: 2; }
+      .pennant { width: 0; height: 0; border-left: 19px solid transparent; border-right: 19px solid transparent; border-top: 32px solid var(--gold); }
+      .pennant:nth-child(odd) { border-top-color: var(--crimson); }
+      .pennant:nth-child(3n) { border-top-color: var(--cream); }
+
+      .brand { position: absolute; top: 74px; left: 0; right: 0; text-align: center; z-index: 3; }
+      .brand .name { font-family: 'Clash Display', Georgia, serif; font-weight: 700; font-size: 22px; letter-spacing: 0.03em; color: var(--cream); }
+      .brand .name b { color: var(--gold-bright); }
+
+      .eyebrow {
+        position: absolute; top: 112px; left: 0; right: 0; text-align: center; z-index: 3;
+        font-size: 12px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold-bright);
+      }
+
+      /* the hero number on a gold sunburst (clean + celebratory — easy to port to canvas) */
+      .crest { position: absolute; top: 150px; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; z-index: 3; }
+      .crest .wrap { position: relative; width: 300px; height: 216px; }
+      .crest .sunburst {
+        position: absolute; inset: 0;
+        background: repeating-conic-gradient(from -3.75deg at 50% 46%, var(--gold-bright) 0deg 7.5deg, var(--gold) 7.5deg 15deg);
+        -webkit-mask: radial-gradient(circle at 50% 46%, #000 24%, rgba(0,0,0,0.55) 44%, transparent 60%);
+                mask: radial-gradient(circle at 50% 46%, #000 24%, rgba(0,0,0,0.55) 44%, transparent 60%);
+      }
+      .crest .disc { position: absolute; left: 50%; top: 46%; width: 168px; height: 168px; transform: translate(-50%,-50%); border-radius: 50%; background: radial-gradient(circle, var(--emerald-deep) 58%, rgba(21,101,71,0) 74%); }
+      .crest .star { position: absolute; left: 50%; top: -8px; transform: translateX(-50%); z-index: 1; }
+      .crest .num {
+        position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding-top: 8px;
+        font-family: 'Arial Black', 'Helvetica Neue', Impact, sans-serif; font-weight: 900; font-size: 104px;
+        letter-spacing: -0.03em; color: var(--cream); text-shadow: 3px 4px 0 rgba(0,0,0,0.22);
+      }
+      .crest .label { margin-top: -6px; font-weight: 800; font-size: 16px; letter-spacing: 0.06em; color: var(--gold-bright); text-transform: uppercase; }
+
+      /* bold banner chips */
+      .banners { position: absolute; bottom: 86px; left: 40px; right: 40px; display: flex; gap: 12px; z-index: 3; }
+      .banner { flex: 1; background: var(--crimson); border: 2px solid rgba(0,0,0,0.18); border-radius: 10px; padding: 10px 8px; text-align: center; box-shadow: 0 3px 0 rgba(0,0,0,0.18); }
+      .banner:nth-child(2) { background: var(--gold); color: var(--ink); }
+      .banner:nth-child(3) { background: var(--cream); color: var(--ink); }
+      .banner .l { font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.85; }
+      .banner .v { font-family: 'Arial Black', Impact, sans-serif; font-weight: 900; font-size: 22px; margin-top: 3px; }
+
+      .footer { position: absolute; bottom: 30px; left: 0; right: 0; text-align: center; z-index: 3; color: rgba(251,243,223,0.85); font-size: 13px; font-weight: 700; }
+      .footer b { color: var(--gold-bright); }
+
+      .privacy { max-width: 600px; color: #b9956a; font-size: 12.5px; line-height: 1.5; text-align: center; }
+    </style>
+  </head>
+  <body>
+    <div class="stage-label">QuestDay · theme 3 — “Festival Banner” (loud / celebratory)</div>
+
+    <div class="card">
+      <div class="bunting">
+        <div class="pennant"></div><div class="pennant"></div><div class="pennant"></div>
+        <div class="pennant"></div><div class="pennant"></div><div class="pennant"></div>
+        <div class="pennant"></div><div class="pennant"></div><div class="pennant"></div>
+        <div class="pennant"></div><div class="pennant"></div><div class="pennant"></div>
+      </div>
+
+      <div class="brand"><div class="name">Quest<b>Day</b></div></div>
+      <div class="eyebrow">★ My journey so far ★</div>
+
+      <div class="crest">
+        <div class="wrap">
+          <div class="sunburst"></div>
+          <div class="disc"></div>
+          <svg class="star" width="34" height="34" viewBox="0 0 34 34">
+            <path d="M17 1 l4.6 11 12 1 -9.2 8 2.9 11.8 -10.3 -6.4 -10.3 6.4 2.9 -11.8 -9.2 -8 12 -1z"
+              fill="#ffd564" stroke="#c98f1e" stroke-width="1"/>
+          </svg>
+          <div class="num">247</div>
+        </div>
+        <div class="label">quests done</div>
+      </div>
+
+      <div class="banners">
+        <div class="banner"><div class="l">Streak</div><div class="v">12</div></div>
+        <div class="banner"><div class="l">Best</div><div class="v">28</div></div>
+        <div class="banner"><div class="l">Level</div><div class="v">12</div></div>
+      </div>
+
+      <div class="footer">Made with <b>QuestDay</b></div>
+    </div>
+
+    <p class="privacy">
+      Festival Banner — the loud, celebratory card. Flat bold blocks, a giant number in a laurel wreath, pennant
+      bunting, heavy type. Built to pop in a group chat at thumbnail size. Image only; never quest titles.
+    </p>
+  </body>
+</html>

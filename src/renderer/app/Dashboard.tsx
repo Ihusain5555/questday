@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useStore } from '../state/store'
 import { useNow } from '../hooks/useNow'
 import {
@@ -12,18 +13,32 @@ import { EndOfDayCard } from './EndOfDayCard'
 import { PlayerBar } from '../components/PlayerBar'
 import { isFeatureEnabled } from './features'
 import { questXP } from '@shared/engine/rewards'
-import { Lightning, Check, AppWindow } from '@phosphor-icons/react'
+import { totalCompletions, activeDaysAllTime } from '@shared/engine/stats'
+import { ShareCardModal } from './ShareCardModal'
+import { Lightning, Check, AppWindow, ShareNetwork } from '@phosphor-icons/react'
 
 export function Dashboard(): JSX.Element {
   const { db, completeQuest } = useStore()
 
   const now = useNow(20000)
+  const [sharingJourney, setSharingJourney] = useState(false)
   if (!db) return <div>Loading…</div>
 
   const frame = activeTimeFrame(db.timeFrames, now)
   const current = resolveCurrentQuest(db.quests, db.timeFrames, now, db.settings.pinnedQuestId)
   const sub = immediateSubTask(current)
   const activeCount = db.quests.filter((q) => q.status === 'active').length
+
+  // All-time "journey" snapshot for the share studio (derived, never stored → ↩ Restore-exact;
+  // bestStreak comes from the inert garden engine, which still tracks it silently).
+  const journeyData = {
+    kind: 'journey' as const,
+    completionsTotal: totalCompletions(db.quests),
+    level: db.player.level,
+    streak: db.player.streakCount,
+    bestStreak: Math.max(db.garden.bestStreak, db.player.streakCount),
+    daysActive: activeDaysAllTime(db.quests)
+  }
 
   return (
     <div>
@@ -72,6 +87,16 @@ export function Dashboard(): JSX.Element {
       <div className="dash-stats">
         <StatsView />
       </div>
+
+      <div className="dash-journey-share">
+        <button className="ghost" onClick={() => setSharingJourney(true)}>
+          <ShareNetwork size={16} weight="bold" /> Share my journey
+        </button>
+      </div>
+
+      {sharingJourney && (
+        <ShareCardModal data={journeyData} onClose={() => setSharingJourney(false)} />
+      )}
     </div>
   )
 }

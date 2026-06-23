@@ -20,6 +20,8 @@
     "pw:library": "node scripts/pw-library.mjs",
     "pw:rollover": "node scripts/pw-rollover.mjs",
     "pw:deck": "node scripts/pw-deck.mjs",
+    "pw:sharecard": "node scripts/pw-sharecard.mjs",
+    "pw:sharestudio": "node scripts/pw-sharestudio.mjs",
     "dist": "node scripts/with-app.mjs \"electron-vite build && electron-builder --win -c.directories.output=C:/Users/ihusa/questday-release\"",
     "dist:mac": "electron-vite build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac --publish never",
     "typecheck:node": "tsc -p tsconfig.node.json --noEmit",

@@ -1,0 +1,340 @@
+<!doctype html>
+<!-- QuestDay — offline share-card mockup (v1, ALL-TIME journey).
+     Sibling of share-card.html (the weekly recap). Self-contained: inline SVG + CSS,
+     no deps, no network. Double-click to view.
+     SCOPE (locked, same as the weekly card): image-only; lifetime counts/level/streak +
+     realm art + brand ONLY — NEVER quest titles or notes. The real feature renders this to
+     a PNG via the browser Canvas as a third card `kind: 'journey'` in shareCard.ts (zero deps).
+     Fonts approximate the app (Clash Display + Satoshi) with system fallbacks here.
+     NOTE: Realm/civilization stats (civ stage, regions charted) are DEFERRED until the Realm
+     is un-gated from "Coming Soon" — this v1 shows only progress visible to users today. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>QuestDay — journey card mockup</title>
+    <style>
+      :root {
+        --brand: #2fb380;
+        --brand-deep: #1f8a60;
+        --brand-bright: #3fe0a8;
+        --gold: #f5b938;
+        --gold-bright: #ffcf5c;
+        --gold-deep: #c98a1e;
+        --sky: #54c8f0;
+        --sky-bright: #8fdcf8;
+        --plum: #b98fd9;
+        --plum-bright: #d3b1ee;
+        --ink: #0d1411;
+        --ink-2: #14201a;
+        --text: #eaf2ec;
+        --muted: #93a89a;
+        --line: rgba(90, 180, 140, 0.18);
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        background: #1b1410;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+        padding: 40px 20px;
+        font-family: 'Satoshi', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        color: var(--text);
+      }
+      .stage-label { color: #b9a07a; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+      /* ---- The share card (1:1, 600x600 — the exported PNG) ---- */
+      .card {
+        position: relative;
+        width: 600px;
+        height: 600px;
+        border-radius: 28px;
+        overflow: hidden;
+        background:
+          radial-gradient(130% 90% at 50% -15%, rgba(47, 179, 128, 0.22), transparent 58%),
+          radial-gradient(90% 70% at 85% 110%, rgba(245, 185, 56, 0.12), transparent 60%),
+          linear-gradient(168deg, var(--ink-2), var(--ink));
+        border: 1px solid var(--line);
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+        display: flex;
+        flex-direction: column;
+        padding: 38px 40px 0;
+      }
+      /* gold frame inset */
+      .card::after {
+        content: '';
+        position: absolute;
+        inset: 14px;
+        border: 1px solid rgba(245, 185, 56, 0.22);
+        border-radius: 18px;
+        pointer-events: none;
+      }
+
+      /* top bar: brand on the left, level shield on the right */
+      .topbar {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        z-index: 2;
+      }
+      .brand { display: flex; align-items: center; gap: 10px; }
+      .brand .crown { color: var(--gold); }
+      .brand .name {
+        font-family: 'Clash Display', Georgia, serif;
+        font-weight: 700;
+        font-size: 24px;
+        letter-spacing: 0.01em;
+      }
+      .brand .name b { color: var(--brand-bright); }
+
+      /* ---- heraldic level shield (the journey card's hero badge) ---- */
+      .shield { position: relative; width: 78px; height: 88px; }
+      .shield svg { width: 100%; height: 100%; display: block; }
+      .shield .lv {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding-bottom: 6px;
+      }
+      .shield .lv .cap {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        color: var(--gold-bright);
+        text-transform: uppercase;
+      }
+      .shield .lv .n {
+        font-family: 'Clash Display', Georgia, serif;
+        font-weight: 700;
+        font-size: 34px;
+        line-height: 1;
+        color: var(--text);
+        margin-top: 1px;
+      }
+
+      .headline { margin-top: 30px; z-index: 2; }
+      .headline .eyebrow {
+        color: var(--gold-bright);
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .headline .big {
+        font-family: 'Clash Display', Georgia, serif;
+        font-weight: 700;
+        font-size: 48px;
+        line-height: 1.04;
+        margin-top: 10px;
+      }
+      .headline .big .num { color: var(--gold); }
+      .headline .sub {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .headline .sub b { color: var(--brand-bright); font-weight: 700; }
+
+      /* ---- lifetime stat chips (accent-coded, like the weekly card) ---- */
+      .stats {
+        display: flex;
+        gap: 14px;
+        margin-top: 26px;
+        z-index: 2;
+      }
+      .stat {
+        flex: 1;
+        position: relative;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--chip);
+        border-radius: 16px;
+        padding: 14px 16px 14px 22px;
+        overflow: hidden;
+      }
+      /* bright accent bar down the left edge — the per-stat colour code */
+      .stat::before {
+        content: '';
+        position: absolute;
+        left: 11px;
+        top: 14px;
+        bottom: 14px;
+        width: 3px;
+        border-radius: 2px;
+        background: var(--chip-bright);
+      }
+      .stat .label {
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--chip-bright);
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .stat .val {
+        font-family: 'Clash Display', Georgia, serif;
+        font-weight: 700;
+        font-size: 26px;
+        margin-top: 6px;
+        color: var(--text);
+      }
+      .stat .val small { font-size: 14px; color: var(--muted); font-weight: 600; }
+
+      .stat.streak { --chip: rgba(47, 179, 128, 0.32); --chip-bright: var(--brand-bright); }
+      .stat.best   { --chip: rgba(245, 185, 56, 0.32); --chip-bright: var(--gold-bright); }
+      .stat.days   { --chip: rgba(185, 143, 217, 0.32); --chip-bright: var(--plum-bright); }
+
+      /* ---- realm vignette (inked town on hills) pinned to the bottom ---- */
+      .realm {
+        position: absolute;
+        left: 0; right: 0; bottom: 0;
+        height: 230px;
+        z-index: 1;
+      }
+      .realm svg { width: 100%; height: 100%; display: block; }
+
+      .footer {
+        position: absolute;
+        left: 40px;
+        bottom: 26px;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .footer .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--gold); }
+      .footer b { color: var(--text); }
+
+      .privacy {
+        max-width: 600px;
+        color: #8d7d63;
+        font-size: 12.5px;
+        line-height: 1.5;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage-label">QuestDay · journey card (all-time) — mockup</div>
+
+    <div class="card">
+      <div class="topbar">
+        <div class="brand">
+          <!-- crown mark -->
+          <svg class="crown" width="26" height="26" viewBox="0 0 24 24" fill="none">
+            <path d="M3 8l3.5 3L12 5l5.5 6L21 8l-1.6 9.2a1 1 0 0 1-1 .8H5.6a1 1 0 0 1-1-.8L3 8z"
+              fill="currentColor" stroke="#1b1410" stroke-width="0.6" stroke-linejoin="round"/>
+            <circle cx="3" cy="8" r="1.6" fill="currentColor"/>
+            <circle cx="21" cy="8" r="1.6" fill="currentColor"/>
+            <circle cx="12" cy="5" r="1.7" fill="currentColor"/>
+          </svg>
+          <div class="name">Quest<b>Day</b></div>
+        </div>
+
+        <!-- level shield -->
+        <div class="shield">
+          <svg viewBox="0 0 78 88" fill="none">
+            <defs>
+              <linearGradient id="shieldFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#26402f"/>
+                <stop offset="1" stop-color="#16271d"/>
+              </linearGradient>
+            </defs>
+            <!-- shield body -->
+            <path d="M39 3 L73 14 V44 C73 66 57 79 39 85 C21 79 5 66 5 44 V14 Z"
+              fill="url(#shieldFill)" stroke="#c98a1e" stroke-width="2.5" stroke-linejoin="round"/>
+            <!-- inner rim -->
+            <path d="M39 11 L66 19 V44 C66 61 53 72 39 77 C25 72 12 61 12 44 V19 Z"
+              fill="none" stroke="rgba(255,207,92,0.45)" stroke-width="1.2"/>
+          </svg>
+          <div class="lv">
+            <div class="cap">Level</div>
+            <div class="n">12</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="headline">
+        <div class="eyebrow">My journey so far</div>
+        <div class="big"><span class="num">247</span> quests<br />completed</div>
+        <div class="sub">all-time · <b>and counting</b></div>
+      </div>
+
+      <div class="stats">
+        <div class="stat streak">
+          <div class="label">🔥 Current streak</div>
+          <div class="val">12 <small>days</small></div>
+        </div>
+        <div class="stat best">
+          <div class="label">🏆 Best streak</div>
+          <div class="val">28 <small>days</small></div>
+        </div>
+        <div class="stat days">
+          <div class="label">🗓️ Days adventuring</div>
+          <div class="val">86</div>
+        </div>
+      </div>
+
+      <!-- realm vignette: inked emerald hills + a little gold-lit town -->
+      <div class="realm">
+        <svg viewBox="0 0 600 230" preserveAspectRatio="xMidYMax slice">
+          <defs>
+            <linearGradient id="hill1" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#1f8a60" stop-opacity="0.55"/>
+              <stop offset="1" stop-color="#0d1411" stop-opacity="0"/>
+            </linearGradient>
+            <linearGradient id="hill2" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#2fb380" stop-opacity="0.45"/>
+              <stop offset="1" stop-color="#0d1411" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <!-- back hills -->
+          <path d="M0 150 Q150 95 300 135 T600 120 L600 230 L0 230 Z" fill="url(#hill1)"/>
+          <!-- front hills -->
+          <path d="M0 185 Q160 140 330 175 T600 165 L600 230 L0 230 Z" fill="url(#hill2)"/>
+
+          <!-- little town silhouette (gold-lit windows) -->
+          <g transform="translate(232 120)" stroke="#0d1411" stroke-width="2" stroke-linejoin="round">
+            <!-- tower -->
+            <rect x="58" y="6" width="26" height="54" rx="2" fill="#26402f"/>
+            <path d="M55 6 L71 -12 L87 6 Z" fill="#c98a1e"/>
+            <rect x="66" y="22" width="10" height="12" rx="1.5" fill="#ffcf5c"/>
+            <!-- hall -->
+            <rect x="8" y="26" width="44" height="34" rx="2" fill="#2c4a38"/>
+            <path d="M4 26 L30 4 L56 26 Z" fill="#1f8a60"/>
+            <rect x="16" y="38" width="9" height="12" rx="1.5" fill="#ffcf5c"/>
+            <rect x="34" y="38" width="9" height="12" rx="1.5" fill="#ffcf5c"/>
+            <!-- cottage -->
+            <rect x="92" y="34" width="34" height="26" rx="2" fill="#26402f"/>
+            <path d="M88 34 L109 16 L130 34 Z" fill="#2fb380"/>
+            <rect x="103" y="44" width="9" height="16" rx="1.5" fill="#ffcf5c"/>
+          </g>
+
+          <!-- a few pines -->
+          <g fill="#1f8a60" stroke="#0d1411" stroke-width="1.5">
+            <path d="M150 175 l10 -26 l10 26 z"/>
+            <path d="M158 165 l8 -22 l8 22 z" transform="translate(280 6)"/>
+            <path d="M450 178 l9 -24 l9 24 z"/>
+          </g>
+        </svg>
+      </div>
+
+      <div class="footer"><span class="dot"></span> Made with <b>QuestDay</b></div>
+    </div>
+
+    <p class="privacy">
+      Image only. It shows your lifetime counts, level and realm art — <b>never</b> your quest titles or notes.
+      Tap “Share my journey” → a PNG is saved you can drop into any chat. (Mockup — fonts/spacing will match the
+      app when built; final stat set confirmed against your save data.)
+    </p>
+  </body>
+</html>
