@@ -99,14 +99,17 @@ try {
     await frame.screenshot({ path: path.join(shots, `studio-theme-${slug(t)}.png`) })
   }
 
-  // 2) Journey across the 3 formats
-  await main.getByRole('button', { name: 'Journey', exact: true }).click()
-  await main.waitForTimeout(300)
-  for (const f of formats) {
-    await main.getByRole('button', { name: f, exact: true }).click()
-    await main.waitForTimeout(800)
-    await frame.screenshot({ path: path.join(shots, `studio-format-${slug(f)}.png`) })
+  // 2) every theme across every format (the responsive-layout check)
+  await main.getByRole('button', { name: 'None', exact: true }).click()
+  for (const t of themes) {
+    await main.getByRole('button', { name: t, exact: true }).click()
+    for (const f of formats) {
+      await main.getByRole('button', { name: f, exact: true }).click()
+      await main.waitForTimeout(700)
+      await frame.screenshot({ path: path.join(shots, `studio-${slug(t)}-${slug(f)}.png`) })
+    }
   }
+  await main.getByRole('button', { name: 'Square', exact: true }).click()
 
   // 3) Festival (square) with each effect (frozen, in the exported PNG)
   await main.getByRole('button', { name: 'Square', exact: true }).click()

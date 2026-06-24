@@ -216,6 +216,31 @@ function roundRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: n
   ctx.roundRect(x, y, w, h, r)
 }
 
+/** Content scale for a format's height. 1.0 at square (1080), grows for taller formats so
+ *  the hero / boxes / text don't read tiny in a portrait or story canvas. Capped at story. */
+function fmtScale(H: number): number {
+  return 1 + Math.min(Math.max((H - 1080) / 1080, 0), 1) * 0.5
+}
+
+/** Place `n` stacked rows (top-anchored) within [top, bottom], distributing the leftover
+ *  space as equal gaps (CSS `space-between`), but never a gap larger than `maxGap` — surplus
+ *  beyond that just centres the block in the region, so tall formats spread without voids.
+ *  Returns the TOP y of each row. */
+function spread(top: number, bottom: number, heights: number[], maxGap = Infinity): number[] {
+  const n = heights.length
+  const total = heights.reduce((a, b) => a + b, 0)
+  let gap = n > 1 ? Math.max(0, (bottom - top - total) / (n - 1)) : 0
+  gap = Math.min(gap, maxGap)
+  const used = total + gap * (n - 1)
+  let y = top + Math.max(0, (bottom - top - used) / 2)
+  const ys: number[] = []
+  for (let i = 0; i < n; i++) {
+    ys.push(y)
+    y += heights[i] + gap
+  }
+  return ys
+}
+
 /** Deterministic sunflower scatter inside an ellipse (no Math.random → stable across
  *  renders, mirrors mapEffects.tsx so frozen particles land in a pleasing arrangement). */
 function scatter(n: number, rx: number, ry: number, seed = 0.5): { dx: number; dy: number }[] {
@@ -420,25 +445,38 @@ function pine(ctx: CanvasRenderingContext2D, x: number, baseY: number, halfW: nu
   ctx.stroke()
 }
 
-/** Inked emerald hills + a small gold-lit town + pines, pinned to the bottom (scaled to W). */
-function drawRealmScene(ctx: CanvasRenderingContext2D, W: number, H: number, pal: Palette): void {
-  const k = W / 600 // realm art was authored in 600-wide space
-  let g = ctx.createLinearGradient(0, H - 270 * k, 0, H)
+/** Top y of the realm scene for a given vertical scale — lets the caller park content just
+ *  above the hills. Mirrors the first hill gradient's start (270 authored units up). */
+function realmTopY(W: number, H: number, vScale: number): number {
+  return H - 270 * (W / 600) * vScale
+}
+
+/** Inked emerald hills + a small gold-lit town + pines, pinned to the bottom. `vScale` stretches
+ *  the scene taller (hills peak higher, town bigger) so it fills the lower band of tall formats. */
+function drawRealmScene(ctx: CanvasRenderingContext2D, W: number, H: number, pal: Palette, vScale = 1): void {
+  const k = (W / 600) * vScale // realm art was authored in 600-wide space; vScale grows it for tall formats
+  // back hill ridge raised to ~218 units so its crest sits just above the town's base (210) —
+  // the buildings nestle ON the hill instead of floating above it (esp. once vScale grows it).
+  let g = ctx.createLinearGradient(0, H - 290 * k, 0, H)
   g.addColorStop(0, withAlpha(pal.emeraldDeep, 0.5))
   g.addColorStop(1, withAlpha(pal.ink, 0))
   ctx.fillStyle = g
   ctx.beginPath()
-  ctx.moveTo(0, H - 144 * k)
-  ctx.quadraticCurveTo(W * 0.25, H - 225 * k, W * 0.5, H - 171 * k)
-  ctx.quadraticCurveTo(W * 0.75, H - 117 * k, W, H - 198 * k)
+  ctx.moveTo(0, H - 182 * k)
+  ctx.quadraticCurveTo(W * 0.25, H - 264 * k, W * 0.5, H - 218 * k)
+  ctx.quadraticCurveTo(W * 0.75, H - 158 * k, W, H - 240 * k)
   ctx.lineTo(W, H)
   ctx.lineTo(0, H)
   ctx.closePath()
   ctx.fill()
 
+  // On tall formats (vScale > 1) the foreground hill stays opaque toward the bottom so the lower
+  // band reads as solid ground instead of fading to an empty dark dead-zone. Square (vScale 1) is
+  // unchanged (groundA = 0 → transparent, same as before).
+  const groundA = Math.min(Math.max((vScale - 1) * 0.7, 0), 0.55)
   g = ctx.createLinearGradient(0, H - 171 * k, 0, H)
   g.addColorStop(0, withAlpha(pal.emerald, 0.42))
-  g.addColorStop(1, withAlpha(pal.ink, 0))
+  g.addColorStop(1, withAlpha(pal.emeraldDeep, groundA))
   ctx.fillStyle = g
   ctx.beginPath()
   ctx.moveTo(0, H - 81 * k)
@@ -486,7 +524,10 @@ function drawJourney(ctx: CanvasRenderingContext2D, c: CardContent, W: number, H
   ctx.fillStyle = glow
   ctx.fillRect(0, 0, W, H)
 
-  drawRealmScene(ctx, W, H, pal)
+  // realm hills grow taller on portrait/story so the lower band fills instead of padding blank
+  const vScale = 1 + Math.min(Math.max((H - 1080) / 1080, 0), 1) * 1.1
+  drawRealmScene(ctx, W, H, pal, vScale)
+  const artTop = realmTopY(W, H, vScale)
 
   // gold inset frame
   ctx.strokeStyle = withAlpha(pal.gold, 0.22)
@@ -494,40 +535,59 @@ function drawJourney(ctx: CanvasRenderingContext2D, c: CardContent, W: number, H
   roundRectPath(ctx, 25, 25, W - 50, H - 50, 30)
   ctx.stroke()
 
-  // tall formats (portrait/story): push the top block down into the vertical centre /
-  // story safe-band so it isn't jammed against the very top edge (where phone UI sits).
-  const oy = (H - 1080) * 0.4
+  const s = fmtScale(H)
   const M = 72
-  drawBrand(ctx, M, 96 + oy, pal, pal.emeraldBright, 40)
 
-  // badge top-right
-  if (c.medalBest !== undefined) drawMedal(ctx, W - M - 30, 150 + oy, 52, c.medalBest, pal)
-  else if (c.level !== undefined) drawShield(ctx, W - M - 36, 150 + oy, 92, pal, c.level)
+  // header band — brand left, badge right
+  const headerY = Math.round(H * 0.085) + 34
+  drawBrand(ctx, M, headerY, pal, pal.emeraldBright, 40)
+  if (c.medalBest !== undefined) drawMedal(ctx, W - M - 30, headerY + 4, 52, c.medalBest, pal)
+  else if (c.level !== undefined) drawShield(ctx, W - M - 36, headerY + 4, 92, pal, c.level)
 
-  // headline
+  // hero + chips distributed between the header and the hilltops (scaled up for tall formats)
+  const hEyebrow = 26 * s
+  const hHero = 84 * s
+  const hSub = c.heroSub ? 30 * s : 0
+  const hChips = 116 * s
+  const rowH = c.heroSub ? [hEyebrow, hHero, hSub, hChips] : [hEyebrow, hHero, hChips]
+  // The tallest building's roof apex rises ~12 authored units above artTop; keep the chip row's
+  // lower bound clear of it (+14px) so the roof never touches the chips on tall formats. (Square:
+  // ≈ artTop-36, unchanged.)
+  const chipsBottomBound = artTop - 12 * (W / 600) * vScale - 14
+  const ys = spread(headerY + 48, chipsBottomBound, rowH, 84 * s)
+  let ri = 0
+
+  // eyebrow
   ctx.textAlign = 'left'
   ctx.letterSpacing = '3px'
-  ctx.font = "600 23px 'Satoshi', 'Segoe UI', sans-serif"
+  ctx.font = `600 ${Math.round(23 * s)}px 'Satoshi', 'Segoe UI', sans-serif`
   ctx.fillStyle = pal.goldBright
-  ctx.fillText(c.eyebrow.toUpperCase(), M, 210 + oy)
+  ctx.fillText(c.eyebrow.toUpperCase(), M, ys[ri] + hEyebrow * 0.8)
   ctx.letterSpacing = '0px'
+  ri++
 
-  ctx.font = "700 84px 'Clash Display', 'Segoe UI', sans-serif"
+  // hero number + label
+  const heroBase = ys[ri] + hHero * 0.82
+  ctx.font = `700 ${Math.round(84 * s)}px 'Clash Display', 'Segoe UI', sans-serif`
   ctx.fillStyle = pal.gold
-  ctx.fillText(c.heroNum, M, 300 + oy)
+  ctx.fillText(c.heroNum, M, heroBase)
   const nw = ctx.measureText(c.heroNum).width
   ctx.fillStyle = pal.text
-  ctx.font = "700 40px 'Clash Display', 'Segoe UI', sans-serif"
-  ctx.fillText(` ${c.heroLabel}`, M + nw, 300 + oy)
+  ctx.font = `700 ${Math.round(40 * s)}px 'Clash Display', 'Segoe UI', sans-serif`
+  ctx.fillText(` ${c.heroLabel}`, M + nw, heroBase)
+  ri++
+
+  // sub
   if (c.heroSub) {
     ctx.fillStyle = pal.muted
-    ctx.font = "600 25px 'Satoshi', 'Segoe UI', sans-serif"
-    ctx.fillText(c.heroSub, M, 344 + oy)
+    ctx.font = `600 ${Math.round(25 * s)}px 'Satoshi', 'Segoe UI', sans-serif`
+    ctx.fillText(c.heroSub, M, ys[ri] + hSub * 0.8)
+    ri++
   }
 
-  // chip row
-  const chipY = 392 + oy
-  const chipH = 116
+  // chip row — box height grows with the format; inner layout stays proportional
+  const chipY = ys[ri]
+  const chipH = hChips
   const gap = 24
   const chipW = (W - 2 * M - gap * (c.chips.length - 1)) / c.chips.length
   c.chips.forEach((chip, i) => {
@@ -536,21 +596,21 @@ function drawJourney(ctx: CanvasRenderingContext2D, c: CardContent, W: number, H
     ctx.fillStyle = 'rgba(255,255,255,0.03)'
     ctx.strokeStyle = withAlpha(ac.base, 0.32)
     ctx.lineWidth = 1.5
-    roundRectPath(ctx, x, chipY, chipW, chipH, 24)
+    roundRectPath(ctx, x, chipY, chipW, chipH, Math.min(24, chipH * 0.21))
     ctx.fill()
     ctx.stroke()
     ctx.fillStyle = ac.bright
-    roundRectPath(ctx, x + 20, chipY + 24, 5, chipH - 48, 3)
+    roundRectPath(ctx, x + 20, chipY + chipH * 0.21, 5, chipH * 0.58, 3)
     ctx.fill()
     ctx.textAlign = 'left'
     ctx.letterSpacing = '1px'
-    ctx.font = "700 18px 'Satoshi', 'Segoe UI', sans-serif"
+    ctx.font = `700 ${Math.round(18 * s)}px 'Satoshi', 'Segoe UI', sans-serif`
     ctx.fillStyle = ac.bright
-    ctx.fillText(chip.label.toUpperCase(), x + 40, chipY + 44)
+    ctx.fillText(chip.label.toUpperCase(), x + 40, chipY + chipH * 0.38)
     ctx.letterSpacing = '0px'
-    ctx.font = "700 38px 'Clash Display', 'Segoe UI', sans-serif"
+    ctx.font = `700 ${Math.round(38 * s)}px 'Clash Display', 'Segoe UI', sans-serif`
     ctx.fillStyle = pal.text
-    ctx.fillText(chip.value, x + 40, chipY + 90)
+    ctx.fillText(chip.value, x + 40, chipY + chipH * 0.77)
   })
 
   drawFooter(ctx, W / 2, H - 54, pal, pal.emeraldBright)
@@ -604,22 +664,23 @@ function drawNightWatch(ctx: CanvasRenderingContext2D, c: CardContent, W: number
   roundRectPath(ctx, 25, 25, W - 50, H - 50, 30)
   ctx.stroke()
 
-  // brand centred at top (nudged down on tall formats for the story safe-band)
-  const oy = (H - 1080) * 0.3
+  const sc = fmtScale(H)
+  // brand centred near the top — distributes with the hero + constellation across the height
+  const brandY = Math.round(H * 0.11)
   ctx.font = "700 40px 'Clash Display', 'Segoe UI', sans-serif"
   const qw = ctx.measureText('Quest').width
   const dw = ctx.measureText('Day').width
   const bx = cx - (qw + dw) / 2
-  drawCrown(ctx, bx - 34, 70 + oy, 24, 16, pal.gold)
+  drawCrown(ctx, bx - 34, brandY - 26, 24, 16, pal.gold)
   ctx.textAlign = 'left'
   ctx.fillStyle = pal.text
-  ctx.fillText('Quest', bx, 96 + oy)
+  ctx.fillText('Quest', bx, brandY)
   ctx.fillStyle = pal.emeraldBright
-  ctx.fillText('Day', bx + qw, 96 + oy)
+  ctx.fillText('Day', bx + qw, brandY)
 
   // crescent moon top-right
   const mx = W - 92
-  const my = 96 + oy
+  const my = brandY
   ctx.fillStyle = '#f1e6bd'
   ctx.beginPath()
   ctx.arc(mx, my, 26, 0, Math.PI * 2)
@@ -629,70 +690,84 @@ function drawNightWatch(ctx: CanvasRenderingContext2D, c: CardContent, W: number
   ctx.arc(mx + 9, my - 4, 23, 0, Math.PI * 2)
   ctx.fill()
 
-  // centred hero (serif)
-  const heroY = H * 0.4
+  // centred hero (serif), scaled up for tall formats
+  const heroY = H * 0.42
   ctx.textAlign = 'center'
   ctx.letterSpacing = '4px'
-  ctx.font = "600 22px 'Satoshi', 'Segoe UI', sans-serif"
+  ctx.font = `600 ${Math.round(22 * sc)}px 'Satoshi', 'Segoe UI', sans-serif`
   ctx.fillStyle = pal.goldBright
-  ctx.fillText(c.eyebrow.toUpperCase(), cx, heroY - 96)
+  ctx.fillText(c.eyebrow.toUpperCase(), cx, heroY - 96 * sc)
   ctx.letterSpacing = '0px'
 
-  ctx.font = "700 188px Georgia, 'Times New Roman', serif"
+  ctx.font = `700 ${Math.round(188 * sc)}px Georgia, 'Times New Roman', serif`
   ctx.fillStyle = pal.skyBright
   ctx.shadowColor = 'rgba(180,200,240,0.35)'
   ctx.shadowBlur = 38
-  ctx.fillText(c.heroNum, cx, heroY + 36)
+  ctx.fillText(c.heroNum, cx, heroY + 36 * sc)
   ctx.shadowBlur = 0
-  ctx.font = "400 30px 'Satoshi', 'Segoe UI', sans-serif"
+  ctx.font = `400 ${Math.round(30 * sc)}px 'Satoshi', 'Segoe UI', sans-serif`
   ctx.fillStyle = pal.sky
-  ctx.fillText(c.heroLabel, cx, heroY + 86)
+  ctx.fillText(c.heroLabel, cx, heroY + 86 * sc)
   if (c.heroSub) {
     ctx.letterSpacing = '3px'
-    ctx.font = "600 21px 'Satoshi', 'Segoe UI', sans-serif"
+    ctx.font = `600 ${Math.round(21 * sc)}px 'Satoshi', 'Segoe UI', sans-serif`
     ctx.fillStyle = pal.muted
-    ctx.fillText(c.heroSub.toUpperCase(), cx, heroY + 124)
+    ctx.fillText(c.heroSub.toUpperCase(), cx, heroY + 124 * sc)
     ctx.letterSpacing = '0px'
   }
 
   // supporting stats as a small constellation (3 points), with level appended if present
   const pts: { label: string; value: string }[] = c.chips.map((ch) => ({ label: ch.label, value: ch.value }))
   if (c.level !== undefined) pts.unshift({ label: 'Level', value: String(c.level) })
-  const baseY = H - 200
+  const baseY = H * 0.78
   const slots = [
-    { x: cx, y: baseY - 70 },
+    { x: cx, y: baseY - 70 * sc },
     { x: cx - W * 0.27, y: baseY },
     { x: cx + W * 0.27, y: baseY },
-    { x: cx, y: baseY + 64 }
+    { x: cx, y: baseY + 64 * sc }
   ]
   const used = slots.slice(0, Math.min(pts.length, 4))
-  // connecting lines from hero down to the points
-  ctx.strokeStyle = withAlpha(pal.sky, 0.22)
-  ctx.lineWidth = 1
-  used.forEach((s) => {
+  // connecting lines from hero down to the points (brighter + thicker so the constellation reads)
+  ctx.strokeStyle = withAlpha(pal.skyBright, 0.4)
+  ctx.lineWidth = 2
+  used.forEach((sl, idx) => {
+    if (idx === 3) return // bottom-centre star: a vertical line from the hero would run through
+    // the centre-TOP stat's text — connect it to the side stars below instead (diamond)
     ctx.beginPath()
-    ctx.moveTo(cx, heroY + 150)
-    ctx.lineTo(s.x, s.y - 22)
+    ctx.moveTo(cx, heroY + 150 * sc)
+    ctx.lineTo(sl.x, sl.y - 40 * sc)
     ctx.stroke()
   })
+  if (used.length === 4) {
+    for (const side of [used[1], used[2]]) {
+      ctx.beginPath()
+      ctx.moveTo(side.x, side.y - 48 * sc)
+      ctx.lineTo(used[3].x, used[3].y - 48 * sc)
+      ctx.stroke()
+    }
+  }
   pts.slice(0, 4).forEach((p, i) => {
-    const s = used[i]
+    const sl = used[i]
     ctx.fillStyle = pal.goldBright
     ctx.beginPath()
-    ctx.arc(s.x, s.y - 30, 5, 0, Math.PI * 2)
+    ctx.arc(sl.x, sl.y - 48 * sc, 6.5, 0, Math.PI * 2)
     ctx.fill()
     ctx.textAlign = 'center'
-    ctx.font = "700 38px Georgia, serif"
-    ctx.fillStyle = pal.text
-    ctx.fillText(p.value, s.x, s.y + 8)
+    ctx.font = `700 ${Math.round(52 * sc)}px Georgia, serif`
+    ctx.fillStyle = pal.skyBright
+    ctx.shadowColor = 'rgba(150,180,240,0.45)'
+    ctx.shadowBlur = 16
+    ctx.fillText(p.value, sl.x, sl.y + 8)
+    ctx.shadowBlur = 0
+    ctx.shadowColor = 'transparent'
     ctx.letterSpacing = '1.5px'
-    ctx.font = "600 16px 'Satoshi', 'Segoe UI', sans-serif"
-    ctx.fillStyle = pal.muted
-    ctx.fillText(p.label.toUpperCase(), s.x, s.y + 34)
+    ctx.font = `700 ${Math.round(19 * sc)}px 'Satoshi', 'Segoe UI', sans-serif`
+    ctx.fillStyle = pal.sky
+    ctx.fillText(p.label.toUpperCase(), sl.x, sl.y + 42 * sc)
     ctx.letterSpacing = '0px'
   })
 
-  if (c.medalBest !== undefined) drawMedal(ctx, cx, heroY - 150, 40, c.medalBest, pal)
+  if (c.medalBest !== undefined) drawMedal(ctx, cx, heroY - 150 * sc, 40, c.medalBest, pal)
 
   drawFooter(ctx, cx, H - 54, pal, pal.skyBright)
 }
@@ -743,32 +818,35 @@ function drawFestival(ctx: CanvasRenderingContext2D, c: CardContent, W: number, 
   ctx.stroke()
 
   const cx = W / 2
-  const oy = (H - 1080) * 0.4
+  const sc = fmtScale(H)
   // brand
   ctx.textAlign = 'center'
   ctx.font = "700 40px 'Clash Display', 'Segoe UI', sans-serif"
   const qw = ctx.measureText('Quest').width
   const dw = ctx.measureText('Day').width
   const bx = cx - (qw + dw) / 2
+  const brandY = Math.round(H * 0.165)
   ctx.textAlign = 'left'
   ctx.fillStyle = FEST.cream
-  ctx.fillText('Quest', bx, 192 + oy)
+  ctx.fillText('Quest', bx, brandY)
   ctx.fillStyle = FEST.goldBright
-  ctx.fillText('Day', bx + qw, 192 + oy)
+  ctx.fillText('Day', bx + qw, brandY)
 
   // eyebrow
   ctx.textAlign = 'center'
   ctx.letterSpacing = '3px'
-  ctx.font = "800 22px 'Satoshi', 'Segoe UI', sans-serif"
+  ctx.font = `800 ${Math.round(22 * sc)}px 'Satoshi', 'Segoe UI', sans-serif`
   ctx.fillStyle = FEST.goldBright
-  ctx.fillText(`★ ${c.eyebrow.toUpperCase()} ★`, cx, 236 + oy)
+  ctx.fillText(`★ ${c.eyebrow.toUpperCase()} ★`, cx, Math.round(H * 0.235))
   ctx.letterSpacing = '0px'
 
-  // sunburst behind the hero — CENTRED (H*0.5) + smaller so its top never reaches the
-  // brand/eyebrow above it (the earlier H*0.4/290 overlapped and washed them out).
-  const sy = H * 0.5
+  // chips sit lower than the (taller) tall-format body; the sunburst centres in the gap above them
+  const chipsTop = Math.round(H * (H > 1080 ? 0.73 : 0.79))
+  // sunburst behind the hero — centred between the eyebrow and the chips, grows with the format
+  const sy = (H * 0.235 + chipsTop) / 2
   const rays = 24
-  const rOuter = 250
+  const rOuter = 250 * sc
+  const discR = 150 * sc
   ctx.save()
   ctx.translate(cx, sy)
   for (let i = 0; i < rays; i++) {
@@ -790,34 +868,42 @@ function drawFestival(ctx: CanvasRenderingContext2D, c: CardContent, W: number, 
   ctx.beginPath()
   ctx.arc(0, 0, rOuter, 0, Math.PI * 2)
   ctx.fill()
-  const disc = ctx.createRadialGradient(0, 0, 0, 0, 0, 150)
+  const disc = ctx.createRadialGradient(0, 0, 0, 0, 0, discR)
   disc.addColorStop(0, FEST.emeraldDeep)
   disc.addColorStop(0.62, FEST.emeraldDeep)
   disc.addColorStop(1, withAlpha(FEST.emeraldDeep, 0))
   ctx.fillStyle = disc
   ctx.beginPath()
-  ctx.arc(0, 0, 150, 0, Math.PI * 2)
+  ctx.arc(0, 0, discR, 0, Math.PI * 2)
   ctx.fill()
   ctx.restore()
 
   // star on top of the sunburst
-  drawStar(ctx, cx, sy - rOuter + 16, 5, 26, 11, FEST.goldBright)
+  drawStar(ctx, cx, sy - rOuter + 16, 5, 26 * sc, 11 * sc, FEST.goldBright)
 
   // hero number (heavy)
   ctx.textAlign = 'center'
-  ctx.font = "900 168px 'Arial Black', 'Segoe UI', Impact, sans-serif"
+  ctx.font = `900 ${Math.round(168 * sc)}px 'Arial Black', 'Segoe UI', Impact, sans-serif`
   ctx.fillStyle = FEST.cream
   ctx.shadowColor = 'rgba(0,0,0,0.22)'
   ctx.shadowOffsetX = 4
   ctx.shadowOffsetY = 6
-  ctx.fillText(c.heroNum, cx, sy + 56)
+  ctx.fillText(c.heroNum, cx, sy + 56 * sc)
   ctx.shadowOffsetX = 0
   ctx.shadowOffsetY = 0
   ctx.shadowColor = 'transparent'
-  ctx.font = "800 26px 'Satoshi', 'Segoe UI', sans-serif"
+  const labelText = c.heroLabel.toUpperCase()
+  ctx.font = `800 ${Math.round(26 * sc)}px 'Satoshi', 'Segoe UI', sans-serif`
   ctx.letterSpacing = '2px'
-  ctx.fillStyle = FEST.goldBright
-  ctx.fillText(c.heroLabel.toUpperCase(), cx, sy + rOuter - 92)
+  const lw = ctx.measureText(labelText).width + labelText.length * 2
+  const ly = sy + rOuter - 96 * sc
+  // cream banner behind the label — it was gold-on-gold (invisible) over the sunburst rays
+  ctx.fillStyle = withAlpha(FEST.cream, 0.93)
+  roundRectPath(ctx, cx - lw / 2 - 26 * sc, ly - 30 * sc, lw + 52 * sc, 44 * sc, 22 * sc)
+  ctx.fill()
+  ctx.textAlign = 'center'
+  ctx.fillStyle = FEST.ink
+  ctx.fillText(labelText, cx, ly)
   ctx.letterSpacing = '0px'
 
   // bold banner chips (+ level pill prepended if present)
@@ -827,27 +913,27 @@ function drawFestival(ctx: CanvasRenderingContext2D, c: CardContent, W: number, 
   const M = 64
   const gap = 20
   const pw = (W - 2 * M - gap * (show.length - 1)) / show.length
-  const py = H - 230
-  const ph = 116
+  const py = chipsTop
+  const ph = Math.round(116 * sc)
   const pillBg = [FEST.crimson, FEST.gold, FEST.cream]
   const pillFg = [FEST.cream, FEST.ink, FEST.ink]
   show.forEach((p, i) => {
     const x = M + i * (pw + gap)
     ctx.fillStyle = pillBg[i % 3]
-    roundRectPath(ctx, x, py, pw, ph, 14)
+    roundRectPath(ctx, x, py, pw, ph, Math.min(14, ph * 0.12))
     ctx.fill()
     ctx.strokeStyle = withAlpha(FEST.ink, 0.18)
     ctx.lineWidth = 2
     ctx.stroke()
     ctx.textAlign = 'center'
     ctx.fillStyle = withAlpha(pillFg[i % 3], 0.82)
-    ctx.font = "800 17px 'Satoshi', 'Segoe UI', sans-serif"
+    ctx.font = `800 ${Math.round(17 * sc)}px 'Satoshi', 'Segoe UI', sans-serif`
     ctx.letterSpacing = '1px'
-    ctx.fillText(p.label.toUpperCase(), x + pw / 2, py + 42)
+    ctx.fillText(p.label.toUpperCase(), x + pw / 2, py + ph * 0.36)
     ctx.letterSpacing = '0px'
     ctx.fillStyle = pillFg[i % 3]
-    ctx.font = "900 40px 'Arial Black', 'Segoe UI', Impact, sans-serif"
-    ctx.fillText(p.value, x + pw / 2, py + 88)
+    ctx.font = `900 ${Math.round(40 * sc)}px 'Arial Black', 'Segoe UI', Impact, sans-serif`
+    ctx.fillText(p.value, x + pw / 2, py + ph * 0.76)
   })
 
   // footer
