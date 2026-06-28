@@ -218,6 +218,18 @@ by outcome and **cannot read code**, so the gates below are load-bearing, not op
   "no failures detected — N lines hidden". `exit 0` means clean, but to SEE the actual PASS/FAIL
   lines, redirect to a temp file and `Read` it (the hook filters the tool *result*, not the file;
   `cygpath -w /tmp/x.txt` gives the Windows path) — or delegate to the `test-runner` agent.
+- **Redirect landmine + dump gitignore (cost cleanup time 2026-06-28):** in git-bash on Windows,
+  redirecting to a `C:\temp\...` path writes a literal `C:temp...` file at the **repo root** (the
+  drive `:` becomes the U+F03A private-use colon), which ordinary globs (`./*.txt`) silently miss and
+  which clutters `git status`. Redirect to `/tmp/...` (POSIX) instead, or to a name already ignored.
+  The regenerable dump patterns `/pw-*.txt`, `/pwqa*.txt`, `/sweep-*.txt`, `/*-out.txt`, `/tc.txt` and
+  root preview PNGs (`/biome-*`, `/buildings-*`, `/town-*`, `/edit-*`, `/tb-*`, `/tp-*`, `/openart-*`)
+  are now in `.gitignore` so test/build output and dev screenshots never re-clutter the tree.
+- **Per-feature commits when a file spans features:** `src/shared/types.ts`, `src/shared/config/balance.ts`,
+  and `src/renderer/styles.css` each accrete changes for MULTIPLE features at once. To split them into
+  coherent commits, stage at the hunk level — `git apply --cached` is offset-tolerant, so generate one
+  sub-patch per feature (header + only that feature's `@@` hunks) and apply in any order; verify each with
+  `git apply --cached --check` first.
 
 ## When summarizing / compacting this conversation, KEEP:
 
