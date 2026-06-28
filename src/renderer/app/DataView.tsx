@@ -4,6 +4,16 @@ import { TOGGLEABLE_FEATURES, isFeatureEnabled } from './features'
 import { CITIES, findCity } from '@shared/data/cities'
 import type { PrayerMethod } from '@shared/types'
 import {
+  THEMES,
+  ACCENTS,
+  loadThemeChoice,
+  loadAccentChoice,
+  setThemeChoice,
+  setAccentChoice,
+  type ThemeChoice,
+  type AccentChoice
+} from '../theme'
+import {
   FileText,
   Sword,
   Trophy,
@@ -161,6 +171,64 @@ function PrayerSettings(): JSX.Element {
   )
 }
 
+/** Appearance (v1.14): theme + accent picker. UI-only prefs → localStorage (theme.ts),
+ *  never db.json, so it sidesteps the save deep-merge/validate path entirely. */
+function AppearanceSettings(): JSX.Element {
+  const [theme, setTheme] = useState<ThemeChoice>(() => loadThemeChoice())
+  const [accent, setAccent] = useState<AccentChoice>(() => loadAccentChoice())
+  const pickTheme = (t: ThemeChoice): void => {
+    setThemeChoice(t)
+    setTheme(t)
+  }
+  const pickAccent = (a: AccentChoice): void => {
+    setAccentChoice(a)
+    setAccent(a)
+  }
+  return (
+    <div className="card">
+      <strong>Appearance</strong>
+      <p className="meta-dim" style={{ marginTop: 4 }}>
+        Pick a theme and accent colour — saved on this PC only.
+      </p>
+      <div className="appearance-row">
+        <span className="appearance-label">Theme</span>
+        <div className="theme-seg" role="group" aria-label="theme">
+          {THEMES.map((t) => (
+            <button
+              key={t.id}
+              className={`theme-seg-opt${theme === t.id ? ' on' : ''}`}
+              onClick={() => pickTheme(t.id)}
+            >
+              <span className="ts-name">{t.name}</span>
+              <span className="ts-sub">{t.sub}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="appearance-row">
+        <span className="appearance-label">Accent</span>
+        <div className="accent-swatches" role="group" aria-label="accent colour">
+          {ACCENTS.map((a) => (
+            <button
+              key={a.id}
+              className={`accent-swatch${accent === a.id ? ' on' : ''}`}
+              title={a.name}
+              aria-label={a.name}
+              onClick={() => pickAccent(a.id)}
+            >
+              <span className="accent-dot" style={{ background: a.swatch }} />
+              <span className="accent-name">{a.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+      <p className="meta-dim" style={{ marginTop: 8 }}>
+        The title bar stays branded emerald, and the floating widget keeps its dark glass look.
+      </p>
+    </div>
+  )
+}
+
 /**
  * Data & backup (§10). Auto-backups run quietly in the background; here the user
  * can Export a single opaque backup file (for transfer to another PC) and Import
@@ -260,6 +328,8 @@ export function DataView(): JSX.Element {
           </div>
         </div>
       )}
+
+      <AppearanceSettings />
 
       {db && (
         <div className="card">

@@ -30,6 +30,9 @@
   --brand: #2fb380;
   --brand-deep: #1f8a60;
   --brand-bright: #3fe0a8;
+  /* Ink colour for text ON a brand-filled button/tab/badge. A token (not a hard #06231a)
+     so a non-emerald accent can carry its own readable ink (see [data-accent] blocks). */
+  --on-brand: #06231a;
   --gold: #f5b938; /* XP, coins, treasure */
   --gold-bright: #ffcf5c;
   --gold-deep: #c98a1e;
@@ -76,4 +79,84 @@
 
   font-family: var(--font-body);
   color-scheme: dark;
+}
+
+/* =====================================================================
+   THEMES & ACCENTS (v1.14) — two independent axes set on <html> as
+   data-theme / data-accent (see theme.ts). Defaults (no attribute) = the
+   :root "Dusk" dark look + emerald. Approved in mockups/theme-preview.html.
+
+   • data-theme  swaps SURFACES (light vs dark). Daylight = warm paper, dark
+     emerald-ink text. The TITLE BAR stays branded emerald in every theme
+     (--titlebar is not overridden; the native Windows overlay is fixed too).
+     Illustration/art colours (Realm, Town, arcade games) are intentionally
+     NOT themed — they read the same on a light page.
+   • data-accent swaps the BRAND hue (saturated fills read on dark AND light),
+     so it's theme-independent.
+   ===================================================================== */
+
+/* ---- Daylight: the warm light theme ---- */
+[data-theme='daylight'] {
+  --bg: #e9e1d2; /* warm paper page (not pure white) */
+  --panel: #fffdf8; /* near-white card / stat base */
+  --panel-2: #f4eee2; /* warm beige raised rows / buttons / tabs */
+  --panel-3: #e7ddcb; /* deeper warm — hover / pressed */
+  --text: #21302a; /* dark emerald-ink, high contrast */
+  --muted: #6f7f74;
+  --border: #e1d9c7;
+  --gold-bright: #8a5d10; /* DARK gold for text on a pale gold tint */
+  --gold-rgb: 214 150 28;
+  --fire: #d65a28;
+  --candy: #d24a57;
+  --shadow-1: 0 1px 2px rgba(70, 55, 30, 0.1);
+  --shadow-2: 0 16px 36px rgba(80, 65, 40, 0.18);
+  --shadow-clay: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 1px 2px rgba(70, 55, 30, 0.07),
+    0 10px 26px rgba(85, 68, 42, 0.12);
+  color-scheme: light;
+}
+
+/* ---- Accent presets (recolour --brand / --accent; pick one) ---- */
+[data-accent='emerald'] {
+  --brand: #2fb380;
+  --brand-bright: #3fe0a8;
+  --brand-deep: #1f8a60;
+  --brand-rgb: 47 179 128;
+  --brand-bright-rgb: 63 224 168;
+  --brand-deep-rgb: 31 138 96;
+  --accent: #2fb380;
+  --accent-2: #3fe0a8;
+  --on-brand: #06231a;
+}
+[data-accent='amethyst'] {
+  --brand: #9d6ae0;
+  --brand-bright: #c39bf2;
+  --brand-deep: #6c40ad;
+  --brand-rgb: 157 106 224;
+  --brand-bright-rgb: 195 155 242;
+  --brand-deep-rgb: 108 64 173;
+  --accent: #9d6ae0;
+  --accent-2: #c39bf2;
+  --on-brand: #1d0d33;
+}
+[data-accent='sky'] {
+  --brand: #38a1ea;
+  --brand-bright: #6ec8f6;
+  --brand-deep: #1d6cad;
+  --brand-rgb: 56 161 234;
+  --brand-bright-rgb: 110 200 246;
+  --brand-deep-rgb: 29 108 173;
+  --accent: #38a1ea;
+  --accent-2: #6ec8f6;
+  --on-brand: #052439;
+}
+[data-accent='gold'] {
+  --brand: #efb43a;
+  --brand-bright: #ffd368;
+  --brand-deep: #bd851c;
+  --brand-rgb: 239 180 58;
+  --brand-bright-rgb: 255 211 104;
+  --brand-deep-rgb: 189 133 28;
+  --accent: #efb43a;
+  --accent-2: #ffd368;
+  --on-brand: #3a2806;
 }

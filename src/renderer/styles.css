@@ -249,7 +249,7 @@ body:not(.widget-body) {
 }
 
 .tab.on {
-  color: #06231a;
+  color: var(--on-brand);
   background: linear-gradient(180deg, var(--brand-bright), var(--brand));
   border-color: transparent;
   box-shadow: 0 3px 0 var(--brand-deep);
@@ -418,7 +418,7 @@ button:active {
 button.primary {
   background: linear-gradient(180deg, var(--brand-bright), var(--brand));
   border-color: transparent;
-  color: #06231a;
+  color: var(--on-brand);
   font-weight: 700;
   box-shadow: 0 4px 0 var(--brand-deep), var(--shadow-1);
 }
@@ -3093,7 +3093,7 @@ select:focus {
 }
 .game-diff-opt.on {
   background: linear-gradient(180deg, var(--brand-bright), var(--brand));
-  color: #06231a;
+  color: var(--on-brand);
 }
 .game-diff-opt:hover {
   filter: brightness(1.06);
@@ -3496,7 +3496,7 @@ button.wlist-item {
 /* ---- Complete buttons (management UI) ---- */
 .complete-btn {
   background: var(--accent-2);
-  color: #0c1410;
+  color: var(--on-brand);
   border-color: transparent;
   font-weight: 600;
   padding: 5px 12px;
@@ -3625,6 +3625,104 @@ code {
 }
 
 /* ---- Backup messages ---- */
+/* ===== Appearance picker (theme + accent) ===== */
+.appearance-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.appearance-label {
+  width: 64px;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.045em;
+}
+.theme-seg {
+  display: inline-flex;
+  gap: 4px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 4px;
+}
+.theme-seg-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 7px 16px;
+  border-radius: 9px;
+  color: var(--muted);
+  background: transparent;
+  box-shadow: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.theme-seg-opt:hover {
+  color: var(--text);
+}
+.theme-seg-opt .ts-sub {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+.theme-seg-opt.on {
+  color: var(--on-brand);
+  background: linear-gradient(180deg, var(--brand-bright), var(--brand));
+  box-shadow: 0 3px 0 var(--brand-deep);
+}
+.theme-seg-opt.on .ts-sub {
+  color: var(--on-brand);
+  opacity: 0.7;
+}
+.accent-swatches {
+  display: inline-flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.accent-swatch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 7px 12px 7px 9px;
+  border-radius: 11px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: none;
+  transition: border-color 0.15s ease, color 0.15s ease, transform 0.12s ease;
+}
+.accent-swatch:hover {
+  transform: translateY(-1px);
+  color: var(--text);
+}
+.accent-swatch .accent-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+.accent-swatch.on {
+  color: var(--text);
+  border-color: var(--brand);
+  box-shadow: 0 0 0 2px rgb(var(--brand-rgb) / 0.25);
+}
+
 .backup-msg {
   margin-top: 12px;
   padding: 10px 12px;
@@ -5832,7 +5930,7 @@ code {
   padding: 10px 12px;
   border-radius: var(--r-btn);
   background: linear-gradient(180deg, var(--brand-bright), var(--brand));
-  color: #06251a;
+  color: var(--on-brand);
   font-weight: 700;
   font-size: 13px;
   border: 1px solid rgba(255, 255, 255, 0.18);
@@ -5988,7 +6086,7 @@ code {
   padding: 7px 12px;
   border-radius: 11px;
   background: linear-gradient(180deg, var(--brand-bright), var(--brand));
-  color: #06251a;
+  color: var(--on-brand);
   font-weight: 700;
   font-size: 12px;
   border: 1px solid rgba(255, 255, 255, 0.18);
