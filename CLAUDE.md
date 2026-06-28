@@ -87,6 +87,13 @@ Pure engines live in `src/shared/engine/` (current-quest scoring, rewards, **rea
   Reference `var(--brand)` etc., never raw hex. Title-bar emerald `#10362a` is duplicated in
   3 spots that must stay in sync: `--titlebar` (theme.css), `titleBarOverlay.color`
   (`src/main/index.ts`), and the `.titlebar` background.
+- **Theming (v1.14): two axes on `<html>` — `data-theme` (dusk/daylight) + `data-accent` (emerald/
+  amethyst/sky/gold).** `:root` = Dusk default; `[data-theme="daylight"]` overrides surfaces; `[data-accent]`
+  overrides `--brand*`. Ink on brand fills = **`var(--on-brand)`** (never hardcode `#06231a`). Applied by
+  `src/renderer/theme.ts` from **localStorage** (no schema change) at the top of every renderer entry before
+  `createRoot` (CSP blocks a pre-paint inline script). Widget/friction/prayer get `{allowLightTheme:false}`
+  (accent only — dark by design). Title bar stays emerald in all themes; **art (Realm/Town/arcade/icons) is NOT
+  themed**. Default = dusk (opt-in light). Picker = `AppearanceSettings` in `DataView.tsx`; driver `pw:theme`.
 - **App version** is injected at build time from `package.json` via Vite `define`
   (`__APP_VERSION__`). The title bar reads it — no manual version strings in the UI.
 - **Shared types** → `src/shared/types.ts`. **Defaults + migration seed** → `src/shared/defaults.ts`
@@ -117,8 +124,17 @@ Pure engines live in `src/shared/engine/` (current-quest scoring, rewards, **rea
   shared `ShareCardModal` carries the picker for every card kind. **Share artifacts stay static PNG** —
   animated export (WebM/GIF/MP4) is rejected (won't paste into iMessage/WhatsApp, or needs a new dep), so
   revisiting it is a stop-and-confirm dep decision, not a quiet add. See the codebase-overview skill's gotchas.
-- **UI-only preferences (e.g. last-used share theme) → `localStorage`, NOT `db.json`** — it deliberately
-  avoids the save-schema deep-merge/validate path (no stop-and-confirm). Only real user data goes in `db.json`.
+- **UI-only preferences (e.g. last-used share theme, `questday.theme`/`questday.accent`) → `localStorage`,
+  NOT `db.json`** — it deliberately avoids the save-schema deep-merge/validate path (no stop-and-confirm). Only
+  real user data goes in `db.json`. **Exception — state whose source of truth is the MAIN process** (it can't
+  read a renderer's localStorage) lives in `settings`: e.g. `settings.widgetVisible` (v1.14), which the main
+  process syncs on widget show/hide/close so the Dashboard toggle label stays correct (a stop-and-confirm
+  schema add). Reset `true` on launch (widget always opens).
+- **Quest ordering (v1.14):** per-frame mode flag `TimeFrame.manualOrder` (Auto = sort by importance/urgency
+  `scoreQuest`; Custom = sort by the existing `Quest.sortOrder`, set by a drag). `selectCurrentQuest.ts`'s
+  `rankCandidates` is frame-mode aware so widget/Dashboard/Quests-tab agree; `resolveCurrentQuest` rescues a
+  near-due quest to "current" in a Custom frame (`balance.selection.dueSoonRescueThreshold`). `manualOrder` +
+  `sortOrder` are NEVER read by reward/↩Restore math.
 - **Design mockups → `mockups/`** (self-contained OFFLINE HTML, inline SVG/CSS, no deps/network,
   double-click to view). The user is highly visual and can't read code — for any visual feature,
   build a mockup and get it APPROVED before coding the real thing (e.g. `mockups/worldmap-mockup.html`).

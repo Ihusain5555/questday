@@ -113,14 +113,22 @@ ONLY writer of the data file. This is why edits in one window appear live in oth
   then dynamic-`import(pathToFileURL(outfile))`. esbuild is present (electron-vite dep), so zero new deps.
 
 ## Feature details
-- **Arcade** (`app/arcade/`): a **10-game brain-training set** (v1.8.3), high-score only — NO
-  coins. Tickets are abundant (v1.8.4): `ticketsFreePerDay` (3) topped up each morning + 1/quest,
-  soft cap `ticketsPerDay` (20). Every game has an **Easy/Medium/Hard** picker (ready phase,
-  default Medium); 3 games adapt *within* a round (Flash Recall exposure / Span Recall span /
-  Mental Spin angle). Game identity = `balance.arcade.games[key].icon`+`.color`, rendered via
-  `app/arcade/gameIcons.tsx` (`GameIcon`/`GameBadge`/`MemoryFace`) — no emoji. Add a game = balance
+- **Arcade** (`app/arcade/`): an **11-game brain-training set** (v1.14 added **Color Recreation**),
+  high-score only — NO coins. Tickets are abundant (v1.8.4): `ticketsFreePerDay` (3) topped up each
+  morning + 1/quest, soft cap `ticketsPerDay` (20). Every game has an **Easy/Medium/Hard** picker (ready
+  phase, default Medium); some adapt *within* a round (Flash Recall exposure / Span Recall span /
+  Mental Spin angle / Color Recreation reveal-ease). Game identity = `balance.arcade.games[key].icon`+`.color`,
+  rendered via `app/arcade/gameIcons.tsx` (`GameIcon`/`GameBadge`/`MemoryFace`) — no emoji. Add a game = balance
   entry (with icon+color) + component in the ArcadeView registry (+ a new icon → the `ICONS` map
-  in `gameIcons.tsx`).
+  in `gameIcons.tsx`) **+ bump `ARCADE_CARDS_TEST` (currently 11) in `scripts/pw-arcade.mjs`**. High scores
+  auto-work for a new key (`ArcadeState.best` is a generic `Record<string,number>`, no migration).
+  **Color Recreation** (`games/ColorRecreation.tsx`, `balance.arcade.games.colorrecall`) is the dialed.gg
+  "colour" game: flash an HSB colour → rebuild it with sliders → score 0–10 by redmean RGB distance × 5
+  rounds (0–50). Per-tier config under `colorrecall.tiers.{easy,medium,hard}` (`free` channels / `tol` /
+  `reveal` / ranges) read via a STATIC key. `onFinish(total)` once on the summary. Not timed (no `RoundTimer`).
+  Test hooks: `.cr-field[data-phase]` + `data-target="h,s,b"` (the pw driver sets the sliders to the target).
+  **Share a high score from the grid (v1.14):** each game card with a saved best shows a `.arcade-grid-share`
+  button → the existing `ShareCardModal` `'arcade'` kind (no new card kind, no schema; reuses the approved studio).
 - **Forge** (v1.8.1, `app/ProductivityView.tsx`): one tab, a sub-nav over the productivity tools
   (Focus / Matrix / Active mode + future ones); sub-tabs respect the feature toggles.
 - **Focus** (`app/FocusView.tsx`, `balance.focus`): one timer engine, Pomodoro family as presets
@@ -390,3 +398,43 @@ ONLY writer of the data file. This is why edits in one window appear live in oth
   buildings shuffle when you move a different one. Hall (index 0) is fixed/non-swappable. Adding `townLayouts` =
   STOP-AND-CONFIRM schema change. Build order in spec §13 (mockup → data layer → render → swap UI → drag UI →
   reset/polish → `pw:townedit` driver).
+- **Quest "order" column (v1.14) — `TimeFrame.manualOrder` is the ONLY new state; the order itself reuses
+  `Quest.sortOrder`.** A frame is AUTO (flag absent/false → quests sort by the importance/urgency `scoreQuest`)
+  or CUSTOM (flag true → sort by `sortOrder`). `rankCandidates` (in `selectCurrentQuest.ts`) is now frame-mode
+  aware via `orderByFrameMode`, so the **widget list, Dashboard, and Quests tab all share one ordering**. A drag
+  (`moveQuestBefore` in `store.ts`) flips the target frame to `manualOrder:true` in the SAME save; `resetFrameOrder`
+  clears it. **`resolveCurrentQuest` adds a custom-frame "deadline rescue":** in a CUSTOM frame the spotlight is
+  the manual #1 EXCEPT a quest whose `dueSoon` ≥ `balance.selection.dueSoonRescueThreshold` (0.5 ≈ within ~1h)
+  grabs "current" while keeping its list position. `selectCurrentQuest` now routes through `resolveCurrentQuest`.
+  `manualOrder` + `sortOrder` are NEVER read by reward/civilization/↩Restore math (proven by `pw:rewards`).
+  Adding `TimeFrame.manualOrder` was a stop-and-confirm schema change (user said yes). The numbered `.rank` badge
+  IS the drag handle (replaced the old `.drag-grip` dots in `QuestsView`); `.quest-row.current` is the spotlight highlight.
+- **Theming (v1.14) — two axes on `<html>`: `data-theme` (dusk/daylight) + `data-accent` (emerald/amethyst/sky/gold).**
+  Tokens in `theme.css`: `:root` = Dusk default, `[data-theme="daylight"]` overrides surfaces/text/border/shadow +
+  `color-scheme:light`, four `[data-accent]` blocks override `--brand*`. **`--on-brand`** is the ink colour on a
+  brand-filled button/tab/badge (was hardcoded `#06231a`/`#0c1410`/`#06251a` in styles.css — all now `var(--on-brand)`
+  so accents recolour text). Applied by **`src/renderer/theme.ts`** (`applyStoredTheme`/`watchThemeChanges`,
+  prefs in **localStorage** `questday.theme`/`questday.accent` — NOT db.json, no schema change). Called at the top of
+  ALL 4 renderer entries BEFORE `createRoot` (no flash; **CSP blocks a pre-paint inline `<script>`**, so it MUST be the
+  entry module, not index.html). **Widget/friction/prayer call it with `{allowLightTheme:false}`** → accent only,
+  surfaces forced dusk (they're dark-glass/atmospheric over the desktop; light `--text` on their dark bg would be
+  unreadable). **Default theme = `dusk`** (opt-in light) so existing users aren't flipped. **Illustration/art is
+  intentionally NOT themed** (Realm map, Town, arcade games, reward icons) — only the ~dozen chrome spots needed
+  tokenizing; most `color:#fff` are white-on-saturated-colour (badges/game labels) and are fine on light. **The native
+  Windows title bar stays emerald in every theme** (`--titlebar` not overridden; the `titleBarOverlay.color` in
+  `main/index.ts` is baked at window creation — relighting it per-theme needs a new IPC = stop-and-confirm, deferred).
+  Picker = `AppearanceSettings` card in `DataView.tsx`. Driver: `scripts/pw-theme.mjs` (flips Daylight + accent,
+  screenshots every tab). Cross-window live update rides the `storage` event (the picker writes localStorage → fires
+  in OTHER windows).
+- **Widget visibility (v1.14) — `settings.widgetVisible` lives in db.json, NOT localStorage, on purpose.** The
+  Dashboard "Show/Hide widget" toggle needs to know if the widget is open, but the SOURCE OF TRUTH is the MAIN process
+  (it owns the `widgetWindow`), which can't read a renderer's localStorage — so it's a settings field the main process
+  keeps in sync via `syncWidgetVisible()` (deep-merge, only that field) on show/hide/close + tray + friction re-show.
+  It broadcasts to the renderer through the existing `store:changed`. Always reset `true` on launch (widget opens every
+  start — the user chose "don't remember closed across restart"). Never read by reward/↩Restore math. This was a
+  stop-and-confirm schema change (user said yes).
+- **Reaction-game buttons that MOVE/RE-RENDER on tap must register on `onPointerDown`, not `onClick`.** A click needs
+  press+release on the SAME element, so a fast tap — or one where the element re-renders mid-press (Flash Recall
+  flash→respond, Track Switch node→done/reshuffle) — silently drops. Fixed in `FlashRecall.tsx`/`TrackSwitch.tsx`
+  with `onPointerDown={(e)=>{ if(e.button===0) … }}` (button 0 = primary/touch; ignores right-click). Playwright's
+  `.click()` still fires pointerdown, so drivers are unaffected.
