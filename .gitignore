@@ -24,3 +24,18 @@ crop_*.png
 _crop_*.png
 # dev-only overworld art (unconfirmed bundle license — never commit to the public repo)
 src/renderer/assets/dev/
+# Test / build / typecheck output dumps at repo root (regenerable scratch — keep out of git status)
+/pw-*.txt
+/pwqa*.txt
+/sweep-*.txt
+/*-out.txt
+/_*.txt
+/tc.txt
+# Dev preview/screenshot PNGs at repo root (regenerable from scripts/_gen-*.mjs)
+/biome-*.png
+/buildings-*.png
+/town-*.png
+/edit-*.png
+/tb-*.png
+/tp-*.png
+/openart-*.png
