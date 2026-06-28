@@ -238,7 +238,11 @@ export function TrackSwitch({ onFinish }: { onFinish: (score: number) => void })
                   }`}
                   data-label={n.label}
                   style={{ top: `${n.top}%`, left: `${n.left}%` }}
-                  onClick={() => tap(n.label)}
+                  // pointerdown, not click: register the tap on press so a fast tap (or one
+                  // where the node re-renders / the trail reshuffles mid-press) never drops.
+                  onPointerDown={(e) => {
+                    if (e.button === 0) tap(n.label)
+                  }}
                   disabled={isDone}
                 >
                   {isDone ? '✓' : n.label}

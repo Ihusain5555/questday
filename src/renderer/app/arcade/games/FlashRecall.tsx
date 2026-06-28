@@ -157,7 +157,13 @@ export function FlashRecall({ onFinish }: { onFinish: (score: number) => void })
                 isChoice && !reveal ? ' wrong' : ''
               }`}
               style={{ left: `${p.left}%`, top: `${p.top}%` }}
-              onClick={() => choose(i)}
+              // Register on POINTER-DOWN, not click: a click needs press+release on the
+              // SAME element, so a fast tap (or one where the cell re-renders flash→respond
+              // mid-press) silently drops. pointerdown fires on the instant of press — the
+              // right model for a reaction game and it fixes "edge taps don't register".
+              onPointerDown={(e) => {
+                if (e.button === 0) choose(i)
+              }}
               aria-label={`position ${i + 1}`}
             >
               {lit || reveal ? '●' : phase === 'respond' ? '?' : ''}
