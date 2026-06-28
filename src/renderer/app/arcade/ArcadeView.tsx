@@ -4,6 +4,7 @@ import { balance } from '@shared/config/balance'
 import { GameController, Ticket, Trophy, Play, SpeakerSimpleHigh, SpeakerSimpleSlash, ShareNetwork, Info, Brain } from '@phosphor-icons/react'
 import { play as playSfx, isMuted, toggleMuted } from './sound'
 import { ShareCardModal } from '../ShareCardModal'
+import type { ShareCardData } from '../shareCard'
 import { AimTrainer } from './games/AimTrainer'
 import { ReactionTime } from './games/ReactionTime'
 import { MemoryMatch } from './games/MemoryMatch'
@@ -14,6 +15,7 @@ import { SpanRecall } from './games/SpanRecall'
 import { StopTap } from './games/StopTap'
 import { TrackSwitch } from './games/TrackSwitch'
 import { MentalSpin } from './games/MentalSpin'
+import { ColorRecreation } from './games/ColorRecreation'
 import { GameIcon, GameBadge } from './gameIcons'
 
 type GameKey = keyof typeof balance.arcade.games
@@ -29,7 +31,8 @@ const GAME_COMPONENTS: Record<string, (props: { onFinish: (score: number) => voi
   spanrecall: SpanRecall,
   stoptap: StopTap,
   trackswitch: TrackSwitch,
-  mentalspin: MentalSpin
+  mentalspin: MentalSpin,
+  colorrecall: ColorRecreation
 }
 
 interface RoundResult {
@@ -60,8 +63,22 @@ export function ArcadeView(): JSX.Element {
   const { db, spendArcadeTicket, finishArcadeRound } = useStore()
   const [playing, setPlaying] = useState<GameKey | null>(null)
   const [result, setResult] = useState<RoundResult | null>(null)
-  const [sharing, setSharing] = useState(false)
+  // Holds the exact card data to share (or null). Built at click time so the SAME
+  // modal can be opened from the fresh-round banner OR from any game card's saved best.
+  const [sharing, setSharing] = useState<ShareCardData | null>(null)
   const [muted, setMuted] = useState(isMuted())
+
+  // Build the arcade share-card payload for a game (resolving its accent token to a
+  // concrete colour for the canvas). `score`/`isBest` differ for a fresh round vs a
+  // best-showcase share from the grid.
+  const arcadeShareData = (key: GameKey, score: number, best: number, isBest: boolean): ShareCardData => ({
+    kind: 'arcade',
+    gameName: balance.arcade.games[key].name,
+    accent: resolveCssColor(balance.arcade.games[key].color),
+    score,
+    best,
+    isBest
+  })
 
   if (!db) return <div>Loading…</div>
   const tickets = db.player.arcadeTickets
@@ -150,25 +167,20 @@ export function ArcadeView(): JSX.Element {
               <Trophy size={13} weight="fill" color="var(--gold)" /> new best!
             </span>
           )}
-          <button className="ghost arcade-share-btn" onClick={() => setSharing(true)}>
+          <button
+            className="ghost arcade-share-btn"
+            onClick={() =>
+              setSharing(
+                arcadeShareData(result.key, result.score, db.arcade.best[result.key] ?? result.score, result.newBest)
+              )
+            }
+          >
             <ShareNetwork size={14} weight="bold" /> Share score
           </button>
         </div>
       )}
 
-      {sharing && result && (
-        <ShareCardModal
-          data={{
-            kind: 'arcade',
-            gameName: balance.arcade.games[result.key].name,
-            accent: resolveCssColor(balance.arcade.games[result.key].color),
-            score: result.score,
-            best: db.arcade.best[result.key] ?? result.score,
-            isBest: result.newBest
-          }}
-          onClose={() => setSharing(false)}
-        />
-      )}
+      {sharing && <ShareCardModal data={sharing} onClose={() => setSharing(null)} />}
 
       {tickets === 0 && (
         <div className="placeholder arcade-empty">
@@ -192,6 +204,14 @@ export function ArcadeView(): JSX.Element {
                 {best !== undefined ? (
                   <>
                     <Trophy size={12} weight="fill" color="var(--gold)" /> best: {best}
+                    <button
+                      className="ghost arcade-grid-share"
+                      title="Share this high score"
+                      aria-label={`Share your ${cfg.name} high score`}
+                      onClick={() => setSharing(arcadeShareData(key, best, best, false))}
+                    >
+                      <ShareNetwork size={12} weight="bold" />
+                    </button>
                   </>
                 ) : (
                   'no rounds yet'

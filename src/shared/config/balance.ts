@@ -430,7 +430,15 @@ export const balance = {
       // revealMs = how long the "watch the left shape rotate onto the right" answer
       // animation plays (the satisfying aha + it teaches the transform); fastMs = answer
       // under this many ms for a "Fast!" bonus that feeds the combo quicker.
-      mentalspin: { name: 'Mental Spin', icon: 'ArrowsClockwise', color: 'var(--skill-flex)', blurb: 'Same shape or mirror? Rotate it in your head — spatial reasoning.', howToPlay: 'The right shape is the left one turned — or flipped. Tap Same if it is only rotated, Mirror if it is flipped. Answer fast to build a combo.', brainBenefit: 'Spatial reasoning — turning objects over in your head without moving them.', seconds: 45, revealMs: 450, fastMs: 2500 }
+      mentalspin: { name: 'Mental Spin', icon: 'ArrowsClockwise', color: 'var(--skill-flex)', blurb: 'Same shape or mirror? Rotate it in your head — spatial reasoning.', howToPlay: 'The right shape is the left one turned — or flipped. Tap Same if it is only rotated, Mirror if it is flipped. Answer fast to build a combo.', brainBenefit: 'Spatial reasoning — turning objects over in your head without moving them.', seconds: 45, revealMs: 450, fastMs: 2500 },
+      // Colour perception & visual memory — sky. The dialed.gg "colour" game: a target
+      // colour flashes, then you rebuild it from memory with H/S/B sliders (5 rounds, 0-50).
+      // Per-tier `free` = which channels you must match; the others are pre-given. `tol` =
+      // the redmean RGB distance that scores 0 (lower = stricter). `reference` keeps a faint
+      // target patch on screen (Easy). `revealMs` is the look time before it hides; a weak
+      // round lengthens the NEXT reveal in-game (tone rule). Read via STATIC key
+      // (balance.arcade.games.colorrecall.tiers.easy) to dodge the union-type narrowing.
+      colorrecall: { name: 'Color Recreation', icon: 'Eyedropper', color: 'var(--skill-flex)', blurb: 'Memorize a colour, then rebuild it from feel — colour perception (dialed).', howToPlay: 'A colour flashes, then hides. Rebuild it from memory with the Hue / Saturation / Brightness sliders — the closer you get, the higher the round score. Five rounds, no penalties; harder modes give a shorter look and match more channels.', brainBenefit: 'Visual memory & colour perception — holding a precise colour in mind and reproducing it.', rounds: 5, tiers: { easy: { revealMs: 2500, free: { h: true, s: false, b: false }, tol: 430, reference: true, sRange: [55, 85], bRange: [68, 94] }, medium: { revealMs: 1500, free: { h: true, s: true, b: false }, tol: 330, reference: false, sRange: [38, 92], bRange: [62, 90] }, hard: { revealMs: 800, free: { h: true, s: true, b: true }, tol: 240, reference: false, sRange: [34, 96], bRange: [46, 95] } } }
     }
   },
 

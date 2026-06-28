@@ -115,7 +115,13 @@ function toContent(d: ShareCardData): CardContent {
       heroLabel: d.gameName,
       chips: [
         { label: 'Your best', value: String(Math.max(d.best, d.score)), accent: 'gold' },
-        { label: 'Result', value: d.isBest ? 'New best!' : 'Nice run', accent: d.isBest ? 'gold' : 'emerald' }
+        {
+          label: 'Result',
+          // Fresh new best → celebrate; a best-showcase share from the grid (score === best,
+          // not a fresh best) reads "Personal best"; an ordinary sub-best run → "Nice run".
+          value: d.isBest ? 'New best!' : d.score >= d.best ? 'Personal best' : 'Nice run',
+          accent: d.isBest ? 'gold' : 'emerald'
+        }
       ],
       medalBest: d.isBest,
       tint: d.accent

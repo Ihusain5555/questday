@@ -71,7 +71,7 @@ try {
   await main.getByRole('button', { name: 'Arcade' }).click()
   await main.waitForTimeout(400)
   const cards = main.locator('.arcade-card')
-  result('ARCADE_CARDS_TEST', (await cards.count()) === 10, `${await cards.count()} games (want 10)`)
+  result('ARCADE_CARDS_TEST', (await cards.count()) === 11, `${await cards.count()} games (want 11)`)
   await main.screenshot({ path: path.join(shots, 'arcade.png') })
 
   const playGame = (name) => main.locator('.arcade-card', { hasText: name }).getByRole('button').click()
@@ -241,6 +241,39 @@ try {
   await endRound()
   await main.waitForTimeout(400)
   result('AIM_PLAY_TEST', (await resultText()).includes('Aim Trainer'), `result: "${(await resultText()).trim()}"`)
+
+  // --- Color Recreation (colour memory): read data-target, set the sliders to it ---
+  // for a perfect run. Pick Hard (0.8s reveals) so the 5-round drive is quick.
+  await playGame('Color Recreation')
+  await main.locator('.cr-field').waitFor({ timeout: 6000 })
+  result('COLORRECALL_LAUNCH_TEST', (await main.locator('.cr-tier').count()) === 3, `${await main.locator('.cr-tier').count()} difficulty tiers`)
+  await main.locator('.cr-tier', { hasText: 'Hard' }).click()
+  await main.locator('.cr-action', { hasText: 'Start' }).click()
+  // Native-set a range input's value so React's onChange fires (skip disabled/given ones).
+  const setRange = async (ch, val) =>
+    main.locator(`.cr-sliders input[data-channel="${ch}"]`).evaluate((el, v) => {
+      if (el.disabled) return
+      const set = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set
+      set.call(el, String(v))
+      el.dispatchEvent(new Event('input', { bubbles: true }))
+    }, val)
+  for (let r = 0; r < 5; r++) {
+    await main.locator('.cr-field[data-phase="guess"]').waitFor({ timeout: 8000 })
+    const [th, ts, tb] = ((await main.locator('.cr-field').getAttribute('data-target')) ?? '0,0,0')
+      .split(',')
+      .map(Number)
+    await setRange('h', th)
+    await setRange('s', ts)
+    await setRange('b', tb)
+    await main.locator('.cr-action', { hasText: 'Submit' }).click()
+    await main.locator('.cr-action', { hasText: r < 4 ? 'Next round' : 'See results' }).click()
+  }
+  await main.locator('.cr-action', { hasText: 'Collect' }).click()
+  await main.waitForTimeout(500)
+  await main.screenshot({ path: path.join(shots, 'arcade-colorrecall.png') })
+  result('COLORRECALL_PLAY_TEST',
+    (await resultText()).includes('Color Recreation') && (await resultText()).includes('new best'),
+    `result: "${(await resultText()).trim()}" (perfect-match run -> scored + best)`)
 
   await app.close()
 } catch (err) {

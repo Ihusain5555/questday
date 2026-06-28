@@ -12,6 +12,7 @@ import {
   Crosshair,
   Lightning,
   Palette,
+  Eyedropper,
   HandPalm,
   ArrowsLeftRight,
   ArrowsClockwise,
@@ -52,6 +53,7 @@ const ICONS: Record<string, Icon> = {
   Crosshair,
   Lightning,
   Palette,
+  Eyedropper,
   HandPalm,
   ArrowsLeftRight,
   ArrowsClockwise

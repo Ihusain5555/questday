@@ -1740,6 +1740,22 @@ select:focus {
   background: rgb(var(--gold-rgb) / 0.1);
 }
 
+/* Small icon-only Share button on each game card's "best:" line — lets any saved
+   personal best be shared from the grid, not only right after a fresh round. */
+.arcade-grid-share {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 5px;
+  margin-left: 2px;
+  line-height: 1;
+  border-radius: var(--r-pill);
+}
+.arcade-grid-share:hover {
+  color: var(--gold-bright);
+  background: rgb(var(--gold-rgb) / 0.12);
+}
+
 /* Per-game how-to-play strip (shown under every game while playing) + the
    brain-benefit line on each game card. */
 .game-howto {
@@ -2105,6 +2121,460 @@ select:focus {
 }
 
 /* Span Recall — Corsi / digit span */
+/* ===== Color Recreation (arcade) ===== */
+.cr-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 320px;
+  text-align: center;
+}
+.cr-action {
+  margin-top: 20px;
+}
+.cr-stage {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.cr-lead {
+  color: var(--muted);
+  max-width: 560px;
+  line-height: 1.5;
+  font-size: 14px;
+  margin: 4px auto 0;
+}
+/* difficulty tiers */
+.cr-tiers {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin: 22px 0 4px;
+  text-align: left;
+  width: 100%;
+}
+@media (max-width: 680px) {
+  .cr-tiers {
+    grid-template-columns: 1fr;
+  }
+}
+.cr-tier {
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  border: 1.5px solid var(--border);
+  background: var(--panel);
+  border-radius: var(--r-card);
+  padding: 16px;
+  box-shadow: var(--shadow-1);
+  transition: transform 0.18s var(--ease-spring), border-color 0.18s ease;
+  color: var(--text);
+  font: inherit;
+}
+.cr-tier:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--skill-flex) 45%, var(--border));
+}
+.cr-tier.sel {
+  border-color: var(--brand);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 12%, var(--panel)), var(--panel));
+  box-shadow: 0 0 0 1px var(--brand), var(--shadow-1);
+}
+.cr-tier-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+}
+.cr-swatchbar {
+  height: 8px;
+  border-radius: var(--r-pill);
+  margin: 11px 0;
+}
+.cr-tier-desc {
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.cr-tier-ch {
+  margin-top: 11px;
+  display: flex;
+  gap: 5px;
+}
+.cr-pip {
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  background: var(--panel-3);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.cr-pip.on {
+  background: rgb(var(--brand-rgb) / 0.22);
+  color: var(--brand-bright);
+  border-color: transparent;
+}
+.cr-tinynote {
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 12px;
+}
+/* countdown */
+.cr-countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 40px 0;
+}
+.cr-cd-ready {
+  color: var(--brand-bright);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 19px;
+  letter-spacing: 0.04em;
+}
+.cr-cd-num {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 120px;
+  line-height: 1;
+  color: var(--text);
+  text-shadow: 0 0 40px rgb(var(--brand-bright-rgb) / 0.45);
+  animation: cr-pop 0.6s var(--ease-spring);
+}
+.cr-cd-num.go {
+  color: var(--brand-bright);
+  font-size: 92px;
+}
+@keyframes cr-pop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  45% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+/* round dots */
+.cr-dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 6px 0 16px;
+}
+.cr-dots i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--panel-3);
+  border: 1px solid var(--border);
+  transition: 0.25s var(--ease-spring);
+}
+.cr-dots i.done {
+  background: var(--brand);
+  border-color: var(--brand);
+}
+.cr-dots i.cur {
+  background: var(--gold);
+  border-color: var(--gold);
+  transform: scale(1.25);
+  box-shadow: 0 0 12px rgb(var(--gold-rgb) / 0.55);
+}
+/* reveal */
+.cr-memo {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--brand-bright);
+  text-shadow: 0 0 14px rgb(var(--brand-bright-rgb) / 0.35);
+  margin-bottom: 12px;
+}
+.cr-swatch {
+  width: 100%;
+  max-width: 340px;
+  height: 190px;
+  border-radius: var(--r-card);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.12), inset 0 -10px 24px rgba(0, 0, 0, 0.18), var(--shadow-2);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.cr-swatch.sm {
+  height: 130px;
+  max-width: 100%;
+}
+.cr-swatch-label {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.cr-reveal-bar {
+  width: 200px;
+  height: 5px;
+  margin: 14px auto 0;
+  border-radius: var(--r-pill);
+  background: rgb(var(--brand-rgb) / 0.16);
+  overflow: hidden;
+}
+.cr-reveal-bar i {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  background: var(--brand-bright);
+  border-radius: var(--r-pill);
+  animation: cr-shrink linear forwards;
+}
+@keyframes cr-shrink {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+.cr-ease-note {
+  margin-top: 10px;
+  color: var(--fire);
+  font-size: 12.5px;
+}
+/* masked guess panel */
+.cr-masked {
+  width: 100%;
+  max-width: 340px;
+  height: 120px;
+  margin: 0 auto 18px;
+  border-radius: var(--r-card);
+  border: 1px dashed var(--border);
+  background: repeating-linear-gradient(45deg, var(--panel-2) 0 14px, var(--panel) 14px 28px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  box-shadow: var(--shadow-1);
+}
+.cr-q {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 38px;
+  color: var(--panel-3);
+}
+.cr-q-sub {
+  font-size: 13px;
+  color: var(--muted);
+}
+/* guess layout */
+.cr-guess-grid {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 26px;
+  align-items: start;
+  text-align: left;
+  width: 100%;
+  max-width: 600px;
+}
+@media (max-width: 680px) {
+  .cr-guess-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.cr-preview-col {
+  text-align: center;
+}
+.cr-refpatch {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.cr-ref {
+  width: 120px;
+  height: 36px;
+  border-radius: var(--r-sm);
+  opacity: 0.28;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.cr-ref-l {
+  font-size: 11px;
+  color: var(--muted);
+}
+.cr-sliders {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.cr-slider-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.cr-slider-nm {
+  font-weight: 600;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.cr-slider-val {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+}
+.cr-slider-row.locked .cr-slider-val {
+  color: var(--muted);
+}
+.cr-lockpill {
+  font-size: 10px;
+  color: var(--muted);
+  background: var(--panel-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 2px 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+/* chunky range sliders (scoped to the colour game) */
+.cr-sliders input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 20px;
+  border-radius: var(--r-pill);
+  background: var(--panel-3);
+  outline: none;
+  cursor: pointer;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+.cr-sliders input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid var(--panel);
+  cursor: grab;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+.cr-sliders input[type='range']:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+/* round result */
+.cr-result-pair {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  width: 100%;
+  max-width: 460px;
+}
+.cr-result-col {
+  flex: 1;
+  min-width: 0;
+}
+.cr-scorebig {
+  margin: 18px auto 2px;
+  line-height: 1;
+}
+.cr-score-n {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 60px;
+  color: var(--brand-bright);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 20px rgb(var(--brand-bright-rgb) / 0.3);
+}
+.cr-score-d {
+  font-size: 22px;
+  color: var(--muted);
+  font-weight: 700;
+}
+.cr-encourage {
+  color: var(--text);
+  font-size: 15px;
+  max-width: 420px;
+  margin: 4px auto 0;
+  line-height: 1.5;
+}
+/* summary */
+.cr-run-done {
+  letter-spacing: 0.1em;
+}
+.cr-sum-total {
+  margin: 12px auto 2px;
+  line-height: 1;
+}
+.cr-sum-n {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 72px;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 26px rgb(var(--gold-rgb) / 0.35);
+}
+.cr-sum-d {
+  font-size: 26px;
+  color: var(--muted);
+  font-weight: 700;
+}
+.cr-sum-line {
+  color: var(--text);
+  font-size: 15.5px;
+  margin-top: 2px;
+}
+.cr-breakdown {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 20px 0 4px;
+}
+.cr-bd {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 9px 11px;
+  min-width: 62px;
+  box-shadow: var(--shadow-1);
+}
+.cr-bd-swt {
+  width: 100%;
+  height: 30px;
+  border-radius: 6px;
+}
+.cr-bd-swt.sm {
+  height: 16px;
+  margin-top: 4px;
+  margin-bottom: 6px;
+}
+.cr-bd-s {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+}
+.cr-bd-d {
+  color: var(--muted);
+  font-size: 11px;
+}
+.cr-bd-l {
+  font-size: 10.5px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .sr-field {
   display: flex;
   flex-direction: column;
