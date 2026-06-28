@@ -191,6 +191,10 @@ interface AppStore {
   snoozeQuest: (id: string, untilIso: string) => Promise<void>
   /** Lift a snooze immediately (the quest returns to the spotlight pool). */
   unsnoozeQuest: (id: string) => Promise<void>
+  /** End-of-day wind-down: tuck every still-active quest away until tomorrow morning
+   *  (snooze to next local midnight). Gains-only — nothing is lost or penalized, the
+   *  quests simply rest tonight and resurface tomorrow. Returns how many were pushed. */
+  pushUnfinishedToTomorrow: () => Promise<number>
   /** Pin a quest as the widget's "current" (click-to-switch), or null to return to
    *  the automatic scored pick. Honored only while it's a valid in-frame candidate. */
   pinQuest: (id: string | null) => Promise<void>
@@ -429,6 +433,27 @@ export const useStore = create<AppStore>((set, get) => ({
     if (!db) return
     const quests = db.quests.map((q) => (q.id === id ? { ...q, snoozedUntil: null } : q))
     await get().save({ quests })
+  },
+
+  // End-of-day wind-down (v2): snooze every still-active quest to next local midnight,
+  // so the day closes cleanly and they resurface tomorrow. Non-punitive (only hides),
+  // and snoozedUntil is never read by reward/↩Restore math. Skips quests already tucked
+  // away that far. Returns the count pushed so the card can confirm.
+  pushUnfinishedToTomorrow: async () => {
+    const db = get().db
+    if (!db) return 0
+    const now = new Date()
+    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0).toISOString()
+    const tomorrowMs = Date.parse(tomorrow)
+    let count = 0
+    const quests = db.quests.map((q) => {
+      if (q.status !== 'active') return q
+      if (q.snoozedUntil && Date.parse(q.snoozedUntil) >= tomorrowMs) return q
+      count++
+      return { ...q, snoozedUntil: tomorrow }
+    })
+    if (count > 0) await get().save({ quests })
+    return count
   },
 
   // ---- Widget click-to-switch (v1.13) ------------------------------------
