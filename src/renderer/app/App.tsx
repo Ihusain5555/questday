@@ -7,6 +7,7 @@ import { TimeFramesView } from './TimeFramesView'
 import { ProductivityView } from './ProductivityView'
 import { RealmView } from './RealmView'
 import { ArcadeView } from './arcade/ArcadeView'
+import { CalendarView } from './CalendarView'
 import { DataView } from './DataView'
 import { CompletionCelebration } from '../components/CompletionCelebration'
 import { ErrorBoundary } from '../components/ErrorBoundary'
@@ -24,10 +25,11 @@ import {
   Hammer,
   MapTrifold,
   GameController,
+  CalendarStar,
   Gear
 } from '@phosphor-icons/react'
 
-type Tab = 'dashboard' | 'quests' | 'frames' | 'productivity' | 'world' | 'arcade' | 'data'
+type Tab = 'dashboard' | 'quests' | 'frames' | 'productivity' | 'world' | 'observanceCalendar' | 'arcade' | 'data'
 
 const TABS: { id: Tab; label: string; icon: JSX.Element }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: <Crown size={16} weight="fill" /> },
@@ -35,6 +37,9 @@ const TABS: { id: Tab; label: string; icon: JSX.Element }[] = [
   { id: 'frames', label: 'Time frames', icon: <Hourglass size={16} weight="fill" /> },
   { id: 'productivity', label: 'Forge', icon: <Hammer size={16} weight="fill" /> },
   { id: 'world', label: 'Realm', icon: <MapTrifold size={16} weight="fill" /> },
+  // Faith calendar — a feature-gated tab (id matches the 'observanceCalendar' toggle), OFF by
+  // default so non-Muslim users never see it (mirrors the faithChecklist seed).
+  { id: 'observanceCalendar', label: 'Calendar', icon: <CalendarStar size={16} weight="fill" /> },
   { id: 'arcade', label: 'Arcade', icon: <GameController size={16} weight="fill" /> },
   { id: 'data', label: 'Data', icon: <Gear size={16} weight="fill" /> }
 ]
@@ -130,6 +135,7 @@ export function App(): JSX.Element {
               {tab === 'frames' && <TimeFramesView />}
               {tab === 'productivity' && <ProductivityView />}
               {tab === 'world' && <RealmView />}
+              {tab === 'observanceCalendar' && <CalendarView />}
               {tab === 'arcade' && <ArcadeView />}
               {tab === 'data' && <DataView />}
             </ErrorBoundary>

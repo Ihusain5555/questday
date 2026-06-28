@@ -6383,6 +6383,344 @@ code {
   color: var(--brand-bright);
 }
 
+/* --- End-of-day wind-down (v2): wins recap + push-to-tomorrow ----------------- */
+.eod-wins {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--brand) 6%, transparent);
+}
+.eod-wins-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--brand-bright);
+}
+.eod-wins-list {
+  margin: 6px 0 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+.eod-wins-list li::marker {
+  content: '✓ ';
+  color: var(--brand-bright);
+}
+.eod-wins-more {
+  list-style: none;
+  margin-left: -20px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.eod-wins-empty {
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.eod-push {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+.eod-push:hover {
+  border-color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 8%, transparent);
+}
+.eod-pushed {
+  font-size: 0.85rem;
+  color: var(--brand-bright);
+  text-align: center;
+  padding: 4px 0;
+}
+
+/* --- Quest Bundles (v2): save / apply a named set of quests ------------------- */
+.bundles-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+.bundles-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--brand-bright);
+}
+.bundles-head strong {
+  color: var(--text);
+}
+.bundles-blurb {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.bundles-save {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.bundles-name {
+  flex: 1;
+  min-width: 0;
+}
+.bundles-flash {
+  font-size: 0.82rem;
+  color: var(--brand-bright);
+}
+.bundles-empty {
+  font-size: 0.85rem;
+  color: var(--muted);
+  padding: 4px 0;
+}
+.bundles-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.bundle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.bundle-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.bundle-name-label {
+  font-weight: 600;
+  color: var(--text);
+}
+.bundle-count {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.bundle-del {
+  color: var(--muted);
+}
+.bundle-del:hover {
+  color: #e0564f;
+}
+
+/* --- Islamic calendar (v2 faith layer): Hijri date + observances ------------- */
+.calendar-view {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.cal-today {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cal-hijri {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--brand-bright);
+}
+.cal-hijri-date {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.cal-greg {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.cal-caveat {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  line-height: 1.5;
+}
+.cal-fasting {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+.cal-fasting-body {
+  display: flex;
+  flex-direction: column;
+}
+.cal-fasting-body strong {
+  color: var(--text);
+}
+.cal-fasting-body span {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.cal-fasting-forbidden {
+  border-color: #e0564f;
+  background: color-mix(in srgb, #e0564f 10%, transparent);
+}
+.cal-fasting-forbidden strong {
+  color: #e0564f;
+}
+.cal-fasting-obligatory,
+.cal-fasting-encouraged {
+  border-color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 8%, transparent);
+}
+.cal-todays {
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cal-todays-head,
+.cal-upcoming-head {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cal-notify {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  padding: 0 2px;
+  line-height: 1.45;
+  cursor: pointer;
+}
+.cal-notify input {
+  margin-top: 2px;
+}
+.cal-upcoming {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cal-empty {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.cal-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.cal-day {
+  display: flex;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.cal-day:last-child {
+  border-bottom: none;
+}
+.cal-day-when {
+  flex: none;
+  width: 96px;
+  display: flex;
+  flex-direction: column;
+}
+.cal-day-hijri {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.85rem;
+}
+.cal-day-greg {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.cal-day-obs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.obs-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.obs-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.obs-name {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+.obs-cat-forbidden {
+  color: #e0564f;
+}
+.obs-ar {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.obs-note {
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.obs-fast {
+  font-size: 0.7rem;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.obs-fast-encouraged,
+.obs-fast-obligatory {
+  color: var(--brand-bright);
+  border-color: color-mix(in srgb, var(--brand) 40%, transparent);
+}
+.obs-fast-forbidden {
+  color: #e0564f;
+  border-color: color-mix(in srgb, #e0564f 40%, transparent);
+}
+.obs-contested {
+  font-size: 0.68rem;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--muted) 18%, transparent);
+  color: var(--muted);
+}
+
 /* --- Weekly review — this week's reflections list (v1.13). -------------------- */
 .wr-reflections {
   margin-top: 14px;

@@ -267,6 +267,13 @@ export interface Settings {
    *  default (a faith feature — opt-in only). Needs prayerTimes (lat/lon) configured;
    *  computed on-device from the same PrayerTimes math, never read by reward math. */
   prayerReminderEnabled?: boolean
+  /** Fire a gentle once-a-day system notification for a notable Islamic observance (v2).
+   *  OFF by default (opt-in faith feature). Computed on-device from the tabular Hijri
+   *  calendar; never read by reward math. NEVER suggests fasting on a forbidden day. */
+  observanceNotify?: boolean
+  /** Last local YYYY-MM-DD an observance notification was shown — so the main process
+   *  fires at most once per day (v2). null/absent = never shown. */
+  observanceLastNotified?: string | null
 }
 
 // --- Reward world: the garden (§7 vision, built 2026-06-06) -----------------

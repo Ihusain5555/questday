@@ -65,6 +65,16 @@ export const TOGGLEABLE_FEATURES: ToggleableFeature[] = [
       'An optional, private daily checklist for the five prayers and Qur’an reading. You only ever tick what you’ve done — nothing is ever counted against you. Off by default.'
   },
   {
+    // A faith TAB (id matches the App.tsx tab) — OFF by default (seeded false in defaults.ts)
+    // so non-Muslim users never see it. The Hijri date + observance calendar; all computed
+    // on-device, and it never suggests fasting on a forbidden day.
+    id: 'observanceCalendar',
+    icon: 'CalendarStar',
+    label: 'Islamic calendar',
+    blurb:
+      'The Hijri date and a calendar of Islamic observances (Eids, Ashura, Arafah, Ramadan, the White Days), computed privately on your device. Optional gentle reminders. Off by default.'
+  },
+  {
     // A Dashboard recap CARD, not a tab — read via isFeatureEnabled (App.tsx's tab
     // filter never matches this id). Default ON (missing key = on), so no defaults
     // seed is needed; users can hide it from the Data tab.

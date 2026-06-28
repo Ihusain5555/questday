@@ -103,13 +103,16 @@ export function createDefaultDatabase(): Database {
       pinnedQuestId: null,
       // Prayer reminder OFF by default — a faith feature is opt-in only (see faithChecklist note).
       prayerReminderEnabled: false,
+      // Observance notifications OFF by default — opt-in faith feature (v2).
+      observanceNotify: false,
+      observanceLastNotified: null,
       launchOnLogin: false,
       focusPreset: 'pomodoro',
-      // faithChecklist seeded false: a faith feature must be OFF until opted in
-      // (the generic "missing key = on" rule is deliberately overridden by this
-      // seed, which migrate() merges fresh-first so existing saves inherit it too)
-      // so non-Muslim users never see it.
-      enabledFeatures: { focus: true, matrix: true, faithChecklist: false },
+      // faithChecklist + observanceCalendar seeded false: a faith feature must be OFF until
+      // opted in (the generic "missing key = on" rule is deliberately overridden by this seed,
+      // which migrate() merges fresh-first so existing saves inherit it too) so non-Muslim
+      // users never see it.
+      enabledFeatures: { focus: true, matrix: true, faithChecklist: false, observanceCalendar: false },
       realmChronicle: [],
       // Prayer-time settings (v1.12). No location until the user picks a city, so
       // the Salah setup card prompts for one before seeding timed quests. Never

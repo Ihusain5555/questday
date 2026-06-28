@@ -25,8 +25,10 @@ import {
   Compass,
   MapTrifold,
   Books,
+  Stack,
   Mosque,
   CalendarCheck,
+  CalendarStar,
   PencilSimple,
   type Icon
 } from '@phosphor-icons/react'
@@ -38,8 +40,10 @@ const FEATURE_ICON: Record<string, Icon> = {
   Compass,
   MapTrifold,
   Books,
+  Stack,
   Mosque,
   CalendarCheck,
+  CalendarStar,
   PencilSimple
 }
 

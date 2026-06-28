@@ -1,0 +1,11 @@
+[
+  "1 Shawwal — Eid al-Fitr: fasting is HARAM for everyone, no exception (forbidden even for qada'/vow/kaffarah) by ijma' of all four madhhabs (Bukhari 1991-1992 / Muslim 1137). Absolute auto-skip in every fast schedule.",
+  "10 Dhul-Hijjah — Eid al-Adha (Yawm an-Nahr): fasting is HARAM for everyone, no exception, by ijma' (Bukhari 1991-1992 / Muslim 1137). Absolute auto-skip. Note: the virtuous Arafah fast is the 9th — never let it drift onto the 10th.",
+  "11 Dhul-Hijjah — Day of Tashreeq: fasting FORBIDDEN for non-pilgrims (Muslim 1141a). Sole exception is a tamattu'/qiran Hajj pilgrim with no hady — not applicable to a general user.",
+  "12 Dhul-Hijjah — Day of Tashreeq: fasting FORBIDDEN for non-pilgrims (Muslim 1141a). Same Hajj-only exception.",
+  "13 Dhul-Hijjah — Day of Tashreeq (the third/last one): fasting FORBIDDEN for non-pilgrims (Muslim 1141a). This is the one annual collision with the monthly White Days — suppress the White-Day 13th here and fast 14 + 15 only.",
+  "30 Sha'ban — Day of Doubt (ONLY when the Ramadan crescent was not confirmed): do NOT auto-suggest a precautionary/Ramadan fast and do NOT auto-start Ramadan (forbidden by the jumhur; Tirmidhi 686, Bukhari 1914 / Muslim 1082). EXCEPTION: a pre-existing habitual fast (regular Mon/Thu, Dawud), a vow, or a Ramadan make-up landing here is permitted — do not block those.",
+  "Any lone Friday — DISLIKED (makruh), NOT forbidden (Bukhari 1985 / Muslim 1144). Never auto-suggest a Friday-only voluntary fast; it is fine when paired with Thursday or Saturday, or when it coincides with a habitual/virtuous fast (Arafah, Ashura, White Days, Mon/Thu, Dawud) or an obligatory make-up.",
+  "Any lone Saturday (voluntary) — CONTESTED, at most disliked, NOT forbidden (Tirmidhi 744 / Abu Dawud 2421, contested). Do NOT hard-block and do NOT present as prohibited. Prefer pairing; permitted when obligatory (Ramadan/qada'/vow/kaffarah), joined with Friday/Sunday, or coinciding with a Sunnah fast.",
+  "Al-Wisal — joining two or more days with no break at Maghrib: never schedule or encourage continuous unbroken fasting; disliked->prohibited, forbidden by the Prophet as a mercy (Bukhari 1961-1963 / Muslim 1102-1103). This is a forbidden manner of fasting, not a calendar date. Only permitted extension: delaying suhur until just before Fajr on a single day."
+]

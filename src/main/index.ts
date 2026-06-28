@@ -21,6 +21,7 @@ import { startDetector, stopDetector } from './activeMode/detector'
 import { getDatabase, saveDatabase, onDatabaseChanged } from './db/store'
 import { flushAutoBackup } from './backup/backup'
 import { startPrayerReminders, samplePrayerReminder } from './prayer/reminder'
+import { startObservanceNotifier } from './observance/notify'
 import type { PrayerReminderInfo } from '@shared/types'
 
 let widgetWindow: BrowserWindow | null = null
@@ -410,6 +411,10 @@ if (!singleLock) {
     syncActiveMode(getDatabase().settings.activeModeEnabled)
     // Gentle prayer-time reminders (opt-in; the poll no-ops while disabled/unconfigured).
     startPrayerReminders(getDatabase, (data) => showPrayerReminder(data))
+    // Gentle once-a-day Islamic observance notifications (opt-in; no-ops while disabled).
+    startObservanceNotifier(getDatabase, (today) =>
+      saveDatabase({ settings: { observanceLastNotified: today } })
+    )
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWidgetWindow()
