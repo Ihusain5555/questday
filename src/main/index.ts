@@ -90,8 +90,15 @@ function loadRenderer(win: BrowserWindow, htmlFile: string): void {
   }
 }
 
+// Record the widget's shown/hidden state into settings so the Dashboard toggle button
+// can label + act correctly. Send ONLY this field — saveDatabase deep-merges settings.
+function syncWidgetVisible(visible: boolean): void {
+  saveDatabase({ settings: { widgetVisible: visible } })
+}
+
 // --- Widget window (§9): small, frameless, always-on-top, movable, resizable -
 function createWidgetWindow(): void {
+  syncWidgetVisible(true)
   if (widgetWindow) {
     widgetWindow.show()
     return
@@ -134,6 +141,7 @@ function createWidgetWindow(): void {
   widgetWindow.on('resized', persistBounds)
   widgetWindow.on('closed', () => {
     widgetWindow = null
+    syncWidgetVisible(false)
   })
 }
 
@@ -288,8 +296,10 @@ function createTray(): void {
     {
       label: 'Show/Hide Widget',
       click: () => {
-        if (widgetWindow?.isVisible()) widgetWindow.hide()
-        else createWidgetWindow()
+        if (widgetWindow?.isVisible()) {
+          widgetWindow.hide()
+          syncWidgetVisible(false)
+        } else createWidgetWindow()
       }
     },
     { type: 'separator' },
@@ -315,7 +325,10 @@ function registerWindowIpc(): void {
       widgetWindow.setSize(w, expanded ? 496 : 212, true)
     }
   })
-  ipcMain.handle('widget:hide', () => widgetWindow?.hide())
+  ipcMain.handle('widget:hide', () => {
+    widgetWindow?.hide()
+    syncWidgetVisible(false)
+  })
   // Re-open the widget from the Dashboard (createWidgetWindow shows it if it already
   // exists, otherwise recreates it — same path the tray "Show/Hide Widget" uses).
   ipcMain.handle('widget:show', () => createWidgetWindow())
@@ -335,6 +348,7 @@ function registerWindowIpc(): void {
       if (widgetWindow && !widgetWindow.isDestroyed()) {
         widgetWindow.show()
         widgetWindow.focus()
+        syncWidgetVisible(true)
       } else {
         createMainWindow()
         mainWindow?.show()

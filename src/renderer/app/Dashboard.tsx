@@ -49,10 +49,18 @@ export function Dashboard(): JSX.Element {
           <div className="label">Current quest · {frame ? frame.name : 'no active frame'}</div>
           <button
             className="ghost cq-show-widget"
-            title="Reopen the always-on-top widget if you closed it"
-            onClick={() => void window.questday.widget.show()}
+            title={
+              db.settings.widgetVisible
+                ? 'Hide the always-on-top widget'
+                : 'Reopen the always-on-top widget'
+            }
+            onClick={() =>
+              void (db.settings.widgetVisible
+                ? window.questday.widget.hide()
+                : window.questday.widget.show())
+            }
           >
-            <AppWindow size={15} weight="bold" /> Show widget
+            <AppWindow size={15} weight="bold" /> {db.settings.widgetVisible ? 'Hide widget' : 'Show widget'}
           </button>
         </div>
         {current ? (

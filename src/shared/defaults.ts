@@ -99,6 +99,7 @@ export function createDefaultDatabase(): Database {
       blockBreakPassMin: 5,
       widgetBounds: null,
       widgetExpanded: false,
+      widgetVisible: true,
       pinnedQuestId: null,
       // Prayer reminder OFF by default — a faith feature is opt-in only (see faithChecklist note).
       prayerReminderEnabled: false,

@@ -184,6 +184,12 @@ export interface Settings {
   blockBreakPassMin: number
   widgetBounds: { x: number; y: number; width: number; height: number } | null
   widgetExpanded: boolean
+  /** Whether the always-on-top widget is currently shown. The MAIN process is the source
+   *  of truth (it owns the window) and keeps this in sync on show/hide/close, so the
+   *  Dashboard's toggle button can label + act correctly even when the widget is hidden
+   *  from its own X or the tray. Always reset true on launch (widget opens every start).
+   *  Never read by reward / ↩Restore math. */
+  widgetVisible: boolean
   /** Quest the user "pinned" as current by tapping it in the widget (click-to-switch,
    *  v1.13). Honored only while it's a valid candidate in the active frame; otherwise the
    *  scorer's pick wins. Cleared on completion / day change. Never read by reward math. */
