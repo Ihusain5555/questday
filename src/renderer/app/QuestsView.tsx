@@ -4,11 +4,13 @@ import { useStore, type QuestInput, FAITH_PRAYER_TITLES, FAITH_QURAN_TITLE } fro
 import { useNow } from '../hooks/useNow'
 import { QuestForm, type QuestFormInitial } from './QuestForm'
 import { QuestLibraryRail } from './QuestLibraryRail'
+import { QuestBundlesPanel } from './QuestBundlesPanel'
 import { TEMPLATE_DRAG_MIME } from './TemplateCard'
 import { IMPORTANCE_COLOR, URGENCY_COLOR } from './options'
 import { isFeatureEnabled } from './features'
 import { formatDue, formatMinutes } from '@shared/format'
 import { activeTimeFrame, isSnoozed, scoreQuest, resolveCurrentQuest } from '@shared/engine/selectCurrentQuest'
+import { effectiveTimeFrames } from '@shared/engine/prayerFrames'
 import { questXP } from '@shared/engine/rewards'
 import { isRecurring, isResting, recurLabel, ymdOf } from '@shared/engine/recurrence'
 import {
@@ -75,15 +77,20 @@ export function QuestsView(): JSX.Element {
     return () => document.removeEventListener('mousedown', close)
   }, [snoozeFor])
 
-  const activeFrameId = db ? activeTimeFrame(db.timeFrames, now)?.id ?? null : null
+  const activeFrameId = db
+    ? activeTimeFrame(effectiveTimeFrames(db.timeFrames, db.settings, now), now)?.id ?? null
+    : null
 
   if (!db) return <div>Loading…</div>
 
   const frames = [...db.timeFrames].sort((a, b) => a.order - b.order)
+  // Resolve prayer-anchored windows so the "current" highlight matches the widget (v2).
+  const eframes = effectiveTimeFrames(db.timeFrames, db.settings, now)
   // The spotlight quest (same one the widget surfaces) — highlighted as "current" in its
   // active frame. Honors a widget pin + the custom-frame deadline rescue.
-  const currentQuest = resolveCurrentQuest(db.quests, db.timeFrames, now, db.settings.pinnedQuestId)
+  const currentQuest = resolveCurrentQuest(db.quests, eframes, now, db.settings.pinnedQuestId)
   const libraryOn = isFeatureEnabled(db.settings.enabledFeatures, 'questLibrary')
+  const bundlesOn = isFeatureEnabled(db.settings.enabledFeatures, 'questBundles')
   // Salah & Qur'an checklist (opt-in, off by default). When on, a calm setup card
   // sits atop the Quests tab; once the preset quests exist it flips to a quiet note.
   const faithOn = isFeatureEnabled(db.settings.enabledFeatures, 'faithChecklist')
@@ -240,6 +247,8 @@ export function QuestsView(): JSX.Element {
             More options
           </button>
         </div>
+
+        {bundlesOn && <QuestBundlesPanel />}
 
         {faithOn && (
           <div className="card faith-card">

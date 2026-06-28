@@ -13,7 +13,7 @@
 // for DST — so the bundled city table only needs lat/lon (spec §Architecture).
 // ---------------------------------------------------------------------------
 
-import type { PrayerMethod, AsrSchool } from '../types'
+import type { PrayerMethod, AsrSchool, PrayerSettings } from '../types'
 
 export interface PrayerOptions {
   lat: number
@@ -112,7 +112,7 @@ function julianDayNumber(year: number, month: number, day: number): number {
  *  fully on-device (no network — honours the local-only rule). The tabular calendar
  *  can differ from an official sighting-based date by ±1 day near a month boundary,
  *  which is fine here: it's used only to widen the Umm al-Qura Isha interval in Ramadan. */
-function hijriFromGregorian(
+export function hijriFromGregorian(
   year: number,
   month0: number,
   day: number
@@ -138,6 +138,21 @@ function hijriFromGregorian(
 /** True when `date` falls in Ramadan (the 9th Hijri month) by the tabular calendar. */
 export function isRamadan(date: Date): boolean {
   return hijriFromGregorian(date.getFullYear(), date.getMonth(), date.getDate()).month === 9
+}
+
+/** Convenience: compute today's prayer times straight from the user's saved
+ *  `PrayerSettings`, or `null` when no location is configured yet (so callers can
+ *  fall back to plain clock frames). DST-correct via the system clock. Pure. */
+export function prayerDayFor(settings: PrayerSettings | undefined | null, now: Date): PrayerDayTimes | null {
+  if (!settings || settings.lat == null || settings.lon == null) return null
+  return computePrayerDay({
+    lat: settings.lat,
+    lon: settings.lon,
+    date: now,
+    tzHours: localTzHours(now),
+    method: settings.method,
+    asr: settings.asr
+  })
 }
 
 export function computePrayerDay(opts: PrayerOptions): PrayerDayTimes {

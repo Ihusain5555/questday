@@ -81,6 +81,42 @@ export interface QuestTemplate {
   createdAt: string
 }
 
+/** The points a time frame can anchor to in the daily prayer cycle (v2 faith layer).
+ *  `sunrise` is not a prayer but is a meaningful boundary (Fajr's window ends there,
+ *  the forenoon/Duha period begins there), so it's an allowed anchor. */
+export type PrayerAnchorPoint = 'fajr' | 'sunrise' | 'dhuhr' | 'asr' | 'maghrib' | 'isha'
+
+/** One quest inside a Quest Bundle (v2). A reusable blueprint that remembers which
+ *  frame + recurrence it belongs to, so applying a bundle recreates the quests faithfully.
+ *  Day-specific instance state (id, status, dueAt, rewards) is intentionally omitted —
+ *  it's filled in by createQuest when the bundle is applied. NEVER read by reward math. */
+export interface BundleQuest {
+  title: string
+  /** Each sub-task's `done` is always false in a bundle blueprint. */
+  subTasks: SubTask[]
+  difficulty: Difficulty
+  importance: Importance
+  urgency: Urgency
+  timeEstimateMinutes: number
+  /** The frame each quest is recreated in when the bundle is applied. */
+  timeFrameId: string
+  /** Recurring weekdays (0=Sun..6=Sat); absent/empty = a one-off quest. */
+  recurDays?: number[]
+  notes?: string
+}
+
+/** A named, reusable set of quests applied in one tap (v2) — e.g. "Morning routine" or a
+ *  faith starter-kit later. A SEALED top-level db key (mirrors questTemplates): wholesale-
+ *  replaced on save, tolerant migrate, strict validate, and NEVER read by reward/
+ *  civilization math, so ↩ Restore stays exact. */
+export interface QuestBundle {
+  id: string
+  name: string
+  /** ISO; default sort is newest-first. */
+  createdAt: string
+  quests: BundleQuest[]
+}
+
 export interface TimeFrame {
   id: string
   name: string
@@ -94,6 +130,14 @@ export interface TimeFrame {
    *  to hand-rank, so quests sort by their saved `sortOrder`. Optional so old saves migrate
    *  cleanly (missing = auto). Never read by reward / ↩Restore math. */
   manualOrder?: boolean
+  /** Prayer-aware anchoring (v2). When set, this frame's EFFECTIVE window is derived each
+   *  day from the on-device prayer times instead of `startMinute/endMinute` — e.g.
+   *  `{ start: 'fajr', end: 'dhuhr' }` makes the frame run from Fajr until Dhuhr, shifting
+   *  with the real prayer times. `end` omitted = until the NEXT anchor point after `start`.
+   *  Resolution is pure (engine/prayerFrames.ts); the stored startMinute/endMinute remain as
+   *  the fallback when prayer times aren't configured. Optional so old saves migrate cleanly
+   *  (missing = a plain clock frame). NEVER read by reward / ↩Restore math. */
+  prayerAnchor?: { start: PrayerAnchorPoint; end?: PrayerAnchorPoint }
 }
 
 export interface PlayerState {

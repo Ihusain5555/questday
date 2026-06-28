@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../state/store'
 import { useNow } from '../hooks/useNow'
 import { selectCurrentQuest } from '@shared/engine/selectCurrentQuest'
+import { effectiveTimeFrames } from '@shared/engine/prayerFrames'
 import { balance } from '@shared/config/balance'
 import {
   Play,
@@ -60,7 +61,9 @@ const fmt = (ms: number): string => {
 export function FocusView(): JSX.Element {
   const { db, updateSettings } = useStore()
   const now = useNow(20000)
-  const current = db ? selectCurrentQuest(db.quests, db.timeFrames, now) : null
+  const current = db
+    ? selectCurrentQuest(db.quests, effectiveTimeFrames(db.timeFrames, db.settings, now), now)
+    : null
 
   const presetKey = db?.settings.focusPreset ?? 'pomodoro'
   const preset = PRESETS[presetKey] ?? PRESETS.pomodoro

@@ -6,6 +6,7 @@ import {
   activeTimeFrame,
   rankCandidates
 } from '@shared/engine/selectCurrentQuest'
+import { effectiveTimeFrames } from '@shared/engine/prayerFrames'
 import { ymd } from '@shared/engine/rollover'
 import { WidgetList } from './WidgetList'
 import { CompletionCelebration } from '../components/CompletionCelebration'
@@ -45,9 +46,12 @@ export function Widget(): JSX.Element {
   }, [connect])
 
   const expanded = db?.settings.widgetExpanded ?? false
-  const frame = db ? activeTimeFrame(db.timeFrames, now) : null
+  // Resolve prayer-anchored frames for today once, then feed the resolved frames to the
+  // selection engine so the widget agrees with the Dashboard / Quests tab (v2 faith layer).
+  const frames = db ? effectiveTimeFrames(db.timeFrames, db.settings, now) : []
+  const frame = db ? activeTimeFrame(frames, now) : null
   const current = db
-    ? resolveCurrentQuest(db.quests, db.timeFrames, now, db.settings.pinnedQuestId)
+    ? resolveCurrentQuest(db.quests, frames, now, db.settings.pinnedQuestId)
     : null
   // Resting / welcome-back greeting on a genuine return (see isRealmResting).
   const resting = db ? isRealmResting(db.player.lastCompletionDate, now) : false
@@ -71,7 +75,7 @@ export function Widget(): JSX.Element {
     setDeferredIds(undone.every((s) => next.includes(s.id)) ? [sub.id] : next)
   }
   const remainingInFrame = db
-    ? Math.max(0, rankCandidates(db.quests, db.timeFrames, now).length - 1)
+    ? Math.max(0, rankCandidates(db.quests, frames, now).length - 1)
     : 0
   const allDone = current ? current.subTasks.length > 0 && current.subTasks.every((s) => s.done) : false
 

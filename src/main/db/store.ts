@@ -221,6 +221,22 @@ function applyPatch(current: Database, patch: DatabasePatch): Database {
 function validate(db: Database): string | null {
   if (!Array.isArray(db.quests)) return 'quests must be an array'
   if (!Array.isArray(db.timeFrames)) return 'timeFrames must be an array'
+  // Prayer-anchored frames (v2) carry an optional `prayerAnchor`. If present it must be
+  // { start: <anchor point>, end?: <anchor point> }. The engine falls back to clock minutes
+  // when prayer times aren't configured, but keep the save structurally sound. Checked as
+  // `unknown` — runtime data may defy types.
+  const ANCHOR_POINTS = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha']
+  for (const f of db.timeFrames as unknown[]) {
+    const anchor = (f as { prayerAnchor?: unknown } | null)?.prayerAnchor
+    if (anchor != null) {
+      if (typeof anchor !== 'object' || Array.isArray(anchor)) return 'timeFrame prayerAnchor must be an object'
+      const a = anchor as { start?: unknown; end?: unknown }
+      if (typeof a.start !== 'string' || !ANCHOR_POINTS.includes(a.start))
+        return 'timeFrame prayerAnchor.start must be a prayer anchor point'
+      if (a.end != null && (typeof a.end !== 'string' || !ANCHOR_POINTS.includes(a.end)))
+        return 'timeFrame prayerAnchor.end must be a prayer anchor point'
+    }
+  }
   // The new optional quest fields (v1.13) are display/selection-only and fail safe when
   // malformed, but reject a corrupt shape so the save stays structurally sound (mirrors
   // the per-entry checks for townLayouts/questTemplates/dailyNotes).

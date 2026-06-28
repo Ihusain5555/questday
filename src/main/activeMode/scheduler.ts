@@ -14,6 +14,7 @@ import { Notification, BrowserWindow } from 'electron'
 import { minimizeApp, restoreApp } from './detector'
 import { getDatabase } from '../db/store'
 import { resolveCurrentQuest, activeTimeFrame } from '@shared/engine/selectCurrentQuest'
+import { effectiveTimeFrames } from '@shared/engine/prayerFrames'
 import { minutesUntilFrameEnd } from '@shared/engine/activeMode'
 import { ymd } from '@shared/engine/rollover'
 import { balance } from '@shared/config/balance'
@@ -135,7 +136,13 @@ export function handleForeground(app: string, title: string): void {
   if (now < snoozeUntil) return
 
   const isDistracting = s.distractingApps.some((e) => matchesEntry(app, title, e))
-  const current = resolveCurrentQuest(db.quests, db.timeFrames, new Date(), db.settings.pinnedQuestId)
+  const nowDate = new Date()
+  const current = resolveCurrentQuest(
+    db.quests,
+    effectiveTimeFrames(db.timeFrames, s, nowDate),
+    nowDate,
+    db.settings.pinnedQuestId
+  )
   const label = app || 'that app'
 
   // Hard block (tier 4) — supersedes nudge/friction for flagged apps. Fires on
@@ -218,7 +225,9 @@ function tick(): void {
   }
   if (now.getTime() < snoozeUntil) return
 
-  const current = resolveCurrentQuest(db.quests, db.timeFrames, now, db.settings.pinnedQuestId)
+  // Resolve prayer-anchored frames once for this tick (used by awareness + nudge below).
+  const eframes = effectiveTimeFrames(db.timeFrames, s, now)
+  const current = resolveCurrentQuest(db.quests, eframes, now, db.settings.pinnedQuestId)
 
   // Awareness — quiet periodic reminder of the current quest.
   if (s.activeModeTiers.awareness && current) {
@@ -231,7 +240,7 @@ function tick(): void {
 
   // Gentle nudge — heads-up that the active frame is wrapping up (once per frame/day).
   if (s.activeModeTiers.nudge) {
-    const frame = activeTimeFrame(db.timeFrames, now)
+    const frame = activeTimeFrame(eframes, now)
     if (frame) {
       const mins = minutesUntilFrameEnd(frame, now)
       if (mins <= Math.max(1, s.frameEndingLeadMin)) {
@@ -271,6 +280,12 @@ export function snooze(minutes: number): void {
 /** Fire an immediate awareness reminder (used by the "Send test reminder" button). */
 export function testReminder(): void {
   const db = getDatabase()
-  const current = resolveCurrentQuest(db.quests, db.timeFrames, new Date(), db.settings.pinnedQuestId)
+  const nowDate = new Date()
+  const current = resolveCurrentQuest(
+    db.quests,
+    effectiveTimeFrames(db.timeFrames, db.settings, nowDate),
+    nowDate,
+    db.settings.pinnedQuestId
+  )
   fire('awareness', 'Current quest', current ? current.title : 'No current quest right now')
 }

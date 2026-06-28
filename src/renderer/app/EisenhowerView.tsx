@@ -2,6 +2,7 @@ import { useStore } from '../state/store'
 import { useNow } from '../hooks/useNow'
 import { classifyQuests, type Quadrant } from '@shared/engine/eisenhower'
 import { selectCurrentQuest } from '@shared/engine/selectCurrentQuest'
+import { effectiveTimeFrames } from '@shared/engine/prayerFrames'
 import { balance } from '@shared/config/balance'
 import type { Quest } from '@shared/types'
 import {
@@ -47,7 +48,7 @@ export function EisenhowerView(): JSX.Element {
   if (!db) return <div />
 
   const groups = classifyQuests(db.quests)
-  const current = selectCurrentQuest(db.quests, db.timeFrames, now)
+  const current = selectCurrentQuest(db.quests, effectiveTimeFrames(db.timeFrames, db.settings, now), now)
   const total = (Object.values(groups) as Quest[][]).reduce((n, arr) => n + arr.length, 0)
 
   return (

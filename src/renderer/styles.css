@@ -1054,6 +1054,50 @@ button.ghost.icon-btn.danger:hover {
   color: var(--muted);
 }
 
+/* Prayer-anchoring (v2 faith layer): a per-frame Clock/Prayer segmented toggle, the
+   prayer-point dropdowns that replace the clock inputs, and the no-location hint. */
+.tf-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.tf-anchor-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  flex: none;
+}
+
+.tf-seg {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.tf-seg.on {
+  background: var(--brand);
+  color: var(--on-brand);
+}
+
+.tf-prayer-select {
+  width: 110px;
+}
+
+.tf-anchor-hint {
+  font-size: 12px;
+  color: var(--muted);
+  padding: 2px 0 8px 42px;
+  line-height: 1.4;
+}
+
 .add-frame {
   display: flex;
   gap: 10px;

@@ -3,6 +3,7 @@ import { X } from '@phosphor-icons/react'
 import { useStore } from '../state/store'
 import { useNow } from '../hooks/useNow'
 import { selectCurrentQuest } from '@shared/engine/selectCurrentQuest'
+import { effectiveTimeFrames } from '@shared/engine/prayerFrames'
 import { FrictionPrompt } from './FrictionPrompt'
 import type { ActiveModeTier } from '@shared/types'
 
@@ -38,7 +39,7 @@ export function ActiveModeSettings(): JSX.Element {
   if (!db) return <div>Loading…</div>
   const s = db.settings
   const on = s.activeModeEnabled
-  const current = selectCurrentQuest(db.quests, db.timeFrames, now)
+  const current = selectCurrentQuest(db.quests, effectiveTimeFrames(db.timeFrames, db.settings, now), now)
 
   const setTier = (key: ActiveModeTier, value: boolean) =>
     updateSettings({ activeModeTiers: { ...s.activeModeTiers, [key]: value } })

@@ -1,5 +1,6 @@
 import type { Database, Quest } from '@shared/types'
 import { rankCandidates } from '@shared/engine/selectCurrentQuest'
+import { effectiveTimeFrames } from '@shared/engine/prayerFrames'
 import { useStore } from '../state/store'
 import { IMPORTANCE_COLOR } from '../app/options'
 import { formatMinutes } from '@shared/format'
@@ -19,10 +20,12 @@ export function WidgetList({ db, now, currentId }: Props): JSX.Element {
   const pinQuest = useStore((s) => s.pinQuest)
   const pinnedId = db.settings.pinnedQuestId ?? null
   const frames = [...db.timeFrames].sort((a, b) => a.order - b.order)
-  const activeFrameId = rankCandidates(db.quests, db.timeFrames, now)[0]?.quest.timeFrameId ?? null
+  // Resolve prayer-anchored windows so the "active now" frame is detected correctly (v2).
+  const eframes = effectiveTimeFrames(db.timeFrames, db.settings, now)
+  const activeFrameId = rankCandidates(db.quests, eframes, now)[0]?.quest.timeFrameId ?? null
 
   // For the active frame, order by selection score so the spotlight quest leads.
-  const rankedActive = rankCandidates(db.quests, db.timeFrames, now).map((r) => r.quest)
+  const rankedActive = rankCandidates(db.quests, eframes, now).map((r) => r.quest)
 
   return (
     <div className="wlist">

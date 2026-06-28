@@ -6,6 +6,7 @@ import {
   resolveCurrentQuest,
   immediateSubTask
 } from '@shared/engine/selectCurrentQuest'
+import { effectiveTimeFrames } from '@shared/engine/prayerFrames'
 import { RealmPeek } from './RealmView'
 import { StatsView } from './StatsView'
 import { WeeklyReviewCard } from './WeeklyReviewCard'
@@ -24,8 +25,9 @@ export function Dashboard(): JSX.Element {
   const [sharingJourney, setSharingJourney] = useState(false)
   if (!db) return <div>Loading…</div>
 
-  const frame = activeTimeFrame(db.timeFrames, now)
-  const current = resolveCurrentQuest(db.quests, db.timeFrames, now, db.settings.pinnedQuestId)
+  const frames = effectiveTimeFrames(db.timeFrames, db.settings, now)
+  const frame = activeTimeFrame(frames, now)
+  const current = resolveCurrentQuest(db.quests, frames, now, db.settings.pinnedQuestId)
   const sub = immediateSubTask(current)
   const activeCount = db.quests.filter((q) => q.status === 'active').length
 
