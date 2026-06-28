@@ -97,13 +97,25 @@ export function isSnoozed(quest: Quest, now: Date): boolean {
   return quest.snoozedUntil != null && Date.parse(quest.snoozedUntil) > now.getTime()
 }
 
-/** Candidates = active-status quests assigned to the active frame, ranked.
- *  Recurring quests on an off-day "rest": never candidates (v1.5). Snoozed quests are
- *  hidden from the spotlight until their snooze lifts (v1.13). */
+/** Order a frame's scored candidates for DISPLAY (and to pick the spotlight):
+ *   • CUSTOM frame (frame.manualOrder) → the user's hand-ranking, by `sortOrder` asc.
+ *   • AUTO frame                       → by selection score desc (importance/urgency/…).
+ *  Score ties in an auto frame fall back to sortOrder so the order stays stable. */
+function orderByFrameMode(scored: QuestScore[], frame: TimeFrame): QuestScore[] {
+  if (frame.manualOrder) {
+    return [...scored].sort((a, b) => a.quest.sortOrder - b.quest.sortOrder)
+  }
+  return [...scored].sort((a, b) => b.score - a.score || a.quest.sortOrder - b.quest.sortOrder)
+}
+
+/** Candidates = active-status quests assigned to the active frame, in the frame's display
+ *  order (custom hand-rank, or auto score). Recurring quests on an off-day "rest": never
+ *  candidates (v1.5). Snoozed quests are hidden from the spotlight until their snooze lifts
+ *  (v1.13). The returned order is what the widget list and Quests tab both follow. */
 export function rankCandidates(quests: Quest[], timeFrames: TimeFrame[], now: Date): QuestScore[] {
   const frame = activeTimeFrame(timeFrames, now)
   if (!frame) return []
-  return quests
+  const scored = quests
     .filter(
       (q) =>
         q.status === 'active' &&
@@ -112,31 +124,43 @@ export function rankCandidates(quests: Quest[], timeFrames: TimeFrame[], now: Da
         !isSnoozed(q, now)
     )
     .map((q) => scoreQuest(q, now))
-    .sort((a, b) => b.score - a.score)
+  return orderByFrameMode(scored, frame)
 }
 
 /** The single "current quest" to surface, or null when none qualifies. */
 export function selectCurrentQuest(quests: Quest[], timeFrames: TimeFrame[], now: Date): Quest | null {
-  return rankCandidates(quests, timeFrames, now)[0]?.quest ?? null
+  return resolveCurrentQuest(quests, timeFrames, now)
 }
 
 /** The current quest, honoring a user "pin" (widget click-to-switch, v1.13) when the
- *  pinned quest is still a valid candidate in the active frame; otherwise the scored
- *  pick. Because the pin is only honored among rankCandidates (already gated by frame +
- *  active + not resting/snoozed), a stale or out-of-frame pin simply falls back to the
- *  scorer — "pin overrides WITHIN the active frame". Pure: never mutates the pin. */
+ *  pinned quest is still a valid candidate in the active frame; otherwise the frame's lead.
+ *  In a CUSTOM-ordered active frame the lead is the manual #1, EXCEPT a quest that's due
+ *  very soon is "deadline-rescued" into the spotlight (v1.14) while keeping its list spot —
+ *  so a low-ranked but imminent quest is never missed. Auto frames bake dueSoon into the
+ *  score already, so their lead needs no rescue. Pure: never mutates the pin. */
 export function resolveCurrentQuest(
   quests: Quest[],
   timeFrames: TimeFrame[],
   now: Date,
   pinnedQuestId?: string | null
 ): Quest | null {
+  const frame = activeTimeFrame(timeFrames, now)
+  if (!frame) return null
   const ranked = rankCandidates(quests, timeFrames, now)
+  if (ranked.length === 0) return null
+  // Pin overrides within the active frame.
   if (pinnedQuestId) {
     const pinned = ranked.find((r) => r.quest.id === pinnedQuestId)
     if (pinned) return pinned.quest
   }
-  return ranked[0]?.quest ?? null
+  // Custom frame: an imminent quest rescues the spotlight from the manual #1.
+  if (frame.manualOrder) {
+    const rescue = ranked
+      .filter((r) => r.breakdown.dueSoon >= balance.selection.dueSoonRescueThreshold)
+      .sort((a, b) => b.breakdown.dueSoon - a.breakdown.dueSoon)[0]
+    if (rescue) return rescue.quest
+  }
+  return ranked[0].quest
 }
 
 /** The immediate (first not-done, by order) sub-task of a quest. */

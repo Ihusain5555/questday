@@ -198,6 +198,10 @@ interface AppStore {
   dropQuest: (id: string) => Promise<void>
   moveQuestToFrame: (id: string, timeFrameId: string) => Promise<void>
   moveQuestBefore: (id: string, targetId: string) => Promise<void>
+  /** Reset a time frame back to AUTO ordering (sort by importance/urgency) — clears the
+   *  per-frame manual-order flag a drag had set. The hand-set sortOrder values stay, so
+   *  re-dragging restores a custom order. */
+  resetFrameOrder: (frameId: string) => Promise<void>
   toggleSubTask: (questId: string, subTaskId: string) => Promise<void>
   completeQuest: (id: string) => Promise<void>
   /** Undo an accidental complete: back to active. Earned rewards are kept. */
@@ -616,7 +620,21 @@ export const useStore = create<AppStore>((set, get) => ({
       const ord = orderById.get(q.id)
       return ord === undefined ? q : { ...q, sortOrder: ord }
     })
-    await get().save({ quests })
+    // Hand-ranking a frame flips it to CUSTOM order (so it stops auto-sorting by priority);
+    // a "Reset to auto" clears this. Done in the SAME atomic save as the reorder.
+    const timeFrames = db.timeFrames.map((f) =>
+      f.id === target.timeFrameId && !f.manualOrder ? { ...f, manualOrder: true } : f
+    )
+    await get().save({ quests, timeFrames })
+  },
+
+  resetFrameOrder: async (frameId) => {
+    const db = get().db
+    if (!db) return
+    const timeFrames = db.timeFrames.map((f) =>
+      f.id === frameId ? { ...f, manualOrder: false } : f
+    )
+    await get().save({ timeFrames })
   },
 
   /** Abandon a quest — no penalty (§6). Kept in history as 'dropped'. */

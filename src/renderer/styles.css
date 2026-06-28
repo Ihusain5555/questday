@@ -810,6 +810,107 @@ button:has(svg) {
   cursor: grabbing;
 }
 
+/* Quest "order" column (v1.14): the rank NUMBER doubles as the drag handle. */
+.rank {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  background: var(--panel-3);
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 15px;
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.15s var(--ease-spring), background 0.15s ease, color 0.15s ease;
+}
+.rank:hover {
+  background: #2e4034;
+  color: var(--text);
+  transform: translateY(-1px);
+}
+.rank:active {
+  cursor: grabbing;
+}
+/* Tiny grip dots fade in on hover to signal "draggable". */
+.rank .dots {
+  position: absolute;
+  left: 50%;
+  bottom: -9px;
+  transform: translateX(-50%);
+  font-size: 9px;
+  line-height: 1;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.rank:hover .dots {
+  opacity: 0.8;
+}
+/* The current quest's rank badge — filled brand, glowing. */
+.rank.current {
+  background: linear-gradient(180deg, var(--brand-bright), var(--brand));
+  color: var(--on-brand);
+  box-shadow: 0 0 0 3px rgb(var(--brand-rgb) / 0.22);
+}
+/* The current quest's row — soft brand edge + a left spotlight bar. */
+.quest-row.current {
+  position: relative;
+  border-color: rgb(var(--brand-rgb) / 0.55);
+}
+.quest-row.current::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--brand-bright), var(--brand));
+}
+
+/* Per-frame ordering mode pill + "Reset to auto" button (frame header). */
+.order-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+}
+.order-mode.auto {
+  background: rgb(var(--brand-rgb) / 0.16);
+  color: var(--brand-bright);
+  border: 1px solid rgb(var(--brand-rgb) / 0.35);
+}
+.order-mode.custom {
+  background: rgb(var(--gold-rgb) / 0.14);
+  color: var(--gold-bright);
+  border: 1px solid rgb(var(--gold-rgb) / 0.35);
+}
+.reset-auto {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font: inherit;
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+}
+.reset-auto:hover {
+  color: var(--text);
+  border-color: var(--brand);
+}
+
 .card.drop-over {
   outline: 2px dashed var(--accent);
   outline-offset: -2px;

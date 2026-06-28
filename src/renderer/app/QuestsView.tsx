@@ -8,7 +8,7 @@ import { TEMPLATE_DRAG_MIME } from './TemplateCard'
 import { IMPORTANCE_COLOR, URGENCY_COLOR } from './options'
 import { isFeatureEnabled } from './features'
 import { formatDue, formatMinutes } from '@shared/format'
-import { activeTimeFrame, isSnoozed } from '@shared/engine/selectCurrentQuest'
+import { activeTimeFrame, isSnoozed, scoreQuest, resolveCurrentQuest } from '@shared/engine/selectCurrentQuest'
 import { questXP } from '@shared/engine/rewards'
 import { isRecurring, isResting, recurLabel, ymdOf } from '@shared/engine/recurrence'
 import {
@@ -16,8 +16,8 @@ import {
   Check,
   ArrowsClockwise,
   ArrowUUpLeft,
+  ArrowCounterClockwise,
   Trophy,
-  DotsSixVertical,
   FloppyDisk,
   Copy,
   Clock,
@@ -41,6 +41,7 @@ export function QuestsView(): JSX.Element {
     restoreQuest,
     moveQuestToFrame,
     moveQuestBefore,
+    resetFrameOrder,
     createTemplate,
     updateTemplate,
     deleteTemplate,
@@ -79,6 +80,9 @@ export function QuestsView(): JSX.Element {
   if (!db) return <div>Loading…</div>
 
   const frames = [...db.timeFrames].sort((a, b) => a.order - b.order)
+  // The spotlight quest (same one the widget surfaces) — highlighted as "current" in its
+  // active frame. Honors a widget pin + the custom-frame deadline rescue.
+  const currentQuest = resolveCurrentQuest(db.quests, db.timeFrames, now, db.settings.pinnedQuestId)
   const libraryOn = isFeatureEnabled(db.settings.enabledFeatures, 'questLibrary')
   // Salah & Qur'an checklist (opt-in, off by default). When on, a calm setup card
   // sits atop the Quests tab; once the preset quests exist it flips to a quiet note.
@@ -292,6 +296,18 @@ export function QuestsView(): JSX.Element {
             q.status === 'completed' &&
             !!q.completedAt &&
             ymdOf(new Date(q.completedAt)) === ymdOf(now)
+          // Active-quest display order for THIS frame: CUSTOM frames keep the user's
+          // hand-rank (sortOrder); AUTO frames sort by importance/urgency score (ties →
+          // sortOrder for stability). Scores are precomputed once so the sort is cheap.
+          const scoreOf = new Map(
+            db.quests
+              .filter((q) => q.timeFrameId === frame.id && q.status === 'active')
+              .map((q) => [q.id, scoreQuest(q, now).score])
+          )
+          const orderActive = (a: Quest, b: Quest) =>
+            frame.manualOrder
+              ? a.sortOrder - b.sortOrder
+              : (scoreOf.get(b.id) ?? 0) - (scoreOf.get(a.id) ?? 0) || a.sortOrder - b.sortOrder
           const quests = db.quests
             .filter(
               (q) =>
@@ -305,8 +321,14 @@ export function QuestsView(): JSX.Element {
                 return statusRank[a.status] - statusRank[b.status]
               if (a.status === 'completed')
                 return (b.completedAt ?? '').localeCompare(a.completedAt ?? '')
-              return a.sortOrder - b.sortOrder
+              return orderActive(a, b)
             })
+          // 1-based rank number per ACTIVE quest, in the display order above (actives sort
+          // ahead of completed/dropped, so they're the leading rows).
+          const rankOf = new Map<string, number>()
+          quests.forEach((q) => {
+            if (q.status === 'active') rankOf.set(q.id, rankOf.size + 1)
+          })
           // Capacity bar (calm): planned load of ACTIVE, non-resting quests vs the
           // frame's length. Soft amber near/over full — never red, never a failure.
           const activeInFrame = db.quests.filter(
@@ -352,6 +374,31 @@ export function QuestsView(): JSX.Element {
               <div className="frame-head">
                 <strong>{frame.name}</strong>
                 {frame.id === activeFrameId && <span className="badge active-now">active now</span>}
+                {rankOf.size > 1 &&
+                  (frame.manualOrder ? (
+                    <>
+                      <span
+                        className="order-mode custom"
+                        title="You hand-ranked this frame — it keeps your order. Reset to auto to sort by priority again."
+                      >
+                        Custom order
+                      </span>
+                      <button
+                        className="reset-auto"
+                        title="Sort this frame by importance/urgency again (your drag order is cleared)"
+                        onClick={() => void resetFrameOrder(frame.id)}
+                      >
+                        <ArrowCounterClockwise size={12} weight="bold" /> Reset to auto
+                      </button>
+                    </>
+                  ) : (
+                    <span
+                      className="order-mode auto"
+                      title="Sorted automatically by importance & urgency. Drag a quest to set your own order."
+                    >
+                      Auto · by priority
+                    </span>
+                  ))}
                 <span className="frame-count">{quests.length}</span>
               </div>
 
@@ -359,7 +406,7 @@ export function QuestsView(): JSX.Element {
                 <div className="capacity" title="Each quest's planned time, as a slice of this frame — just a calm heads-up, never a limit">
                   <div className={`capacity-track ${capPct > 0.9 ? 'full' : ''}`}>
                     {[...activeInFrame]
-                      .sort((a, b) => a.sortOrder - b.sortOrder)
+                      .sort(orderActive)
                       .map((q, i) => (
                         <div
                           key={q.id}
@@ -390,7 +437,7 @@ export function QuestsView(): JSX.Element {
                         dragId && dragId !== q.id && overQuest === q.id ? 'drop-before' : ''
                       } ${q.status === 'active' && isResting(q, now) ? 'resting' : ''} ${
                         q.status === 'active' && isSnoozed(q, now) ? 'snoozed' : ''
-                      }`}
+                      } ${frame.id === activeFrameId && currentQuest?.id === q.id ? 'current' : ''}`}
                       key={q.id}
                       draggable={q.status === 'active'}
                       onDragStart={(e) => {
@@ -425,8 +472,16 @@ export function QuestsView(): JSX.Element {
                       }}
                     >
                       {q.status === 'active' && (
-                        <span className="drag-grip" title="Drag to reorder or move to another frame">
-                          <DotsSixVertical size={16} weight="bold" />
+                        <span
+                          className={`rank${
+                            frame.id === activeFrameId && currentQuest?.id === q.id ? ' current' : ''
+                          }`}
+                          title="Drag to reorder, or onto another frame to move it"
+                        >
+                          {rankOf.get(q.id)}
+                          <span className="dots" aria-hidden="true">
+                            ⠿
+                          </span>
                         </span>
                       )}
                       <div className="quest-main">

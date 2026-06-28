@@ -89,6 +89,11 @@ export interface TimeFrame {
   /** Exclusive end minute. May be < startMinute to wrap past midnight (e.g. Night). */
   endMinute: number
   order: number
+  /** Quest ordering mode for THIS frame (v1.14). Undefined/false = AUTO: quests sort by
+   *  importance/urgency score (the current-quest scorer). True = CUSTOM: the user dragged
+   *  to hand-rank, so quests sort by their saved `sortOrder`. Optional so old saves migrate
+   *  cleanly (missing = auto). Never read by reward / ↩Restore math. */
+  manualOrder?: boolean
 }
 
 export interface PlayerState {

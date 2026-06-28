@@ -522,7 +522,13 @@ export const balance = {
     /** After the due time the pull DECAYS from 1 back to 0 across this many hours, so a
      *  stale/forgotten dated quest (e.g. a recurring quest with a frozen past dueAt)
      *  can't dominate the spotlight forever — it falls back to its importance rank. */
-    dueSoonOverdueHours: 4
+    dueSoonOverdueHours: 4,
+    /** Deadline rescue (v1.14) for CUSTOM-ordered frames: in a hand-ranked frame the
+     *  spotlight is your manual #1, but a quest whose `dueSoon` ramp reaches this value
+     *  (≈ within ~1h of its due time at the default 6h/cubic curve) is pulled to "current"
+     *  anyway — while keeping its manual list position — so a low-ranked but imminent quest
+     *  is never missed. Auto frames don't need this (dueSoon is already in their score). */
+    dueSoonRescueThreshold: 0.5
   }
 } as const
 
