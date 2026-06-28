@@ -106,11 +106,6 @@ ONLY writer of the data file. This is why edits in one window appear live in oth
   `node_modules/.bin/esbuild.cmd` via `execFileSync` fails on Windows (Node 24: `EINVAL` on `.cmd`). Use
   `import { buildSync } from 'esbuild'; buildSync({ entryPoints, outfile, format:'esm', absWorkingDir })`
   then dynamic-`import(pathToFileURL(outfile))`. esbuild is present (electron-vite dep), so zero new deps.
-- **Driver gotcha — to import a `.ts` engine into a `.mjs` pw driver, use esbuild's JS API, not the bin.**
-  `pw-prayer.mjs` transpiles `prayerTimes.ts` to a temp `.mjs` to compute expected times. Spawning
-  `node_modules/.bin/esbuild.cmd` via `execFileSync` fails on Windows (Node 24: `EINVAL` on `.cmd`). Use
-  `import { buildSync } from 'esbuild'; buildSync({ entryPoints, outfile, format:'esm', absWorkingDir })`
-  then dynamic-`import(pathToFileURL(outfile))`. esbuild is present (electron-vite dep), so zero new deps.
 
 ## Feature details
 - **Arcade** (`app/arcade/`): an **11-game brain-training set** (v1.14 added **Color Recreation**),
@@ -438,3 +433,48 @@ ONLY writer of the data file. This is why edits in one window appear live in oth
   flash→respond, Track Switch node→done/reshuffle) — silently drops. Fixed in `FlashRecall.tsx`/`TrackSwitch.tsx`
   with `onPointerDown={(e)=>{ if(e.button===0) … }}` (button 0 = primary/touch; ignores right-click). Playwright's
   `.click()` still fires pointerdown, so drivers are unaffected.
+- **STALE-DOCS LANDMINE — verify against CODE, not `docs/*-research-*.md` (3rd+ confirmation, 2026-06-28).** The
+  2026-06-16 feature/social research docs are OUT OF DATE; the HANDOFF's "to build" list was ALSO stale. A code-level
+  check has repeatedly found features already shipped. **Confirmed already-built when the HANDOFF said "to build":**
+  export/import + restore (`backup/portable.ts` + `ipc/backup.ts` + the Data-tab UI) and the arcade depth modes (ALL
+  11 games already ship Easy/Med/Hard with distinct mechanics). Earlier audit also found: Salah & Qur'an checklist,
+  quest duplicate/reorder-subtasks/notes/snooze/capacity-bar, Quest Library, Weekly Review, resting widget,
+  Importance×Urgency. **Do a quick existence-grep before building anything off a research/HANDOFF doc.**
+- **v2 FAITH LAYER (built 2026-06-28) — architecture + the load-bearing gotchas.** The faith-first pivot's slices are
+  now BUILT (prayer-aware frames, Hijri/observance calendar + notifications, Quest Bundles, end-of-day wind-down).
+  Non-obvious wiring to know:
+  - **Prayer-aware frames — `effectiveTimeFrames` is a MANDATORY pre-step every selection call site must route through.**
+    `src/shared/engine/prayerFrames.ts` (PURE) turns a frame's optional `TimeFrame.prayerAnchor` (`{start,end?:PrayerAnchorPoint}`,
+    where points are fajr/sunrise/dhuhr/asr/maghrib/isha) into effective start/end minutes for TODAY via `computePrayerDay`.
+    The selection engine (`selectCurrentQuest.ts`) stays **prayer-agnostic** — callers resolve frames FIRST:
+    `effectiveTimeFrames(db.timeFrames, db.settings, now)` then hand the result to `activeTimeFrame`/`rankCandidates`/
+    `resolveCurrentQuest`. **A new caller that forgets to wrap will silently NOT shift with prayer times** (it falls
+    back to the stored clock minutes). All ~10 current call sites are wrapped (Widget, WidgetList, Dashboard, QuestsView,
+    FocusView, ActiveModeSettings, EisenhowerView, TimeFramesView, scheduler.ts ×3). `prayerAnchor` is validated on the
+    write path and NEVER read by reward/↩Restore math. Driver `pw:prayer-frames`.
+  - **Observance calendar — the FORBIDDEN-FAST GUARDRAIL is load-bearing; NEVER soften it.** `src/shared/engine/observances.ts`
+    (PURE, tabular Hijri via the now-exported `hijriFromGregorian`). `forbiddenFastReason(date)` / `fastingRuling(date)`
+    return `'forbidden'` on the two Eids (1 Shawwal, 10 Dhul-Hijjah) + the three Tashreeq days (11/12/13 Dhul-Hijjah), and
+    `observancesOn(date)` SUPPRESSES any recommended-fast observance landing on one. **Source of truth =
+    `docs/islamic-observances-reference.md`** (+ `…-forbidden-fasts.json`) — authentic Quran + Sahih Sunnah, adversarially
+    verified; al-Kahf-on-Friday is marked CONTESTED, not confirmed. **Hijri dates are tabular ESTIMATES** — the UI always
+    shows the moon-sighting caveat; never assert a date is certain. Driver `pw:observances` includes a 365-day guardrail
+    scan (must stay `fastSuggestedOnForbidden=0`).
+  - **Observance TAB vs NOTIFY are separate switches.** The Calendar TAB is gated by `enabledFeatures.observanceCalendar`
+    (a feature-gated tab → its **tab id in App.tsx MUST equal the feature id**, unlike sub-section features questBundles/
+    questLibrary/faithChecklist which have no matching tab and are read via `isFeatureEnabled` directly). The system
+    notification is a SEPARATE opt-in `settings.observanceNotify`, deduped per-day by `settings.observanceLastNotified`,
+    fired by the main-process `src/main/observance/notify.ts` (mirrors the prayer-reminder scheduler). Both faith toggles
+    **seed `false`** (override the missing-key=ON rule; see the opt-in-faith gotcha above).
+  - **Quest Bundles — `questBundles` is a SEALED top-level db key** (mirrors `questTemplates`: wholesale-replace, tolerant
+    migrate, strict validate, never read by reward math). `BundleQuest` blueprints remember `timeFrameId`+`recurDays`;
+    `applyBundle` recreates them as fresh ACTIVE undated quests (falls back to the first frame if the remembered one is
+    gone). Panel = `QuestBundlesPanel.tsx` in the Quests tab. Driver `pw:bundles`.
+  - **Wind-down "push to tomorrow" REUSES the snooze primitive.** `store.pushUnfinishedToTomorrow()` sets
+    `snoozedUntil = next local midnight` on every active quest (gains-only — hides, never deletes; resurfaces tomorrow).
+    Wins-recap is derived (completed-today). Card = `EndOfDayCard.tsx`. Driver `pw:winddown`.
+  - **`DataView.FEATURE_ICON` must map every feature's Phosphor icon NAME** — a new `features.ts` entry whose `icon` isn't
+    in that map silently falls back. Added `Stack` (bundles) + `CalendarStar` (calendar) this session.
+  - **pw driver importing a `.ts` engine with RELATIVE value imports needs esbuild `bundle:true`** (prayerFrames imports
+    prayerTimes; observances imports prayerTimes). `pw-prayer.mjs` used `bundle:false` because prayerTimes has no relative
+    value imports — match the engine's import shape or the dynamic-import fails to resolve `./prayerTimes`.

@@ -11,6 +11,36 @@ The reward world only ever GAINS — no wilt/decay. (As of v1.8 the **Realm** re
 the UI; the garden engine is kept INERT — it still runs silently so ↩ Restore's coin claw-back math
 stays intact — so do NOT delete it.)
 
+## Strategic direction (v2 — DECIDED 2026-06-28; supersedes the civilization headline below)
+
+After a red-team pre-mortem + a full options framework, QuestDay was **repositioned**:
+**"the private, calm DESKTOP deep-work companion that structures focused work around the five daily prayers."**
+The **Muslim-productivity layer is now the CORE differentiator** — but keep ALL existing generic productivity
+features (additive, not narrowing). Decisions that change what gets built:
+- **Civilization / Realm reward layer → PARKED behind "Coming Soon"** (the v1.10 "town editing is the centerpiece"
+  framing below is SUPERSEDED). Retention rides on the faith layer + arcade + core, NOT realm growth.
+- **Arcade → keep + add OPTIONAL depth modes** (every game keeps its simple default + an advanced/polished mode; never remove simple).
+- **Faith build order (faith first, one feature at a time):** prayer-aware time-frame TOGGLE → Hijri date + Islamic
+  observance calendar w/ notifications (Quran + Sahih Sunnah grounded; **NEVER suggest fasting on forbidden days** —
+  two Eids / days of Tashreeq) → Quest Bundles → End-of-day Wind-Down. Plus local export/import + restore.
+  - **DONE 2026-06-28 (batch session): all of the above SHIPPED + verified + committed + pushed.** Prayer-aware frames
+    (`engine/prayerFrames.ts` + `TimeFrame.prayerAnchor`), Hijri/observance calendar + main-process notifications
+    (`engine/observances.ts` + `CalendarView` tab + `observance/notify.ts`; the **forbidden-fast guardrail is enforced
+    in code** and grounded in the durable `docs/islamic-observances-reference.md`), Quest Bundles (`questBundles` key +
+    panel), end-of-day wind-down (`EndOfDayCard` wins-recap + push-to-tomorrow). Export/import+restore and arcade depth
+    modes were found **already built** (stale-docs — see Standing guidance). Per-feature commits `5ea264f`→`a7c3dce`;
+    new drivers `pw:prayer-frames`/`pw:observances`/`pw:bundles`/`pw:winddown`. Architecture details + the load-bearing
+    gotchas (the `effectiveTimeFrames` pre-step; the never-soften guardrail) are in the **codebase-overview skill**.
+- **Constraints:** local-only ABSOLUTE (add export/import + restore; no cloud); gains-only KEPT (stakes via
+  prayer-consistency/identity, never punishment); zero-dep default + vetted exceptions; installer UNSIGNED for now
+  (revisit Microsoft Store ~$19 before distributing). **Monetization = FREE forever (sadaqah).**
+- **Cut:** Qibla (no desktop compass), Realm mystery reveal, arcade unlock tiers, live-friends server.
+- **Distribution:** the **Vercel landing page** is BUILT + DEPLOYED (2026-06-28) — `website/` (Next.js 14 App Router,
+  faithful port of `mockups/website-mockup.html`), live at `https://website-virid-six-hmzgotbvpo.vercel.app`. Deploy
+  from here via `cd website ; npx vercel --prod --yes` (CLI already authed). **Download buttons 404 until a GitHub
+  Release exists** (publish `npm run dist`'s `.exe`). Deploy/Vercel quirks → shipping-and-gotchas skill.
+- Full decision record: memory `questday-pivot-muslim-productivity`; resume kit: `HANDOFF.md`.
+
 ## Commands
 
 ```powershell
@@ -207,6 +237,12 @@ by outcome and **cannot read code**, so the gates below are load-bearing, not op
 
 ## Standing guidance (efficiency)
 
+- **`docs/*-research-*.md` AND the HANDOFF's "to build" list are STALE — verify against CODE.** A 2026-06-28 audit
+  found most "to build" features already shipped (Salah checklist, quest duplicate / reorder-subtasks / notes / snooze /
+  capacity-bar / Quest Library, Weekly Review, resting widget, Importance×Urgency). **Confirmed AGAIN the same session:**
+  local export/import + restore (`backup/portable.ts` + `ipc/backup.ts` + DataView UI) and the arcade depth modes (all
+  11 games already ship Easy/Med/Hard) were listed "to build" but were fully done. The code is the source of truth;
+  **a quick existence-grep before building beats trusting any planning doc** (incl. this file and HANDOFF).
 - **Prefer CLI tools over MCP servers** when both exist (`gh`, `aws`, `gcloud`, …) — tighter
   output, and no extra tool schemas loaded into context.
 - **Delegate verbose operations to subagents** — running test suites, fetching docs, scanning
@@ -225,11 +261,17 @@ by outcome and **cannot read code**, so the gates below are load-bearing, not op
   The regenerable dump patterns `/pw-*.txt`, `/pwqa*.txt`, `/sweep-*.txt`, `/*-out.txt`, `/tc.txt` and
   root preview PNGs (`/biome-*`, `/buildings-*`, `/town-*`, `/edit-*`, `/tb-*`, `/tp-*`, `/openart-*`)
   are now in `.gitignore` so test/build output and dev screenshots never re-clutter the tree.
-- **Per-feature commits when a file spans features:** `src/shared/types.ts`, `src/shared/config/balance.ts`,
-  and `src/renderer/styles.css` each accrete changes for MULTIPLE features at once. To split them into
-  coherent commits, stage at the hunk level — `git apply --cached` is offset-tolerant, so generate one
-  sub-patch per feature (header + only that feature's `@@` hunks) and apply in any order; verify each with
-  `git apply --cached --check` first.
+- **Per-feature commits when a file spans features (refined 2026-06-28, used for the whole batch).** `types.ts`,
+  `defaults.ts`, `store.ts`, `styles.css`, `features.ts`, `state/store.ts` accrete changes for several features. Reliable
+  recipe: `node scripts/_split-diff.cjs <file>` dumps `git diff <file>` into one patch per `@@` hunk; assemble a
+  per-feature patch from the right hunks and `git apply --cached --recount` it (then `git add` that feature's whole-only
+  files, commit, repeat). **Why it works incrementally:** `git apply` locates hunks by CONTEXT, tolerating the
+  line-number drift earlier commits cause — as long as the hunk's context lines aren't themselves modified by a prior
+  commit. **`--check` each first.** Caveats learned: (1) **contiguous added blocks can't be split incrementally** (e.g.
+  the 5 adjacent `package.json` script lines; the eod+bundles+calendar CSS in one `styles.css` hunk) — assign the whole
+  hunk to ONE commit and note the ride-along in the message; (2) the splitter keys output files by BASENAME, so the two
+  `store.ts` files collide — copy them to distinct names; (3) only `git add` your OWN paths (never `-A`) — the repo has
+  many pre-existing untracked dev files.
 
 ## When summarizing / compacting this conversation, KEEP:
 

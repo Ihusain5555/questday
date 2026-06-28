@@ -1,142 +1,155 @@
 # HANDOFF — QuestDay (resume kit)
 _Updated 2026-06-28 · branch `feature/civilization-world-map`._
 
-## ▶ STATUS: BUILD session COMPLETE (batch mode). All 5 faith slices built + verified; website built. Only the Vercel DEPLOY remains (needs the user's one-time `vercel login`).
-The user enabled **batch mode** and asked to finish the whole agenda. Done this session (each plan→build→verify, schema
-adds confirmed up-front in one approval):
-- **#1 Prayer-aware time frames** — `TimeFrame.prayerAnchor` (schema); pure `engine/prayerFrames.ts` resolves a frame's
-  effective window from prayer times; every selection call site routes through `effectiveTimeFrames`; per-frame Clock/Prayer
-  toggle in TimeFramesView. Driver `pw:prayer-frames` ALL PASS.
-- **#2 Hijri date + observance calendar + notifications** — pure `engine/observances.ts` (forbidden-fast guardrail), a
-  feature-gated **Calendar** tab (`CalendarView`, toggle `observanceCalendar`, OFF by default), a main-process
-  `observance/notify.ts` daily system notification (`settings.observanceNotify`/`observanceLastNotified` schema). Authentic-
-  source research persisted to `docs/islamic-observances-reference.md` + `docs/islamic-observances-forbidden-fasts.json`.
-  Driver `pw:observances` ALL PASS (incl. a 365-day guardrail scan: 0 fast-suggestions on forbidden days).
-- **#3 Quest Bundles** — top-level `questBundles` key (schema); `BundleQuest`/`QuestBundle` types; store
-  createBundle/createBundleFromActive/applyBundle/deleteBundle; `QuestBundlesPanel` in the Quests tab (toggle `questBundles`).
-  Driver `pw:bundles` ALL PASS.
-- **#4 End-of-day Wind-Down** — finished `EndOfDayCard`: today's-wins recap + `pushUnfinishedToTomorrow` (snooze to next
-  midnight, gains-only). Driver `pw:winddown` ALL PASS.
-- **#5 Export/import + restore** — was ALREADY BUILT (portable.ts + ipc/backup.ts + DataView UI). Verified, no change.
-- **#6 Arcade depth modes** — ALREADY BUILT (all 11 games ship simple + advanced difficulty modes). Verified, no change.
-- **#7 Website** — real Next.js app in `website/` (Next 14.2.35, App Router, faithful port of the approved mockup;
-  download buttons → GitHub Releases latest). `npm run build` green. **NOT deployed** — needs `vercel login` (user) then
-  `vercel --prod` from `website/`.
-
-`pw:rewards` (↩Restore exactness) stayed ALL PASS throughout — the 3 new schema keys never touch reward math.
-**Remaining:** deploy the website to Vercel (user `vercel login`), then optionally commit/push the branch (user's call —
-git push is stop-and-confirm). NOTE: HANDOFF's old "Next steps" + "Open" sections below are now HISTORICAL.
-
-Durable decision record = the memory file `questday-pivot-muslim-productivity` (~/.claude memory).
-
-## The pivot in one line
-QuestDay → **"the private, calm DESKTOP deep-work companion that structures your focused work around the five daily
-prayers."** Faith layer becomes the CORE (keep ALL generic features too); civ parked behind Coming Soon; arcade gets
-optional depth modes; free forever; local-only stays absolute.
+## ▶ STATUS: BUILD session COMPLETE + COMMITTED + PUSHED + website DEPLOYED.
+Batch-mode session: built the whole faith-first agenda, committed it as per-feature commits, pushed to origin,
+and deployed the landing site to Vercel production. Nothing is blocking. Two optional follow-ups need the user
+(GitHub Release for the download buttons; rename the Vercel project). No open errors.
 
 ## Git state
-- **Branch:** `feature/civilization-world-map` (repo default). **Remote:** `origin` github.com/Ihusain5555/questday.
-- **Staged:** none. **Stashes:** none. **Origin HEAD = `6231a0d`** (nothing committed this session).
-- **Unstaged (tracked) — PRE-EXISTING, not this session, intentionally left:** `.claude/settings.local.json`,
-  `.claude/skills/shipping-and-gotchas/SKILL.md`.
-- **Modified THIS session (docs only — this close-out):** `HANDOFF.md`, `CLAUDE.md`,
-  `.claude/skills/codebase-overview/SKILL.md`.
-- **Untracked NEW this session:** `mockups/website-mockup.html` (landing-page mockup, user-approved).
-- **Untracked pre-existing keepers:** `docs/*.md`, other `mockups/*.html`, `presentation/`, `scripts/_*.mjs`,
-  `.github/*.png`, root `_*.json` — unchanged from commit 6231a0d's handoff.
-- **Memory (outside repo, ~/.claude):** new `questday-pivot-muslim-productivity.md` + a `MEMORY.md` index line.
+- **Branch:** `feature/civilization-world-map` (repo default). **Remote:** `origin` = github.com/Ihusain5555/questday.
+- **HEAD = `3fea82b`**, and `origin/feature/civilization-world-map` is **in sync** (pushed — branch is NOT ahead/behind).
+- **Stashes:** none.
+- **Last 7 commits** (oldest first this session; baseline was `6231a0d`):
+  ```
+  3fea82b docs: update resume kit — faith slices + website built, deploy done
+  aa7db2f feat(site): QuestDay landing page (Next.js) — deployed to Vercel
+  3ba33ed test: register pw drivers (prayer-frames, observances, bundles, wind-down)
+  a7c3dce feat: end-of-day wind-down
+  31615a7 feat: Quest Bundles
+  fc3235d feat(faith): Hijri date + Islamic observance calendar + notifications
+  5ea264f feat(faith): prayer-aware time frames
+  6231a0d docs: rewrite HANDOFF resume-kit + record session tooling lessons  <- pre-session baseline
+  ```
+- **Working tree after the doc-update commit (this close-out):**
+  - **Unstaged tracked, intentionally NOT committed (PRE-EXISTING, not this session's feature work):**
+    `.claude/settings.local.json` (local Claude config — leave it).
+  - **Untracked NEW this session (deliberately left untracked — throwaway dev helpers, matching the `scripts/_*.mjs` convention):**
+    `scripts/_extract-observances.cjs` (one-shot: pulled the research workflow's JSON → `docs/islamic-observances-*`),
+    `scripts/_split-diff.cjs` (splits `git diff <file>` into per-hunk patches for per-feature commits — reusable).
+  - **Untracked pre-existing keepers (unchanged from baseline — still undecided whether to track):** `mockups/*.html`,
+    `scripts/_gen-*.mjs`/`_*.mjs`, `.github/*.png`, `presentation/`, root `_*.json`, `docs/*-2026-06-16.md`,
+    `docs/superpowers/specs/2026-06-18-*`, `scripts/build-deck.mjs`, `scripts/pw-deck.mjs`.
 
-### Session diff --stat (tracked) + one-line "what & why"
-```
- HANDOFF.md                                 | rewritten  — this resume kit (pivot + faith-first build plan)
- CLAUDE.md                                  | +section   — record the strategic pivot + the stale-docs lesson
- .claude/skills/codebase-overview/SKILL.md  | +gotchas   — verified built/not-built map, stale-docs landmine, dedup a repeated note
- mockups/website-mockup.html                | new (untracked) — approved offline landing-page mockup
-```
-`git diff --stat` for tracked **source** is EMPTY this session (no `src/` change).
+### Session diff --stat (`6231a0d..HEAD`) + one-line "what & why" per file
+`42 files changed, +3964 / -235`. Grouped by the commit that owns each:
 
-### Last commits (origin at 6231a0d)
+**#1 prayer-aware time frames (`5ea264f`):**
 ```
-6231a0d docs: rewrite HANDOFF resume-kit + record session tooling lessons   <- origin HEAD
-44dc0f1 chore: gitignore regenerable test-output dumps + root preview PNGs
-4f7b374 docs: record backlog-batch conventions + resume kit
-6829604 fix(arcade): register Flash Recall / Track Switch taps on pointerdown
-eae4916 feat(widget): Show-widget button is now a Show/Hide toggle
+src/shared/engine/prayerFrames.ts      | NEW  — pure resolver: a frame's prayerAnchor → effective start/end minutes from prayer times
+src/shared/engine/prayerTimes.ts       | +export hijriFromGregorian (was private, #2 needs it) + new prayerDayFor() convenience
+src/main/activeMode/scheduler.ts       | route all 3 resolveCurrentQuest + the activeTimeFrame call through effectiveTimeFrames
+src/renderer/app/TimeFramesView.tsx     | per-frame Clock/Prayer segmented toggle + prayer-point dropdowns + no-location hint
+src/renderer/app/Dashboard.tsx          | wrap db.timeFrames → effectiveTimeFrames for current-quest + active frame
+src/renderer/widget/Widget.tsx          | same wrap (compute `frames` once, feed engine) so the widget agrees
+src/renderer/widget/WidgetList.tsx      | resolve frames for the "active now" detection
+src/renderer/app/FocusView.tsx          | wrap the selectCurrentQuest call
+src/renderer/app/ActiveModeSettings.tsx | wrap the selectCurrentQuest call
+src/renderer/app/EisenhowerView.tsx     | wrap the selectCurrentQuest call
+src/renderer/app/QuestsView.tsx         | wrap for activeFrameId + currentQuest highlight (+ #3's bundlesOn/panel render ride along)
+src/main/db/store.ts                    | validate(): reject a malformed TimeFrame.prayerAnchor on the write path
+src/shared/types.ts                     | + PrayerAnchorPoint type + TimeFrame.prayerAnchor (+ #3's Bundle types ride this hunk)
+src/renderer/styles.css                 | .tf-anchor-toggle / .tf-seg / .tf-prayer-select / .tf-anchor-hint
+scripts/pw-prayer-frames.mjs            | NEW driver: engine math (RESOLVE_SHIFT/END_OMITTED/FALLBACK) + UI toggles + DB accept
 ```
+**#2 Hijri date + observance calendar + notifications (`fc3235d`):**
+```
+src/shared/engine/observances.ts        | NEW pure engine: Hijri date, fastingRuling(), observancesOn(), upcomingObservances() + the forbidden-fast guardrail
+src/renderer/app/CalendarView.tsx        | NEW feature-gated tab: Hijri date, today's fasting ruling, upcoming observances list
+src/main/observance/notify.ts            | NEW main-process daily system notification for a notable observance (opt-in)
+src/main/index.ts                        | startObservanceNotifier(getDatabase, persist last-notified) in whenReady
+src/renderer/app/App.tsx                 | add the 'observanceCalendar' tab (id === feature id so the toggle can hide it)
+src/renderer/app/DataView.tsx            | FEATURE_ICON += CalendarStar (+ Stack for #3 rides along)
+src/renderer/app/features.ts             | TOGGLEABLE_FEATURES += observanceCalendar (faith TAB, OFF by default)
+src/shared/types.ts                      | Settings += observanceNotify? + observanceLastNotified?
+src/shared/defaults.ts                   | seed observanceNotify:false, observanceLastNotified:null, enabledFeatures.observanceCalendar:false
+src/renderer/styles.css                  | .cal-* / .obs-* calendar styles (this hunk also carries #3 bundles + #4 eod CSS)
+docs/islamic-observances-reference.md    | NEW durable authentic-source reference (Quran + Sahih Sunnah, adversarially verified)
+docs/islamic-observances-forbidden-fasts.json | NEW machine list of forbidden/disliked fast days (the guardrail data)
+scripts/pw-observances.mjs               | NEW driver: 365-day guardrail scan + Eid/Arafah rulings + the Calendar tab UI
+```
+**#3 Quest Bundles (`31615a7`):**
+```
+src/renderer/app/QuestBundlesPanel.tsx   | NEW panel in the Quests tab: save current quests / apply / delete a named bundle
+src/shared/types.ts                      | + BundleQuest + QuestBundle interfaces + Database.questBundles key
+src/shared/defaults.ts                   | seed questBundles: []
+src/main/db/store.ts                     | migrate() tolerant + validate() strict for the new questBundles key
+src/renderer/state/store.ts              | createBundle / createBundleFromActive / applyBundle / deleteBundle actions
+src/renderer/app/features.ts             | TOGGLEABLE_FEATURES += questBundles (sub-section, default ON)
+scripts/pw-bundles.mjs                   | NEW driver: save / apply / delete + DB-accept + rewards-exact
+```
+**#4 end-of-day wind-down (`a7c3dce`):**
+```
+src/renderer/app/EndOfDayCard.tsx        | + today's-wins recap (derived) + "rest open quests until tomorrow" button
+src/renderer/state/store.ts              | pushUnfinishedToTomorrow() — snooze every active quest to next local midnight
+scripts/pw-winddown.mjs                  | NEW driver: wins recap + push action + rewards-exact
+```
+**chore (`3ba33ed`):** `package.json` — register pw:prayer / pw:prayer-frames / pw:winddown / pw:bundles / pw:observances.
+**site (`aa7db2f`):** `website/` — Next.js 14 App Router landing page (faithful port of the approved mockup), deployed.
+**docs (`3fea82b` + this close-out):** `HANDOFF.md`, `CLAUDE.md`, the two `.claude/skills/*` SKILL.md.
 
-## Baseline (DON'T re-derive — no code changed this session)
-- **No `src/` runtime code changed**, so the last-known baseline still holds; NOT re-run (Electron drivers are slow +
-  single-instance). Last-known PASS from commit 6231a0d's session: `npm run typecheck` PASS (node+web);
-  `npm run build` PASS; `pw:arcade` 20/20; `pw` 19; `pw-widget` 8/8; `pw:rewards` exact; `pw:rollover`; `pw:theme` — all PASS.
-- **Pre-existing INTENTIONAL "failures" (not regressions):** `pw:realm` + the expedition assertion in `pw-celebration`
-  only pass when `REALM_COMING_SOON` is flipped `false` (Realm/civ is gated behind a Coming-Soon wall by design — the
-  pivot KEEPS it parked there).
+## Baseline (last-known PASS — DO NOT re-derive; Electron drivers are slow + single-instance)
+Recorded from this session's runs against the BUILT `out/` (each after `npm run build`):
+- `npm run typecheck` → **PASS** (node + web), re-run green after every feature.
+- `npm run build` → **PASS** (electron-vite).
+- `npm run pw:prayer-frames` → **9/9 ALL PASS** (RESOLVE_SHIFT, END_OMITTED, FALLBACK, ISOLATION, DB_ACCEPTS, UI_PICKERS, ACTIVE_NOW, TOGGLE_CLOCK, TOGGLE_PRAYER).
+- `npm run pw:observances` → **7/7 ALL PASS** — incl. `GUARDRAIL_YEAR: forbiddenDays=5, ruleMismatches=0, fastSuggestedOnForbidden=0` (365-day scan).
+- `npm run pw:bundles` → **7/7 ALL PASS**.
+- `npm run pw:winddown` → **5/5 ALL PASS**.
+- `npm run pw:rewards` → **7/7 ALL PASS** (↩Restore exactness — the 3 new schema keys never touch reward math). Re-run green after the schema adds.
+- `website/`: `npm run build` (inside website/) → **PASS** (static `/` + `/_not-found`).
+- **Pre-existing INTENTIONAL non-pass (NOT regressions):** `pw:realm` + the expedition assertion in `pw-celebration` only pass with `REALM_COMING_SOON` flipped `false` (the Realm/civ is gated behind a Coming-Soon wall by design).
 
 ## Verbatim currently-failing output
-**NONE.** No code ran or changed this session; no new failures.
+**NONE.** No failing test or open error at close. Everything above passed; nothing is mid-broken.
 
-## Decisions locked (source of truth = memory `questday-pivot-muslim-productivity`)
-- **Identity:** Muslim-productivity niche. **Faith layer:** the CORE, keep ALL generic features (additive).
-- **Civ:** parked behind "Coming Soon" (retention rides on faith + arcade + core, NOT realm growth).
-- **Arcade:** build game-feel upgrades as an OPTIONAL depth layer — keep every game's simple default + an advanced mode; never remove simple.
-- **Monetization:** FREE forever (sadaqah). **Social:** invest in the offline share-card as the growth lever.
-- **Platform:** desktop + widget + one community; positioning = own focus-work *between* prayers (don't fight Muslim Pro/Athan).
-- **Constraints:** local-only ABSOLUTE (+ add export/import + restore; no cloud); gains-only KEPT (stakes via
-  prayer-consistency/identity, never punishment); zero-dep default + vetted exceptions; installer UNSIGNED for now
-  (revisit Microsoft Store ~$19 before distributing).
-- **Cut:** Qibla, Realm mystery reveal, arcade "New game discovered" unlock tiers, live-friends server.
-- **Security answer:** offline shrinks the real RCE surface + verifiable export/import/restore + /security-review + dependabot.
+## Deployed
+- **Vercel production (live, public):** `https://website-virid-six-hmzgotbvpo.vercel.app` (HTTP 200, serves the real page).
+- Project = `website`, account scope `ihusain5556`, deployment id `dpl_9faVLX4YLhoYYvBcau17WETaJcVz`.
+- The deployment-specific `website-bbedqjir6-…vercel.app` URL is 302→SSO (Vercel default Deployment Protection); the
+  production ALIAS above is the public one. CLI was already authed (`vercel whoami` → ihusain5555).
 
-## Next steps — file-level build targets (ORDER = faith first; each is its own plan→OK→build→test cycle; schema = STOP-AND-CONFIRM)
-1. **Prayer-aware time frames (the differentiator, smallest safe blast radius).**
-   - Add optional `prayerAnchor` to `TimeFrame` (`src/shared/types.ts:84`, e.g. `prayerAnchor?: { start: PrayerName; end?: PrayerName }`) — **schema change, stop-and-confirm**.
-   - Tolerant migrate + `validate()` it in `src/main/db/store.ts` (mirror `manualOrder`/`questTemplates`).
-   - New PURE helper to resolve a frame's EFFECTIVE start/end for a day from `PrayerDayTimes` (via `computePrayerDay()` in `src/shared/engine/prayerTimes.ts`); when `prayerAnchor` set, derive from prayer times instead of `startMinute/endMinute`.
-   - Make `frameForTime()` (`src/main/db/store.ts:~159`) and `src/shared/engine/selectCurrentQuest.ts` read the effective window so widget/Dashboard/Quests agree.
-   - UI: per-frame "Anchor to prayer times" toggle + prayer picker in `src/renderer/app/TimeFramesView.tsx`.
-   - NEVER feeds reward/↩Restore. New driver `scripts/pw-prayer-frames.mjs`; `pw:rewards` must stay exact.
-2. **Hijri date + Islamic observance calendar + notifications.** Source = this session's authentic-source research
-   (Quran + Sahih Sunnah + an authenticity audit). **Review + persist that research FIRST** (see Open). Export the
-   already-present-but-private `hijriFromGregorian()` in `prayerTimes.ts` to surface the Hijri date; add gentle date
-   notifications. **Guardrail: NEVER suggest fasting on a forbidden day** (two Eids, days of Tashreeq); phrase
-   Ramadan/Eid as "expected ~X, subject to local sighting." Likely a small schema add (enabled/last-shown) → stop-and-confirm.
-3. **Quest Bundles** (generic now, faith starter-kits later). New sealed top-level db key (mirror `questTemplates`) → stop-and-confirm; build on the Quest Library plumbing.
-4. **End-of-day Wind-Down** — finish the half-built feature in `src/renderer/app/EndOfDayCard.tsx`: add a "today's wins"
-   recap + a manual "push unfinished to tomorrow" action (reflection-note third already exists; carry-over today is automatic in `src/shared/engine/rollover.ts`).
-5. **Local export/import + restore** (data-safety; supports the security answer + local-only). `src/main/backup/portable.ts`
-   already does opaque export/import — wire a user-facing export/import/restore into the Data tab.
-
-**NEXT (after faith slices):**
-6. **Arcade depth upgrades** — simple default + advanced mode per game. The full per-game analysis (reference + concrete
-   upgrades + constraint audit, all 11 games) was produced this session via the `arcade-quality-upgrade` workflow
-   (re-run/resume the saved workflow script for the data). Keep the simple version intact.
-7. **Website (real build)** — polished **Next.js on Vercel**, download buttons → **GitHub Releases latest**. Mockup
-   approved: `mockups/website-mockup.html`. Build with the **frontend-design** skill; deploy via the Vercel CLI (needs a
-   one-time user `vercel login`). **AFTER the app changes** (user's instruction).
-
-**LATER:** Ramadan mode (~Dec 2026 / ~2mo before Ramadan 2027); pre-launch polish (real Data-behind-gear move); revisit signing/Microsoft Store before distributing.
+## Next steps — file-level targets (none blocking; pick per priority)
+1. **Publish a GitHub Release so the site's download buttons resolve** (they 404 now). `npm run dist` →
+   `C:\Users\ihusa\questday-release\` NSIS `.exe` → create a Release on github.com/Ihusain5555/questday and upload it.
+   The site links to `…/releases/latest` (in `website/app/page.tsx`). STOP-AND-CONFIRM (publish).
+2. **Rename the Vercel project `website` → `questday`** (Vercel dashboard → Project → Settings → Name) for a clean URL,
+   and/or add a custom domain. Optional: turn off Deployment Protection (Settings → Deployment Protection) to make
+   every URL public.
+3. **(If wanted) deploy on every push:** connect the GitHub repo in Vercel with Root Directory = `website` (currently
+   it's CLI-deployed only).
+4. **macOS `.dmg` of the new build** — re-tag to trigger `.github/workflows/build-macos.yml` (see codebase-overview macOS gotchas).
 
 ## Open / deferred
-- **No code TODO/FIXME added** (no code changed this session).
-- **Persist the Islamic-observances research** before building the calendar — currently only in the workflow task output
-  (temp file, may be cleaned). Re-run the saved `islamic-observances-research` workflow, OR save its findings to a durable
-  `docs/` reference. It FLAGGED: Surah-al-Kahf-on-Friday authenticity is CONTESTED (present as "cherished," not
-  "confirmed"); the white-days fast must SKIP 13 Dhul-Hijjah (Tashreeq); a lone-Friday voluntary fast is disliked.
-- **Schema changes pending (each stop-and-confirm):** `TimeFrame.prayerAnchor`; calendar-notification settings; Quest Bundles key.
-- **Deferred by decision:** Ramadan mode (~Dec 2026); Data-behind-gear (pre-launch polish); signing/Microsoft Store
-  (before launch); a paid human security review (when real users appear); the website real build (after app changes).
-- **Cut (do not build):** Qibla; Realm mystery reveal; arcade unlock tiers; live-friends server; civ deep roadmap (parked).
-- **Undecided (unchanged from 6231a0d):** track-or-not the pre-existing untracked keepers + the 2 pre-existing tracked edits.
+- **No code TODO/FIXME added this session** (swept `6231a0d..HEAD` — zero matches).
+- **Deferred by decision (unchanged):** Ramadan mode (~Dec 2026 / ~2mo before Ramadan 2027); Qibla (CUT — no desktop
+  compass); civ/Realm deep roadmap (PARKED behind Coming-Soon); installer code-signing (needs a paid cert); Microsoft
+  Store (~$19, before distributing); a paid human security review (when real users appear).
+- **Deferred this session:** publish a GitHub Release (#1 above); rename/own the Vercel domain (#2); push the
+  doc-update commit if the next session wants origin current (this close-out commit is local until pushed).
+- **Untracked decision (unchanged):** whether to `git add` the pre-existing untracked keepers + the 2 new `_*.cjs`
+  helpers, and whether to commit the pre-existing `.claude/settings.local.json` edit.
+- **Two accepted commit ride-alongs (noted in the commit bodies):** the `BundleQuest`/`QuestBundle` *type defs* sit in
+  #1's `types.ts` hunk (adjacent to PrayerAnchorPoint); the wind-down + bundles *CSS* sit in #2's `styles.css` hunk.
+  Logic for each landed in its own commit. Caused by contiguous additions that can't be hunk-split incrementally.
 
-## Resume commands (offline; no env/services/network)
+## Resume commands (offline; no env vars / services / network needed for the APP)
 ```powershell
 npm install          # only if node_modules missing (OneDrive electron-binary gotcha → shipping-and-gotchas skill)
 npm run build        # compile to out/ — REQUIRED before any pw driver
 npm run typecheck    # tsc node + web — run before "done"
 npm run dev          # live app (exits 127 => OneDrive electron gotcha; fallback: npm run start)
-# pw drivers: QUIT the app first (single-instance lock); all use an isolated --user-data-dir:
-npm run pw:rewards   # ↩Restore exactness — run after ANY schema/save change
-npm run pw:rollover  # rollover / recurrence
-npm run pw           # current-quest / focus
+# pw drivers — QUIT any running QuestDay first (single-instance lock); all use an isolated --user-data-dir:
+#   Get-Process QuestDay,electron | Stop-Process -Force   # then relaunch the installed app after
+npm run pw:prayer-frames   # prayer-anchored frames
+npm run pw:observances     # Hijri/observance calendar + the forbidden-fast guardrail
+npm run pw:bundles         # Quest Bundles
+npm run pw:winddown        # end-of-day wind-down
+npm run pw:rewards         # ↩Restore exactness — run after ANY schema/save change
 ```
-Redirect verbose output to `/tmp/x.txt` (POSIX) or a gitignored `*-out.txt` — NOT `C:\temp\...` (mojibake repo-root file).
+Website (separate Next.js project; needs network for install/deploy):
+```powershell
+cd website ; npm install ; npm run build        # static landing page
+npx vercel --prod --yes                          # deploy (CLI already authed as ihusain5555)
+```
+Redirect verbose pw output to `/tmp/x.txt` (POSIX) or a gitignored `*-out.txt` — NOT `C:\temp\…` (mojibake repo-root file).
