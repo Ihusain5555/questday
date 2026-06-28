@@ -150,6 +150,9 @@ function migrate(db: Database): Database {
     // Quest Library: tolerate old saves (missing) and corruption (non-array) by
     // failing safe to []. Per-entry validation happens on the WRITE path (validate()).
     questTemplates: Array.isArray(db.questTemplates) ? db.questTemplates : fresh.questTemplates,
+    // Quest Bundles: same pattern as questTemplates — tolerate missing/corrupt by failing
+    // safe to []. Per-entry validation happens on the WRITE path (validate()).
+    questBundles: Array.isArray(db.questBundles) ? db.questBundles : fresh.questBundles,
     // End-of-day reflections: tolerate old saves (missing) and corruption (non-object /
     // array) by failing safe to {}. Per-entry validation happens on the WRITE path.
     dailyNotes:
@@ -285,6 +288,27 @@ function validate(db: Database): string | null {
       if (typeof tpl.id !== 'string') return 'questTemplates entry needs a string id'
       if (typeof tpl.title !== 'string') return 'questTemplates entry needs a string title'
       if (!Array.isArray(tpl.subTasks)) return 'questTemplates entry needs a subTasks array'
+    }
+  }
+  // questBundles (Quest Bundles v2) mirror questTemplates: optional-shaped on disk; if present,
+  // an array of { id, name, quests[] } where each quest blueprint carries at least a string title
+  // and a subTasks array. Reject the whole save on malformed data (don't silently drop) so a
+  // renderer bug can't persist a corrupt bundle list. The reward engine never reads it.
+  const bundles = db.questBundles as unknown
+  if (bundles != null) {
+    if (!Array.isArray(bundles)) return 'questBundles must be an array'
+    for (const b of bundles as unknown[]) {
+      const bundle = b as { id?: unknown; name?: unknown; quests?: unknown } | null
+      if (!bundle || typeof bundle !== 'object') return 'questBundles entries must be objects'
+      if (typeof bundle.id !== 'string') return 'questBundles entry needs a string id'
+      if (typeof bundle.name !== 'string') return 'questBundles entry needs a string name'
+      if (!Array.isArray(bundle.quests)) return 'questBundles entry needs a quests array'
+      for (const q of bundle.quests as unknown[]) {
+        const bq = q as { title?: unknown; subTasks?: unknown } | null
+        if (!bq || typeof bq !== 'object') return 'questBundles quest entries must be objects'
+        if (typeof bq.title !== 'string') return 'questBundles quest needs a string title'
+        if (!Array.isArray(bq.subTasks)) return 'questBundles quest needs a subTasks array'
+      }
     }
   }
   // dailyNotes (End-of-day reflections) is optional-shaped on disk; if present it must be

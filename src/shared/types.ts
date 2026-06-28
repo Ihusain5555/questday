@@ -354,6 +354,10 @@ export interface Database {
    *  save like townLayouts; NEVER read by reward/civilization math, so ↩ Restore
    *  stays exact. Old/absent saves migrate to []. */
   questTemplates: QuestTemplate[]
+  /** Quest Bundles (v2): named sets of quests applied in one tap. A SEALED key like
+   *  questTemplates — wholesale-replaced on save, tolerant migrate, strict validate, and
+   *  NEVER read by reward/civilization math, so ↩ Restore stays exact. Old/absent → []. */
+  questBundles: QuestBundle[]
   /** End-of-day reflections (v1.13), keyed by local YYYY-MM-DD → the note text. A
    *  SEALED key like townLayouts/questTemplates: wholesale-replaced on save, tolerant
    *  migrate, strict validate, and NEVER read by reward/civilization math, so ↩ Restore

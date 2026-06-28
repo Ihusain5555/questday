@@ -5,6 +5,7 @@ import type {
   Importance,
   PlotOverride,
   Quest,
+  QuestBundle,
   QuestTemplate,
   Settings,
   SubTask,
@@ -218,6 +219,16 @@ interface AppStore {
   deleteTemplate: (id: string) => Promise<void>
   /** Copy an existing quest's blueprint into the Library. */
   saveQuestAsTemplate: (questId: string) => Promise<void>
+
+  // ---- Quest Bundles (v2) ----
+  /** Snapshot the given quests (by id) into a new named bundle (newest first). */
+  createBundle: (name: string, questIds: string[]) => Promise<void>
+  /** One-tap: snapshot every ACTIVE quest into a new named bundle. */
+  createBundleFromActive: (name: string) => Promise<void>
+  /** Recreate a bundle's quests as fresh ACTIVE quests (new ids, undated). Returns the count. */
+  applyBundle: (id: string) => Promise<number>
+  /** Remove a bundle (quests already created from it are independent — untouched). */
+  deleteBundle: (id: string) => Promise<void>
 
   // ---- Salah & Qur'an checklist preset (opt-in faith feature) ----
   /** Seed the recurring daily Salah checklist + Qur'an quest into today's quests.
@@ -512,6 +523,98 @@ export const useStore = create<AppStore>((set, get) => ({
       createdAt: new Date().toISOString()
     }
     await get().save({ questTemplates: [...db.questTemplates, template] })
+  },
+
+  // ---- Quest Bundles (v2) -------------------------------------------------
+  // A bundle is a named set of quest blueprints applied in one tap. Wholesale-replaced
+  // on save like questTemplates; NEVER read by the reward engine, so ↩ Restore stays exact.
+  createBundle: async (name, questIds) => {
+    const db = get().db
+    if (!db) return
+    const ids = new Set(questIds)
+    const quests = db.quests
+      .filter((q) => ids.has(q.id))
+      .map((q) => ({
+        title: q.title,
+        // Strip instance state: regenerate sub-task ids/order, force done:false.
+        subTasks: q.subTasks.map((s, i) => ({
+          id: uid(),
+          title: s.title,
+          order: i,
+          done: false,
+          timeEstimateMinutes: s.timeEstimateMinutes
+        })),
+        difficulty: q.difficulty,
+        importance: q.importance,
+        urgency: q.urgency,
+        timeEstimateMinutes: q.timeEstimateMinutes,
+        timeFrameId: q.timeFrameId,
+        recurDays: q.recurDays && q.recurDays.length > 0 ? q.recurDays : undefined,
+        notes: q.notes?.trim() ? q.notes.trim() : undefined
+      }))
+    if (quests.length === 0) return
+    const bundle: QuestBundle = {
+      id: uid(),
+      name: name.trim() || 'Bundle',
+      createdAt: new Date().toISOString(),
+      quests
+    }
+    await get().save({ questBundles: [...db.questBundles, bundle] })
+  },
+
+  createBundleFromActive: async (name) => {
+    const db = get().db
+    if (!db) return
+    const ids = db.quests.filter((q) => q.status === 'active').map((q) => q.id)
+    await get().createBundle(name, ids)
+  },
+
+  applyBundle: async (id) => {
+    const db = get().db
+    if (!db) return 0
+    const bundle = db.questBundles.find((b) => b.id === id)
+    if (!bundle) return 0
+    // Recreate each blueprint as a fresh ACTIVE quest (new ids, undated). If a remembered
+    // frame no longer exists, fall back to the first frame so a quest is never orphaned.
+    const frameIds = new Set(db.timeFrames.map((f) => f.id))
+    const fallback = db.timeFrames[0]?.id ?? ''
+    let maxOrder = db.quests.reduce((m, q) => Math.max(m, q.sortOrder), -1)
+    const now = new Date().toISOString()
+    const created: Quest[] = bundle.quests.map((bq) => {
+      maxOrder += 1
+      return {
+        id: uid(),
+        title: bq.title,
+        subTasks: bq.subTasks.map((s, i) => ({
+          id: uid(),
+          title: s.title,
+          order: i,
+          done: false,
+          timeEstimateMinutes: s.timeEstimateMinutes
+        })),
+        difficulty: bq.difficulty,
+        importance: bq.importance,
+        urgency: bq.urgency,
+        timeEstimateMinutes: bq.timeEstimateMinutes,
+        dueAt: null,
+        timeFrameId: frameIds.has(bq.timeFrameId) ? bq.timeFrameId : fallback,
+        status: 'active' as const,
+        createdAt: now,
+        completedAt: null,
+        sortOrder: maxOrder,
+        recurDays: bq.recurDays && bq.recurDays.length > 0 ? bq.recurDays : undefined,
+        notes: bq.notes?.trim() ? bq.notes.trim() : undefined
+      }
+    })
+    if (created.length === 0) return 0
+    await get().save({ quests: [...db.quests, ...created] })
+    return created.length
+  },
+
+  deleteBundle: async (id) => {
+    const db = get().db
+    if (!db) return
+    await get().save({ questBundles: db.questBundles.filter((b) => b.id !== id) })
   },
 
   // ---- Salah & Qur'an checklist preset (opt-in faith feature) --------------

@@ -53,6 +53,16 @@ export const TOGGLEABLE_FEATURES: ToggleableFeature[] = [
     blurb: 'Save reusable quest templates (your work-day / gym-day things) and tap or drag them into today.'
   },
   {
+    // A sub-section, NOT a tab: the Bundles panel lives INSIDE the Quests tab (like the
+    // Library), read via isFeatureEnabled. Default ON; toggling off only hides it — saved
+    // bundles are kept on disk (gains-only).
+    id: 'questBundles',
+    icon: 'Stack',
+    label: 'Quest Bundles',
+    blurb:
+      'Save a set of quests as a named bundle (a morning routine, a Friday kit) and add them all to a day in one tap.'
+  },
+  {
     // A faith feature — OFF by default (seeded false in defaults.ts; the generic
     // "missing key = on" rule is deliberately overridden by that seed) so non-Muslim
     // users never see it. Like questLibrary it's a SUB-SECTION, not a tab: a calm

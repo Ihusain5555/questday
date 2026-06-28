@@ -121,6 +121,7 @@ export function createDefaultDatabase(): Database {
     },
     townLayouts: {},
     questTemplates: [],
+    questBundles: [],
     dailyNotes: {},
     lastSeenDate: null
   }
