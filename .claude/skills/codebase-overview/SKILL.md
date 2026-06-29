@@ -112,7 +112,7 @@ ONLY writer of the data file. This is why edits in one window appear live in oth
   high-score only — NO coins. Tickets are abundant (v1.8.4): `ticketsFreePerDay` (3) topped up each
   morning + 1/quest, soft cap `ticketsPerDay` (20). Every game has an **Easy/Medium/Hard** picker (ready
   phase, default Medium); some adapt *within* a round (Flash Recall exposure / Span Recall span /
-  Mental Spin angle / Color Recreation reveal-ease). Game identity = `balance.arcade.games[key].icon`+`.color`,
+  Mental Spin angle / Color Recreation reveal-ease / Flash Recall level ramp). Game identity = `balance.arcade.games[key].icon`+`.color`,
   rendered via `app/arcade/gameIcons.tsx` (`GameIcon`/`GameBadge`/`MemoryFace`) — no emoji. Add a game = balance
   entry (with icon+color) + component in the ArcadeView registry (+ a new icon → the `ICONS` map
   in `gameIcons.tsx`) **+ bump `ARCADE_CARDS_TEST` (currently 11) in `scripts/pw-arcade.mjs`**. High scores
@@ -124,6 +124,22 @@ ONLY writer of the data file. This is why edits in one window appear live in oth
   Test hooks: `.cr-field[data-phase]` + `data-target="h,s,b"` (the pw driver sets the sliders to the target).
   **Share a high score from the grid (v1.14):** each game card with a saved best shows a `.arcade-grid-share`
   button → the existing `ShareCardModal` `'arcade'` kind (no new card kind, no schema; reuses the approved studio).
+  **Arcade score-flash carve-out (v2.1, 2026-06-29):** a SHARED `app/arcade/ScoreFlash.tsx` (`useScoreFlash` hook) gives any
+  game red-penalty / gold-gain juice (flash overlay + floating ±N + shake), tuned in `balance.arcade.feedback` (dialed in the
+  approved `mockups/arcade-flash-mockup.html`). Drop-in: `const juice = useScoreFlash()` → `ref={juice.shellRef}` +
+  `{juice.overlay}` on `.game-shell`, `className={juice.scoreClass}` on the HUD score, `juice.fire('penalty', -n)` /
+  `juice.fire('gain', +n)` (OMIT n for flash-only — e.g. Reaction Time has no point tally). **HARD boundary (the tone-rule
+  carve-out): deduction lives ONLY in the in-round score — `finishArcadeRound(score)` records `best` (only ever RISES) and
+  never feeds tickets/XP (tickets are earned from quest completions + spent on play). So penalties never reach the reward
+  world.** Penalties are ALWAYS-ON (every difficulty). Wired: StopTap/ColorClash/AimTrainer (−2, `Math.max(0,…)`-floored),
+  ReactionTime (visual-only). ColorRecreation is EXCLUDED (graded slider, no wrong-tap). The overlay is THROTTLED ~180ms so
+  rapid-fire games show +N without strobing; a penalty always flashes. **NAME CLASH: StopTap/ColorClash already have a
+  `flash` state — the hook is conventionally named `juice`.**
+  **Flash Recall is now MEMORY MATRIX (v2.1):** parallel grid-flash (flash a SET of cells → tap them all back any-order →
+  level up: +1 cell / shorter flash / grid grows) — NOT a Simon/sequence game (that's already `SpanRecall`). Tone-compliant:
+  a wrong tap drops a level (staircase), no lives/game-over; clock-bounded (`balance.arcade.games.flashrecall.tiers`). Test
+  hook: `.mm-field[data-lit="i,j,…"]` (the pw driver reads it during the recall phase + taps those cells). **pw GOTCHA:
+  `ARCADE_CARDS_TEST` now WAITS for `.arcade-card` to render — a fixed 400ms intermittently read 0 on the first tab-switch.**
 - **Forge** (v1.8.1, `app/ProductivityView.tsx`): one tab, a sub-nav over the productivity tools
   (Focus / Matrix / Active mode + future ones); sub-tabs respect the feature toggles.
 - **Focus** (`app/FocusView.tsx`, `balance.focus`): one timer engine, Pomodoro family as presets
@@ -444,14 +460,18 @@ ONLY writer of the data file. This is why edits in one window appear live in oth
   now BUILT (prayer-aware frames, Hijri/observance calendar + notifications, Quest Bundles, end-of-day wind-down).
   Non-obvious wiring to know:
   - **Prayer-aware frames — `effectiveTimeFrames` is a MANDATORY pre-step every selection call site must route through.**
-    `src/shared/engine/prayerFrames.ts` (PURE) turns a frame's optional `TimeFrame.prayerAnchor` (`{start,end?:PrayerAnchorPoint}`,
-    where points are fajr/sunrise/dhuhr/asr/maghrib/isha) into effective start/end minutes for TODAY via `computePrayerDay`.
-    The selection engine (`selectCurrentQuest.ts`) stays **prayer-agnostic** — callers resolve frames FIRST:
-    `effectiveTimeFrames(db.timeFrames, db.settings, now)` then hand the result to `activeTimeFrame`/`rankCandidates`/
-    `resolveCurrentQuest`. **A new caller that forgets to wrap will silently NOT shift with prayer times** (it falls
-    back to the stored clock minutes). All ~10 current call sites are wrapped (Widget, WidgetList, Dashboard, QuestsView,
-    FocusView, ActiveModeSettings, EisenhowerView, TimeFramesView, scheduler.ts ×3). `prayerAnchor` is validated on the
-    write path and NEVER read by reward/↩Restore math. Driver `pw:prayer-frames`.
+    `src/shared/engine/prayerFrames.ts` (PURE) turns a frame's per-side anchors into effective start/end minutes for TODAY
+    via `computePrayerDay`. **v2.1 schema (2026-06-29): each EDGE is independent — `TimeFrame.startAnchor` / `endAnchor`**
+    (a `PrayerAnchorPoint` fajr/sunrise/dhuhr/asr/maghrib/isha, or **absent = that edge uses the stored clock minute**). So
+    a frame can run Fajr→9:00, 12:00→Asr, prayer→prayer, or clock→clock. `effectiveFrame` resolves each side via `anchorsOf`,
+    which ALSO honors the **LEGACY whole-frame `prayerAnchor`** (`{start,end?}`, omitted end = next point) so un-migrated
+    frames still work; **`store.ts migrateFrameAnchor` converts legacy→per-side on load** (omitted legacy end → next point;
+    drops the legacy field). The selection engine (`selectCurrentQuest.ts`) stays **prayer-agnostic** — callers resolve
+    frames FIRST: `effectiveTimeFrames(db.timeFrames, db.settings, now)` then hand the result to `activeTimeFrame`/
+    `rankCandidates`/`resolveCurrentQuest`. **A new caller that forgets to wrap will silently NOT shift with prayer times**
+    (it falls back to the stored clock minutes). All ~10 call sites are wrapped. UI = per-side `BoundEditor` in
+    `TimeFramesView.tsx`. `startAnchor`/`endAnchor` are validated on the write path and NEVER read by reward/↩Restore math.
+    Driver `pw:prayer-frames` (incl. a MIXED check). Per-side toggles are `.tf-anchor-toggle` ×2 per row (seg[0]=clock, seg[1]=prayer).
   - **Observance calendar — the FORBIDDEN-FAST GUARDRAIL is load-bearing; NEVER soften it.** `src/shared/engine/observances.ts`
     (PURE, tabular Hijri via the now-exported `hijriFromGregorian`). `forbiddenFastReason(date)` / `fastingRuling(date)`
     return `'forbidden'` on the two Eids (1 Shawwal, 10 Dhul-Hijjah) + the three Tashreeq days (11/12/13 Dhul-Hijjah), and

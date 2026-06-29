@@ -7,11 +7,14 @@ highest-priority "current quest". Local JSON only — no accounts, no cloud.
 **Tone rule (always applies):** motivating, never punishing — never add health/lives loss,
 point deduction, streak-shaming, or any punitive mechanic. (One sanctioned exception:
 ↩ Restore reverses an accidental completion's payout exactly — correction, not punishment.)
-**Arcade carve-out (DECIDED 2026-06-29):** minigames MAY deduct points **within the round's score** on a wrong action,
-with **red** (penalty) / **green-or-gold** (gain) flash feedback — `AimTrainer.tsx`'s "misses are never punished" is **no
-longer absolute for the arcade**. **HARD boundary:** in-game arcade score ONLY — the **productivity reward world stays
-strictly gains-only** (quest XP, levels, streaks, arcade *tickets*, and ↩Restore exactness are NEVER deducted). Spec +
-per-game targets: `docs/arcade-and-ui-feedback-2026-06-29.md`.
+**Arcade carve-out (DECIDED + BUILT 2026-06-29):** minigames deduct points **within the round's score** on a wrong action,
+**ALWAYS-ON** (every difficulty), with **red** (penalty) / **gold** (gain) flash — `AimTrainer.tsx`'s "misses are never
+punished" is **no longer absolute for the arcade**. Implemented as the shared `src/renderer/app/arcade/ScoreFlash.tsx`
+(`useScoreFlash`, named `juice` locally to dodge games' existing `flash` state) + `balance.arcade.feedback` tunables.
+**HARD boundary:** in-game arcade score ONLY — the **productivity reward world stays strictly gains-only** (quest XP,
+levels, streaks, arcade *tickets*, ↩Restore exactness NEVER deducted; round score never feeds ticket/XP, `best` only rises).
+Wired: StopTap/ColorClash/AimTrainer (−2, floored at 0), ReactionTime (visual-only); ColorRecreation EXCLUDED (graded slider).
+Per-game detail → codebase-overview skill. Decision record: `docs/arcade-and-ui-feedback-2026-06-29.md`.
 The reward world only ever GAINS — no wilt/decay. (As of v1.8 the **Realm** replaced the garden in
 the UI; the garden engine is kept INERT — it still runs silently so ↩ Restore's coin claw-back math
 stays intact — so do NOT delete it.)
@@ -172,6 +175,12 @@ Pure engines live in `src/shared/engine/` (current-quest scoring, rewards, **rea
   `rankCandidates` is frame-mode aware so widget/Dashboard/Quests-tab agree; `resolveCurrentQuest` rescues a
   near-due quest to "current" in a Custom frame (`balance.selection.dueSoonRescueThreshold`). `manualOrder` +
   `sortOrder` are NEVER read by reward/↩Restore math.
+- **Time-frame anchors (v2.1):** each EDGE is independent — `TimeFrame.startAnchor`/`endAnchor` (a prayer point, or absent =
+  clock minute), so a frame can run prayer→clock / clock→prayer / either-both. Legacy whole-frame `prayerAnchor` is
+  auto-migrated in `store.ts` (`migrateFrameAnchor`); engine `prayerFrames.ts` resolves each side (`anchorsOf`); UI =
+  per-side `BoundEditor`. NEVER read by reward/↩Restore math. (See the v2 FAITH LAYER notes in the codebase-overview skill.)
+- **Arcade score-flash (v2.1)** → shared `app/arcade/ScoreFlash.tsx` (`useScoreFlash`/`juice`) + tunables in
+  `balance.arcade.feedback`. Arcade-score-only carve-out (see the tone rule); NEVER touches reward/tickets/↩Restore.
 - **Design mockups → `mockups/`** (self-contained OFFLINE HTML, inline SVG/CSS, no deps/network,
   double-click to view). The user is highly visual and can't read code — for any visual feature,
   build a mockup and get it APPROVED before coding the real thing (e.g. `mockups/worldmap-mockup.html`).
@@ -250,6 +259,12 @@ by outcome and **cannot read code**, so the gates below are load-bearing, not op
   local export/import + restore (`backup/portable.ts` + `ipc/backup.ts` + DataView UI) and the arcade depth modes (all
   11 games already ship Easy/Med/Hard) were listed "to build" but were fully done. The code is the source of truth;
   **a quick existence-grep before building beats trusting any planning doc** (incl. this file and HANDOFF).
+- **pw drivers: WAIT for the element, not a fixed delay (cost a flaky FAIL 2026-06-29).** `ARCADE_CARDS_TEST` read 0 cards at
+  a fixed 400ms after the first tab-switch (DB load + render > 400ms); a `.first().waitFor()` fixed it. Same for any
+  "count N after navigating" assertion — the count read can race the render.
+- **Editing a JSX ternary BRANCH into a fragment leaves a stray `)}` (cost a parse error 2026-06-29).** When wrapping a
+  `: ( <div/> )` branch in `<>…</>`, the branch's closing `)}` sits OUTSIDE your matched text — don't re-add it; verify the
+  surrounding lines after the edit.
 - **Prefer CLI tools over MCP servers** when both exist (`gh`, `aws`, `gcloud`, …) — tighter
   output, and no extra tool schemas loaded into context.
 - **Delegate verbose operations to subagents** — running test suites, fetching docs, scanning

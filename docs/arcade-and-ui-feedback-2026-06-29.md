@@ -1,8 +1,23 @@
-# Arcade + UI feedback — captured 2026-06-29 (NOT built yet)
+# Arcade + UI feedback — captured 2026-06-29
 
-User feedback gathered at session close, to **process next session**. **Nothing here is built.**
-Run each through the one-feature-at-a-time cycle (plan → user OK → build → test steps → user confirms).
-The user directs by outcome and **cannot read code**, so confirm intent (and show a mockup for visual items) before building.
+> **BUILT 2026-06-29 (batch-mode session) — ALL 9 ITEMS SHIPPED + verified** (typecheck + build +
+> `pw:arcade` 20/20 + `pw:observances` 8/8 + `pw:rewards` 7/7 + `pw:prayer-frames` 9/9). The **time-frames
+> mixed prayer/clock anchors** (#8, a `db.json` SCHEMA change) was user-approved ("go") and built: new
+> independent `TimeFrame.startAnchor`/`endAnchor` (each prayer-or-clock, any mix), legacy `prayerAnchor`
+> auto-migrated in `store.ts`, per-side `BoundEditor` UI in `TimeFramesView.tsx`, engine resolves each side in
+> `prayerFrames.ts`. Design calls made under batch
+> mode (flag for user): penalty scope = **always-on**; flash feel = the approved "Arcade-y" mockup values
+> (red vignette + 12px shake / gold vignette); penalties wired to **StopTap, ColorClash, AimTrainer**
+> (point deduction, floored at 0) + **ReactionTime** (visual red flash, no deduction — score is reaction ms);
+> **ColorRecreation EXCLUDED** (graded 0–10 slider, no wrong-tap event); fast-cadence games keep their existing
+> gain feedback (a gold flash on every rapid hit would strobe — overlay is throttled ~180ms). Track Switch: guide
+> line AND next-node glow removed. Mental Spin: kept rotation-always + mirror-or-not, relabeled "Same"→"Same shape"
+> + persistent prompt. Flash Recall: redesigned as **Memory Matrix** (parallel grid-flash) — NOT Simon/sequence
+> (that already ships as SpanRecall); a wrong tap drops a level (staircase, no lives/game-over). Reflex: lifeMs
+> 1200→700. New shared component `src/renderer/app/arcade/ScoreFlash.tsx`; tunables in `balance.arcade.feedback`.
+
+User feedback gathered at session close. Run each through the one-feature-at-a-time cycle.
+The user directs by outcome and **cannot read code**.
 
 File map (confirmed this session):
 - Arcade games: `src/renderer/app/arcade/games/{StopTap,AimTrainer,ReactionTime,ColorClash,ColorRecreation,TrackSwitch,MentalSpin,FlashRecall}.tsx`
@@ -22,7 +37,7 @@ File map (confirmed this session):
 - **HARD BOUNDARY (non-negotiable):** this NEVER touches the **productivity reward world** — quest XP, levels, streaks, the arcade **tickets** awarded to the player, and **↩Restore exactness** all stay strictly **gains-only**. Deduction lives entirely in the per-round arcade score (`ArcadeState.best` still records only the best; high-score sharing unaffected).
 - **This AMENDS the tone rule's arcade application** — `AimTrainer.tsx`'s "misses are never punished" is no longer absolute for the arcade. CLAUDE.md tone-rule note updated to record the carve-out.
 - **Per-game build (next session):** a **shared score-flash component** (red / green / gold) reused across games; per-game "wrong action" + penalty amount in `balance.ts`. Games & their penalizable action: `StopTap.tsx` (tap during STOP), `AimTrainer.tsx` (miss / wrong target?), `ReactionTime.tsx` (jumping early), `ColorClash.tsx` / `ColorRecreation.tsx` (wrong colour).
-- **OPEN design question:** is the penalty **always-on**, or only in a harder/advanced mode? The strategic depth-mode rule says *"every game keeps its simple default + an advanced mode; never remove simple."* Confirm with the user whether penalties apply to the simple default too, or only an advanced mode.
+- **RESOLVED 2026-06-29 — penalties are ALWAYS-ON (all modes, incl. the simple default).** User chose always-on over advanced-mode-only: a wrong action deducts + red-flashes in every difficulty. This is the arcade's sanctioned exception to "never remove simple" (the carve-out is arcade-score-only; the productivity reward world stays gains-only). Build order: tunable flash mockup → user approves the feel → shared score-flash component + per-game penalize action wired in.
 
 ---
 
