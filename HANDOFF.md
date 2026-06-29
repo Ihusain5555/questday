@@ -1,14 +1,20 @@
 # HANDOFF — QuestDay (resume kit)
-_Updated 2026-06-28 · branch `feature/civilization-world-map`._
+_Updated 2026-06-29 · branch `feature/civilization-world-map`._
 
-## ▶ STATUS: BUILD session COMPLETE + COMMITTED + PUSHED + website DEPLOYED.
-Batch-mode session: built the whole faith-first agenda, committed it as per-feature commits, pushed to origin,
-and deployed the landing site to Vercel production. Nothing is blocking. Two optional follow-ups need the user
-(GitHub Release for the download buttons; rename the Vercel project). No open errors.
+## ▶ STATUS: v2.0.0 RELEASED (both platforms) — download works end-to-end. Website deployed.
+The faith-first batch + theming + Color Recreation + quest ordering + share studio all shipped as the public
+**v2.0.0** release: version bumped (was stuck at `1.14.0` across ~12 shipped features), tag `v2.0.0` pushed (auto-built
+the macOS `.dmg` via GitHub Actions), Windows `.exe` built via `npm run dist`, and the **GitHub Release v2.0.0 was
+published with BOTH installers, marked Latest**. `releases/latest` resolves to v2.0.0 and both download URLs serve
+real bytes, so the live site's Windows + macOS buttons work. v2.0.0 is installed on this machine. Nothing blocking.
+**Note:** the old v1.14.0 release (Jun 19) had only a stale Mac `.dmg`, no Windows `.exe` — that gap is now closed.
+Procedure + the version-drift trap are saved in memory `questday-release-procedure`. No open errors.
 
 ## Git state
 - **Branch:** `feature/civilization-world-map` (repo default). **Remote:** `origin` = github.com/Ihusain5555/questday.
-- **HEAD = `3fea82b`**, and `origin/feature/civilization-world-map` is **in sync** (pushed — branch is NOT ahead/behind).
+- **HEAD = `d3a11de`** (`chore(release): bump version to 2.0.0`), pushed to origin — branch **in sync**.
+- **Tag `v2.0.0`** pushed (at `d3a11de`); **GitHub Release v2.0.0** published as Latest with `QuestDay.Setup.2.0.0.exe` (Win) + `QuestDay-2.0.0-universal.dmg` (Mac, universal).
+- Commits since the prior baseline (`6231a0d`) also include the 2026-06-28 backlog batch (`aa01342` quest ordering, `171d386` Color Recreation, `5478b65` themes, `eae4916` show/hide widget, share-studio `cc1d3bd`/`76195cc`) — all folded into v2.0.0.
 - **Stashes:** none.
 - **Last 7 commits** (oldest first this session; baseline was `6231a0d`):
   ```
@@ -110,9 +116,10 @@ Recorded from this session's runs against the BUILT `out/` (each after `npm run 
   production ALIAS above is the public one. CLI was already authed (`vercel whoami` → ihusain5555).
 
 ## Next steps — file-level targets (none blocking; pick per priority)
-1. **Publish a GitHub Release so the site's download buttons resolve** (they 404 now). `npm run dist` →
-   `C:\Users\ihusa\questday-release\` NSIS `.exe` → create a Release on github.com/Ihusain5555/questday and upload it.
-   The site links to `…/releases/latest` (in `website/app/page.tsx`). STOP-AND-CONFIRM (publish).
+1. ~~Publish a GitHub Release so the site's download buttons resolve~~ **DONE 2026-06-29** — v2.0.0 released with both
+   installers (Latest); `releases/latest` resolves and serves real bytes. Site buttons link to `…/releases/latest`
+   (the release PAGE, not a direct asset) in `website/app/page.tsx` — OPTIONAL polish: platform-specific one-click
+   direct-download links (tradeoff: the page is more version-robust since the exact asset name changes per version).
 2. **Rename the Vercel project `website` → `questday`** (Vercel dashboard → Project → Settings → Name) for a clean URL,
    and/or add a custom domain. Optional: turn off Deployment Protection (Settings → Deployment Protection) to make
    every URL public.
