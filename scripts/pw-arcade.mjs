@@ -69,7 +69,9 @@ try {
   const main = app.windows().find((w) => w.url().includes('index.html'))
 
   await main.getByRole('button', { name: 'Arcade' }).click()
-  await main.waitForTimeout(400)
+  // Wait for the grid to render rather than a fixed delay — the first tab-switch + DB load
+  // can take >400ms, which intermittently read 0 cards before they mounted.
+  await main.locator('.arcade-card').first().waitFor({ timeout: 8000 }).catch(() => {})
   const cards = main.locator('.arcade-card')
   result('ARCADE_CARDS_TEST', (await cards.count()) === 11, `${await cards.count()} games (want 11)`)
   await main.screenshot({ path: path.join(shots, 'arcade.png') })
@@ -112,44 +114,29 @@ try {
     (await resultText()).includes('Color Clash') && (await resultText()).includes('new best'),
     `result: "${(await resultText()).trim()}" (active-word ink taps -> scored + best)`)
 
-  // Flash Recall (UFOV): the flash is only ~400ms — poll in-page with rAF so we
-  // catch the lit cell the frame it appears; -1 means we missed it (stuck in
-  // "respond") -> click to advance and the next flash gets caught (self-healing).
+  // Flash Recall (Memory Matrix): click Start, wait out the countdown, then for each board
+  // read the test hook data-lit on .mm-field (a deliberate hook, like data-next/data-answer)
+  // and tap exactly those cells while in the recall phase -> clears the board -> level up.
   await playGame('Flash Recall')
-  await main.waitForTimeout(300)
-  result('FLASHRECALL_LAUNCH_TEST', (await main.locator('.ufov-field').count()) === 1, 'UFOV ring rendered')
-  let correct = 0
-  for (let attempt = 0; attempt < 12 && correct < 3; attempt++) {
-    const litIdx = await main.evaluate(
-      () =>
-        new Promise((resolve) => {
-          const t0 = performance.now()
-          const tick = () => {
-            const cells = [...document.querySelectorAll('.ufov-cell')]
-            const i = cells.findIndex((e) => e.classList.contains('lit'))
-            if (i >= 0) return resolve(i)
-            if (performance.now() - t0 > 2000) return resolve(-1)
-            requestAnimationFrame(tick)
-          }
-          tick()
-        })
-    )
-    if (litIdx < 0) {
-      await main.locator('.ufov-cell').first().click().catch(() => {})
-      await main.waitForTimeout(650)
-      continue
+  await main.locator('.mm-field').waitFor({ timeout: 6000 })
+  result('FLASHRECALL_LAUNCH_TEST', (await main.locator('.mm-field').count()) === 1, 'memory-matrix field rendered')
+  await main.locator('.mm-start').click().catch(() => {})
+  for (let board = 0; board < 4; board++) {
+    // Wait until the recall phase (cells hidden, taps accepted).
+    await main.locator('.mm-field[data-phase="recall"]').waitFor({ timeout: 6000 }).catch(() => {})
+    const lit = await main.locator('.mm-field').getAttribute('data-lit')
+    if (!lit) break
+    for (const idx of lit.split(',')) {
+      await main.locator(`.mm-cell[data-idx="${idx}"]`).click().catch(() => {})
     }
-    await main.locator('.ufov-caption', { hasText: 'Where was it' }).waitFor({ timeout: 2500 }).catch(() => {})
-    await main.locator('.ufov-cell').nth(litIdx).click()
-    correct++
-    await main.waitForTimeout(650)
+    await main.waitForTimeout(800) // level-up pause + the next flash
   }
   await main.screenshot({ path: path.join(shots, 'arcade-flashrecall.png') })
   await endRound()
   await main.waitForTimeout(500)
   result('FLASHRECALL_PLAY_TEST',
     (await resultText()).includes('Flash Recall') && (await resultText()).includes('new best'),
-    `result: "${(await resultText()).trim()}" (3 correct localisations)`)
+    `result: "${(await resultText()).trim()}" (cleared matrix boards)`)
 
   // N-Back: verify it launches (3x3 grid + Match button) and cashes out cleanly.
   await playGame('N-Back')
