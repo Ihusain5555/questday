@@ -211,31 +211,16 @@ export function TrackSwitch({ onFinish }: { onFinish: (score: number) => void })
           </div>
         ) : (
           <>
-            {/* Guide line from the just-completed node to the next target — leads the
-                eye across the scattered field so the next node is easy to FIND (the
-                real cause of "stops working after 1": clicks land fine, but players
-                couldn't locate the next far-flung node). preserveAspectRatio="none"
-                maps the 0–100 viewBox onto the field so node %-coords line up. */}
-            {ptr > 0 && ptr < nodes.length && (
-              <svg className="ts-guide" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-                <line
-                  x1={nodes[ptr - 1].left}
-                  y1={nodes[ptr - 1].top}
-                  x2={nodes[ptr].left}
-                  y2={nodes[ptr].top}
-                  vectorEffect="non-scaling-stroke"
-                />
-              </svg>
-            )}
+            {/* No guide line and no next-node highlight — the player must FIND the next
+                node themselves by reading labels (the Trail-Making B visual search is the
+                whole skill; user feedback 2026-06-29: "they should have to find it
+                themselves"). Completed nodes still show a ✓ so progress stays legible. */}
             {nodes.map((n, i) => {
               const isDone = i < ptr
-              const isNext = i === ptr
               return (
                 <button
                   key={`${n.label}-${i}`}
-                  className={`ts-node${isDone ? ' ts-done' : ''}${isNext ? ' ts-next' : ''}${
-                    shake === n.label ? ' ts-shake' : ''
-                  }`}
+                  className={`ts-node${isDone ? ' ts-done' : ''}${shake === n.label ? ' ts-shake' : ''}`}
                   data-label={n.label}
                   style={{ top: `${n.top}%`, left: `${n.left}%` }}
                   // pointerdown, not click: register the tap on press so a fast tap (or one

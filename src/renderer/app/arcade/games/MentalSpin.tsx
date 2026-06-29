@@ -249,8 +249,9 @@ export function MentalSpin({ onFinish }: { onFinish: (score: number) => void }):
               </button>
             </div>
             <span className="meta-dim">
-              Left = the original shape. Right = the same shape turned — or its mirror image.
-              Tap “Same” if it’s only rotated, “Mirror” if it’s flipped. Answer fast for a combo.
+              The right shape is <strong>always turned</strong> to a new angle. Decide if it’s the
+              <strong> same shape</strong> (just rotated) or its <strong>mirror image</strong> (flipped over).
+              Picture un-turning it to check. Answer fast for a combo.
             </span>
             <span className="ms-ready-count">{count > 0 ? count : 'Go!'}</span>
           </div>
@@ -266,14 +267,19 @@ export function MentalSpin({ onFinish }: { onFinish: (score: number) => void }):
                 <strong>{verdict.answer === 'mirror' ? 'a mirror' : 'just rotated'}</strong>
               </div>
             ) : (
-              <div className="ms-choices" role="group" aria-label="rotation or mirror">
-                <button className="ms-choice ms-same primary" onClick={() => answer('same')} disabled={answering.current}>
-                  Same
-                </button>
-                <button className="ms-choice ms-mirror primary" onClick={() => answer('mirror')} disabled={answering.current}>
-                  Mirror
-                </button>
-              </div>
+              <>
+                <div className="meta-dim" style={{ textAlign: 'center', marginBottom: 8, fontSize: 13 }}>
+                  It’s turned to a new angle — is it the <strong>same shape</strong>, or a <strong>mirror</strong>?
+                </div>
+                <div className="ms-choices" role="group" aria-label="same shape or mirror">
+                  <button className="ms-choice ms-same primary" onClick={() => answer('same')} disabled={answering.current}>
+                    Same shape
+                  </button>
+                  <button className="ms-choice ms-mirror primary" onClick={() => answer('mirror')} disabled={answering.current}>
+                    Mirror
+                  </button>
+                </div>
+              </>
             )}
           </>
         )}
