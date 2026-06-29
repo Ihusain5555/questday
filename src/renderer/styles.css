@@ -5585,6 +5585,9 @@ code {
   gap: 12px;
   min-height: 0;
   color: var(--brand-bright);
+  /* Match the 16px gap the .card siblings use, so the Dashboard spacing below this
+     coming-soon peek equals the gap above it (Current Quest → Realm). */
+  margin-bottom: 16px;
 }
 .realm-soon-peek-text {
   display: flex;
@@ -6590,7 +6593,9 @@ code {
 }
 .eod-wins-more {
   list-style: none;
-  margin-left: -20px;
+  /* align the "+N more" with the win TEXT above it (the ul's 20px content edge),
+     not outdented into the ✓ marker column (feedback 2026-06-29). */
+  margin-left: 0;
   color: var(--muted);
   font-size: 0.8rem;
 }

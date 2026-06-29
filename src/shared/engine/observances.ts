@@ -180,9 +180,16 @@ export interface UpcomingDay {
 export function upcomingObservances(from: Date, days: number): UpcomingDay[] {
   const out: UpcomingDay[] = []
   const pad = (n: number): string => String(n).padStart(2, '0')
+  // Collapse the monthly White-Days run (13th–15th) to a SINGLE entry — the first day of the
+  // run within the window — so the three-day fast doesn't list 3× identically every month
+  // (feedback 2026-06-29; its note already says "the 13th–15th of each Hijri month").
+  let prevHadWhiteDays = false
   for (let i = 0; i <= days; i++) {
     const d = new Date(from.getFullYear(), from.getMonth(), from.getDate() + i)
-    const dated = observancesOn(d).filter((o) => o.key !== 'monThu' && o.key !== 'friday')
+    let dated = observancesOn(d).filter((o) => o.key !== 'monThu' && o.key !== 'friday')
+    const hasWhite = dated.some((o) => o.key === 'whiteDays')
+    if (hasWhite && prevHadWhiteDays) dated = dated.filter((o) => o.key !== 'whiteDays')
+    prevHadWhiteDays = hasWhite
     if (dated.length === 0) continue
     const h = hijriDate(d)
     out.push({ ymd: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`, date: d, hijri: h, observances: dated })
