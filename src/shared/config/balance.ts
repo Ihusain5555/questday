@@ -396,6 +396,23 @@ export const balance = {
     ticketsFreePerDay: 3,
     ticketsPerCompletion: 1,
     ticketsPerDay: 20,
+    // Score-flash feedback (DECIDED 2026-06-29) — the ONE sanctioned arcade carve-out to
+    // the tone rule: a wrong action may deduct from the IN-ROUND score only, with a red
+    // flash; a point gain shows a green/gold flash. HARD boundary: this never touches the
+    // productivity reward world — quest XP, levels, streaks, arcade TICKETS and ↩Restore
+    // stay strictly gains-only (round score never feeds ticket/XP awards; `best` only rises).
+    // Values were dialed in the approved tunable mockup (mockups/arcade-flash-mockup.html):
+    // "Arcade-y" feel — red vignette + 12px shake on −2, gold vignette on a gain.
+    // `style` ∈ wash | vignette | border. `throttleMs` caps how often the heavy flash
+    // overlay replays so rapid-fire games (Aim Speed) show the +N popup without strobing.
+    feedback: {
+      penalty: { points: 2, color: '#ff3b3b', style: 'vignette', durationMs: 300, peakOpacity: 0.7, shakePx: 12 },
+      gain: { color: '#f5b938', style: 'vignette', durationMs: 300, peakOpacity: 0.6 },
+      easing: 'ease-out',
+      scorePopup: true,
+      hudBump: true,
+      throttleMs: 180
+    },
     games: {
       // Each game carries a Phosphor `icon` name + a skill-domain `color` token
       // (see theme.css --skill-*); the Arcade renders them as tinted badges

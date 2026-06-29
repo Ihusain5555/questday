@@ -3,6 +3,7 @@ import { balance } from '@shared/config/balance'
 import { play } from '../sound'
 import { GameIcon } from '../gameIcons'
 import { RoundTimer } from '../RoundTimer'
+import { useScoreFlash } from '../ScoreFlash'
 
 /**
  * ✋ Stop Tap — a GO/NO-GO inhibition drill (response stopping). Stimuli flash up
@@ -10,9 +11,11 @@ import { RoundTimer } from '../RoundTimer'
  * A minority are NO-GO (a red octagon, "STOP") — you must HOLD your tap and let
  * it pass. Trains the brake: overriding a primed response on the rare signal.
  *
- * Tone rule: a slip never punishes. Tapping a NO-GO is just a quiet non-point
- * with a brief red flash and a gentle "let that one pass"; missing a GO is silent.
- * Score is a non-negative count of correct GO taps + correct NO-GO withholds.
+ * Arcade carve-out (DECIDED 2026-06-29): tapping a NO-GO (STOP) now DEDUCTS points
+ * in-round (−feedback.penalty.points) with the shared red flash + shake; correct GO
+ * taps and NO-GO withholds GAIN +1 with the gold flash. Score is floored at 0. This is
+ * the sanctioned exception to the tone rule — IN-ROUND score only; XP/streaks/tickets/
+ * ↩Restore are never touched (see ScoreFlash.tsx).
  *
  * Feel: a "Get ready" countdown so it never starts cold, and the cadence ramps
  * a touch faster as the score climbs (a gentle chase, never a wall).
@@ -23,6 +26,7 @@ const DURATION_S: number = balance.arcade.games.stoptap.seconds
 const MIN_GAP_MS: number = balance.arcade.games.stoptap.minGapMs // floor for the gap as the cadence ramps up
 const MIN_WINDOW_MS: number = balance.arcade.games.stoptap.minWindowMs // floor for the response window
 const FEEDBACK_MS: number = balance.arcade.games.stoptap.feedbackMs // how long the post-tap message lingers (readable)
+const PENALTY: number = balance.arcade.feedback.penalty.points // points lost on a STOP tap (arcade carve-out)
 
 // Difficulty: cadence + how often a trial is the rare NO-GO stop signal.
 // `gap` is the blank before a stimulus, `window` how long it stays on screen,
@@ -49,6 +53,7 @@ export function StopTap({ onFinish }: { onFinish: (score: number) => void }): JS
   const [flash, setFlash] = useState<'good' | 'bad' | null>(null)
   const [hint, setHint] = useState<string | null>(null)
   const [mode, setMode] = useState<Mode>('medium')
+  const juice = useScoreFlash()
 
   // Refs so the scheduling timeouts (which close over stale state) read fresh values.
   const scoreRef = useRef(0)
@@ -76,7 +81,7 @@ export function StopTap({ onFinish }: { onFinish: (score: number) => void }): JS
   }
 
   const award = (delta: number) => {
-    scoreRef.current += delta
+    scoreRef.current = Math.max(0, scoreRef.current + delta) // floored at 0 (carve-out)
     setScore(scoreRef.current)
   }
 
@@ -155,6 +160,7 @@ export function StopTap({ onFinish }: { onFinish: (score: number) => void }): JS
           if (stimRef.current === 'nogo' && !respondedRef.current) {
             play('good')
             award(1)
+            juice.fire('gain', 1)
             showFlash('good', 'good — held it')
           }
           stimRef.current = 'none'
@@ -186,10 +192,14 @@ export function StopTap({ onFinish }: { onFinish: (score: number) => void }): JS
       respondedRef.current = true
       play('good')
       award(1)
+      juice.fire('gain', 1)
       showFlash('good')
     } else if (cur === 'nogo') {
+      // Arcade carve-out: tapping STOP costs points in-round (red flash + shake).
       respondedRef.current = true
       play('bad')
+      award(-PENALTY)
+      juice.fire('penalty', -PENALTY)
       showFlash('bad', 'let that one pass')
     }
     // Tapping during a blank ('none') is ignored — quiet, no effect.
@@ -198,10 +208,11 @@ export function StopTap({ onFinish }: { onFinish: (score: number) => void }): JS
   const endEarly = finish
 
   return (
-    <div className="game-shell">
+    <div className="game-shell" ref={juice.shellRef}>
+      {juice.overlay}
       <RoundTimer timeLeft={timeLeft} total={DURATION_S} />
       <div className="game-hud">
-        <span><GameIcon k="stoptap" size={15} /> {score}</span>
+        <span className={juice.scoreClass}><GameIcon k="stoptap" size={15} /> {score}</span>
         <button onClick={endEarly}>End round</button>
       </div>
       <div

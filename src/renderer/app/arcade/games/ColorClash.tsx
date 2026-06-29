@@ -4,6 +4,10 @@ import { play } from '../sound'
 import { Fire } from '@phosphor-icons/react'
 import { GameIcon } from '../gameIcons'
 import { RoundTimer } from '../RoundTimer'
+import { useScoreFlash } from '../ScoreFlash'
+
+// Points lost on a wrong ink tap (arcade carve-out, DECIDED 2026-06-29). In-round score only.
+const PENALTY: number = balance.arcade.feedback.penalty.points
 
 /**
  * 🎨 Color Clash — the Stroop task as a game. A colour WORD is painted in a
@@ -96,6 +100,7 @@ export function ColorClash({ onFinish }: { onFinish: (score: number) => void }):
   const rowClean = useRef(true) // no wrong tap this row → flawless-row bonus
   const done = useRef(false)
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const juice = useScoreFlash()
 
   // Difficulty is chosen during the "ready" countdown, then locked.
   const pickMode = (m: Mode) => {
@@ -148,10 +153,13 @@ export function ColorClash({ onFinish }: { onFinish: (score: number) => void }):
     const targetWord = prompt.words[cursor]
     const correct = idx === targetWord.ink
     if (!correct) {
-      // Wrong: no point, combo resets, retry the SAME word — never a penalty (tone rule).
+      // Arcade carve-out: a wrong ink tap costs points in-round (red flash + shake) and
+      // resets the combo; you still retry the SAME word. In-round score only.
       play('bad')
       setCombo(0)
       rowClean.current = false
+      setScore((s) => Math.max(0, s - PENALTY))
+      juice.fire('penalty', -PENALTY)
       flashNow('bad')
       return
     }
@@ -189,10 +197,11 @@ export function ColorClash({ onFinish }: { onFinish: (score: number) => void }):
   const multi = prompt.words.length > 1
 
   return (
-    <div className="game-shell">
+    <div className="game-shell" ref={juice.shellRef}>
+      {juice.overlay}
       <RoundTimer timeLeft={timeLeft} total={cfg.seconds} />
       <div className="game-hud">
-        <span><GameIcon k="colorclash" size={15} /> {score}</span>
+        <span className={juice.scoreClass}><GameIcon k="colorclash" size={15} /> {score}</span>
         {combo >= 2 && <span className="cc-combo"><Fire size={14} weight="fill" color="var(--fire)" /> {combo}</span>}
         {bestCombo >= 2 && <span className="meta-dim">best {bestCombo}</span>}
         <button onClick={endEarly}>End round</button>

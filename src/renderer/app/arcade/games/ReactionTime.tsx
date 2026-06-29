@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { GameIcon } from '../gameIcons'
+import { useScoreFlash } from '../ScoreFlash'
 
 type Phase = 'ready' | 'waiting' | 'go' | 'between'
 type Mode = 'easy' | 'medium' | 'hard'
@@ -26,6 +27,7 @@ export function ReactionTime({ onFinish }: { onFinish: (score: number) => void }
   const goAt = useRef(0)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const done = useRef(false)
+  const juice = useScoreFlash()
 
   // Mode sets the trial count (overriding the config) and the target precision.
   const trials = MODES[mode].trials
@@ -60,14 +62,17 @@ export function ReactionTime({ onFinish }: { onFinish: (score: number) => void }
   const click = () => {
     if (phase === 'ready' || phase === 'between') return arm()
     if (phase === 'waiting') {
-      // Too soon — no penalty, the trial just re-arms.
+      // Jumped early — red flash + shake (no numeric penalty: the score is reaction ms,
+      // not a tally), then the trial re-arms. Arcade carve-out (DECIDED 2026-06-29).
       if (timer.current) clearTimeout(timer.current)
-      setMessage('A little early — no harm done. Again!')
+      juice.fire('penalty')
+      setMessage('Too early! Wait for green.')
       setPhase('between')
       return
     }
     // phase === 'go'
     const ms = Math.round(performance.now() - goAt.current)
+    juice.fire('gain')
     const all = [...times, ms]
     setTimes(all)
     if (all.length >= trials) return finish(all)
@@ -78,7 +83,8 @@ export function ReactionTime({ onFinish }: { onFinish: (score: number) => void }
   const avg = times.length ? Math.round(times.reduce((s, t) => s + t, 0) / times.length) : null
 
   return (
-    <div className="game-shell">
+    <div className="game-shell" ref={juice.shellRef}>
+      {juice.overlay}
       <div className="game-hud">
         <span><GameIcon k="reaction" size={15} /> trial {Math.min(times.length + 1, trials)}/{trials}</span>
         {avg !== null && <span>avg {avg} ms</span>}

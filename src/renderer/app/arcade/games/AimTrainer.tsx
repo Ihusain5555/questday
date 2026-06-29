@@ -3,6 +3,11 @@ import { balance } from '@shared/config/balance'
 import { play } from '../sound'
 import { GameIcon } from '../gameIcons'
 import { RoundTimer } from '../RoundTimer'
+import { useScoreFlash } from '../ScoreFlash'
+
+// Points lost on a MISS — clicking empty field, not a target (arcade carve-out, DECIDED
+// 2026-06-29). In-round score only; XP/tickets untouched.
+const PENALTY: number = balance.arcade.feedback.penalty.points
 
 /**
  * 🎯 Aim Trainer — click targets as fast as you can for `seconds`. Now with a MODE
@@ -57,6 +62,7 @@ export function AimTrainer({ onFinish }: { onFinish: (score: number) => void }):
   const done = useRef(false)
   const idRef = useRef(0)
   const lifeTimers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map())
+  const juice = useScoreFlash()
 
   const cur = MODES[mode]
   const size: number = cur.size
@@ -152,14 +158,25 @@ export function AimTrainer({ onFinish }: { onFinish: (score: number) => void }):
     onFinish(score)
   }
 
+  // A click that lands on the field BACKGROUND (not a target button) is a miss — it costs
+  // points in-round (red flash + shake). A target hit fires the button's onClick instead,
+  // so e.target is the button/icon, not the field, and this is skipped.
+  const onFieldMiss = (e: React.MouseEvent) => {
+    if (done.current || phase !== 'playing') return
+    if (e.target !== e.currentTarget) return
+    setScore((s) => Math.max(0, s - PENALTY))
+    juice.fire('penalty', -PENALTY)
+  }
+
   return (
-    <div className="game-shell">
+    <div className="game-shell" ref={juice.shellRef}>
+      {juice.overlay}
       <RoundTimer timeLeft={timeLeft} total={cfg.seconds} />
       <div className="game-hud">
-        <span><GameIcon k="aim" size={15} /> {score} {score === 1 ? 'hit' : 'hits'}</span>
+        <span className={juice.scoreClass}><GameIcon k="aim" size={15} /> {score} {score === 1 ? 'hit' : 'hits'}</span>
         <button onClick={endEarly}>End round</button>
       </div>
-      <div className="aim-field">
+      <div className="aim-field" onClick={onFieldMiss}>
         {phase === 'ready' ? (
           <div className="cc-ready">
             <div className="game-diff" role="group" aria-label="mode">
