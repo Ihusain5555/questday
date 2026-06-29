@@ -10,23 +10,27 @@ real bytes, so the live site's Windows + macOS buttons work. v2.0.0 is installed
 **Note:** the old v1.14.0 release (Jun 19) had only a stale Mac `.dmg`, no Windows `.exe` — that gap is now closed.
 Procedure + the version-drift trap are saved in memory `questday-release-procedure`. No open errors.
 
+### ▶ Session close-out (2026-06-29) — NEXT SESSION'S WORK IS CAPTURED, NOT BUILT
+The user gave a batch of arcade + UI feedback at close. **All of it is captured in
+`docs/arcade-and-ui-feedback-2026-06-29.md` — none is built.** Start there next session (one feature at a time).
+**⚠️ One blocking decision:** the "make the minigames punishing / -2 points" request **conflicts with the tone rule**
+(arcade code already enforces "misses are never punished") — resolve literal-penalty-vs-tone-compatible-stakes with the
+user before building any arcade change. Details + recommended reframe in that doc.
+
 ## Git state
 - **Branch:** `feature/civilization-world-map` (repo default). **Remote:** `origin` = github.com/Ihusain5555/questday.
-- **HEAD = `d3a11de`** (`chore(release): bump version to 2.0.0`), pushed to origin — branch **in sync**.
-- **Tag `v2.0.0`** pushed (at `d3a11de`); **GitHub Release v2.0.0** published as Latest with `QuestDay.Setup.2.0.0.exe` (Win) + `QuestDay-2.0.0-universal.dmg` (Mac, universal).
-- Commits since the prior baseline (`6231a0d`) also include the 2026-06-28 backlog batch (`aa01342` quest ordering, `171d386` Color Recreation, `5478b65` themes, `eae4916` show/hide widget, share-studio `cc1d3bd`/`76195cc`) — all folded into v2.0.0.
+- **HEAD = the close-out docs commit** (this HANDOFF + `docs/arcade-and-ui-feedback-2026-06-29.md` + CLAUDE.md/skill
+  lessons); **previous HEAD `ca653d3`** was pushed (in sync). Push the close-out commit to keep the resume point current.
+- **This session (post-`/clear`) = release + docs ONLY. The only app-code change was the version string.** Commits newest-first:
+  ```
+  <close-out> docs: capture arcade+UI feedback + session close-out   (this commit)
+  ca653d3 docs: Vercel renamed website→questday + record CLI rename / clean URL
+  b7eaf78 docs: update HANDOFF — v2.0.0 released (both platforms), download works
+  d3a11de chore(release): bump version to 2.0.0     <- ONLY code change (version string → __APP_VERSION__)
+  556a234 chore: track _split-diff.cjs              <- pre-session baseline
+  ```
+- **Tag `v2.0.0`** (at `d3a11de`); **GitHub Release v2.0.0** = Latest, assets `QuestDay.Setup.2.0.0.exe` (Win) + `QuestDay-2.0.0-universal.dmg` (Mac, universal).
 - **Stashes:** none.
-- **Last 7 commits** (oldest first this session; baseline was `6231a0d`):
-  ```
-  3fea82b docs: update resume kit — faith slices + website built, deploy done
-  aa7db2f feat(site): QuestDay landing page (Next.js) — deployed to Vercel
-  3ba33ed test: register pw drivers (prayer-frames, observances, bundles, wind-down)
-  a7c3dce feat: end-of-day wind-down
-  31615a7 feat: Quest Bundles
-  fc3235d feat(faith): Hijri date + Islamic observance calendar + notifications
-  5ea264f feat(faith): prayer-aware time frames
-  6231a0d docs: rewrite HANDOFF resume-kit + record session tooling lessons  <- pre-session baseline
-  ```
 - **Working tree after the doc-update commit (this close-out):**
   - **Unstaged tracked, intentionally NOT committed (PRE-EXISTING, not this session's feature work):**
     `.claude/settings.local.json` (local Claude config — leave it).
@@ -95,7 +99,10 @@ scripts/pw-winddown.mjs                  | NEW driver: wins recap + push action 
 **docs (`3fea82b` + this close-out):** `HANDOFF.md`, `CLAUDE.md`, the two `.claude/skills/*` SKILL.md.
 
 ## Baseline (last-known PASS — DO NOT re-derive; Electron drivers are slow + single-instance)
-Recorded from this session's runs against the BUILT `out/` (each after `npm run build`):
+**Re-verified 2026-06-29 (release gate, via subagent):** `npm run typecheck` → PASS (node + web), `npm run build` → PASS,
+`npm run pw:rewards` → **7/7 ALL PASS** (↩Restore exactness), no dev-asset PNG leaked into `out/`. Only code change this
+session was the version string, so the per-driver results below still hold.
+Recorded from the prior (faith-batch) session's runs against the BUILT `out/` (each after `npm run build`):
 - `npm run typecheck` → **PASS** (node + web), re-run green after every feature.
 - `npm run build` → **PASS** (electron-vite).
 - `npm run pw:prayer-frames` → **9/9 ALL PASS** (RESOLVE_SHIFT, END_OMITTED, FALLBACK, ISOLATION, DB_ACCEPTS, UI_PICKERS, ACTIVE_NOW, TOGGLE_CLOCK, TOGGLE_PRAYER).
@@ -117,25 +124,32 @@ Recorded from this session's runs against the BUILT `out/` (each after `npm run 
 - The deployment-specific `questday-<hash>-…vercel.app` URL is 302→SSO (Vercel default Deployment Protection); the
   production ALIASES above are the public ones. CLI was already authed (`vercel whoami` → ihusain5555).
 
-## Next steps — file-level targets (none blocking; pick per priority)
-1. ~~Publish a GitHub Release so the site's download buttons resolve~~ **DONE 2026-06-29** — v2.0.0 released with both
-   installers (Latest); `releases/latest` resolves and serves real bytes. Site buttons link to `…/releases/latest`
-   (the release PAGE, not a direct asset) in `website/app/page.tsx` — OPTIONAL polish: platform-specific one-click
-   direct-download links (tradeoff: the page is more version-robust since the exact asset name changes per version).
-2. **Rename the Vercel project `website` → `questday`** (Vercel dashboard → Project → Settings → Name) for a clean URL,
-   and/or add a custom domain. Optional: turn off Deployment Protection (Settings → Deployment Protection) to make
-   every URL public.
-3. **(If wanted) deploy on every push:** connect the GitHub repo in Vercel with Root Directory = `website` (currently
-   it's CLI-deployed only).
-4. **macOS `.dmg` of the new build** — re-tag to trigger `.github/workflows/build-macos.yml` (see codebase-overview macOS gotchas).
+## Next steps — file-level targets (pick per priority)
+**PRIMARY — process `docs/arcade-and-ui-feedback-2026-06-29.md`** (per-file targets + open questions are in it):
+- **Arcade:** RESOLVE the tone-rule decision FIRST (penalties vs tone-compatible stakes); then Track Switch guide-lines
+  (`TrackSwitch.tsx`), Aim-Trainer Reflex-mode `lifeMs` (`AimTrainer.tsx`), Mental Spin "mirror" clarity
+  (`MentalSpin.tsx`), Flash Recall redesign + the still-TODO research (`FlashRecall.tsx`).
+- **UI/feature:** End-of-day "+more" alignment (`EndOfDayCard.tsx`), Dashboard Realm↔Your-Week spacing (`Dashboard.tsx`),
+  mixed prayer/clock time-frame anchors (`types.ts`/`prayerFrames.ts`/`TimeFramesView.tsx` — SCHEMA change), observance
+  White-Days dedup (`observances.ts`/`CalendarView.tsx`).
+
+Lower-priority / optional (carried over, none blocking):
+1. ~~Publish GitHub Release~~ **DONE** (v2.0.0, both installers). Optional: one-click direct-download links (tradeoff: brittle per-release vs the robust `releases/latest` page).
+2. ~~Rename Vercel project~~ **DONE** (`questday`, redeployed; clean URL live).
+3. **(If wanted) auto-deploy on push:** connect the GitHub repo in Vercel, Root Directory = `website` (currently CLI-deployed only).
+4. **Custom domain** for the site (a purchase → stop-and-confirm).
 
 ## Open / deferred
-- **No code TODO/FIXME added this session** (swept `6231a0d..HEAD` — zero matches).
+- **No code TODO/FIXME added this session** (swept `556a234..HEAD` — zero matches; session was docs + a version bump only).
+- **⚠️ OPEN DECISION (arcade penalties):** "make the minigames punishing / -2 points" vs the tone rule. Must be resolved
+  with the user before building any arcade change. Recommended tone-compatible reframe (fail-state / combo-reset) in
+  `docs/arcade-and-ui-feedback-2026-06-29.md`.
+- **Captured-but-not-built (this session's feedback):** the full arcade + UI batch in `docs/arcade-and-ui-feedback-2026-06-29.md`.
+- **Open questions for the user (in that doc):** arcade penalty model; Mental Spin = mirror-only / rotation-only / both.
 - **Deferred by decision (unchanged):** Ramadan mode (~Dec 2026 / ~2mo before Ramadan 2027); Qibla (CUT — no desktop
   compass); civ/Realm deep roadmap (PARKED behind Coming-Soon); installer code-signing (needs a paid cert); Microsoft
   Store (~$19, before distributing); a paid human security review (when real users appear).
-- **Deferred this session:** publish a GitHub Release (#1 above); rename/own the Vercel domain (#2); push the
-  doc-update commit if the next session wants origin current (this close-out commit is local until pushed).
+- **Done this session (were deferred):** GitHub Release v2.0.0 (both installers); Vercel rename + clean URL.
 - **Untracked decision (unchanged):** whether to `git add` the pre-existing untracked keepers + the 2 new `_*.cjs`
   helpers, and whether to commit the pre-existing `.claude/settings.local.json` edit.
 - **Two accepted commit ride-alongs (noted in the commit bodies):** the `BundleQuest`/`QuestBundle` *type defs* sit in

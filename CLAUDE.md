@@ -7,6 +7,10 @@ highest-priority "current quest". Local JSON only — no accounts, no cloud.
 **Tone rule (always applies):** motivating, never punishing — never add health/lives loss,
 point deduction, streak-shaming, or any punitive mechanic. (One sanctioned exception:
 ↩ Restore reverses an accidental completion's payout exactly — correction, not punishment.)
+**This extends to the arcade:** in-game misses are deliberately NOT punished (`AimTrainer.tsx`: "misses are never
+punished"). A request to add minigame penalties / point-deduction (raised 2026-06-29 — see
+`docs/arcade-and-ui-feedback-2026-06-29.md`) is a **stop-and-confirm amendment to this integrity line**, not a routine
+feature; offer tone-compatible stakes (fail-state / combo-reset, gains-only) first.
 The reward world only ever GAINS — no wilt/decay. (As of v1.8 the **Realm** replaced the garden in
 the UI; the garden engine is kept INERT — it still runs silently so ↩ Restore's coin claw-back math
 stays intact — so do NOT delete it.)
@@ -256,6 +260,10 @@ by outcome and **cannot read code**, so the gates below are load-bearing, not op
   "no failures detected — N lines hidden". `exit 0` means clean, but to SEE the actual PASS/FAIL
   lines, redirect to a temp file and `Read` it (the hook filters the tool *result*, not the file;
   `cygpath -w /tmp/x.txt` gives the Windows path) — or delegate to the `test-runner` agent.
+- **`cd` into a subdir persists across Bash calls (cost time 2026-06-29):** after a `cd website` (e.g. for a Vercel
+  deploy), later Bash calls stay in that dir, so a bare `git add CLAUDE.md` fails (`pathspec did not match`) and the
+  Grep tool's default path silently finds nothing. Fix: run git as `git -C "<repo-root>" …` and pass an explicit
+  `path` to Grep — or avoid `cd` inside compound commands.
 - **Redirect landmine + dump gitignore (cost cleanup time 2026-06-28):** in git-bash on Windows,
   redirecting to a `C:\temp\...` path writes a literal `C:temp...` file at the **repo root** (the
   drive `:` becomes the U+F03A private-use colon), which ordinary globs (`./*.txt`) silently miss and
