@@ -130,13 +130,17 @@ export interface TimeFrame {
    *  to hand-rank, so quests sort by their saved `sortOrder`. Optional so old saves migrate
    *  cleanly (missing = auto). Never read by reward / ↩Restore math. */
   manualOrder?: boolean
-  /** Prayer-aware anchoring (v2). When set, this frame's EFFECTIVE window is derived each
-   *  day from the on-device prayer times instead of `startMinute/endMinute` — e.g.
-   *  `{ start: 'fajr', end: 'dhuhr' }` makes the frame run from Fajr until Dhuhr, shifting
-   *  with the real prayer times. `end` omitted = until the NEXT anchor point after `start`.
-   *  Resolution is pure (engine/prayerFrames.ts); the stored startMinute/endMinute remain as
-   *  the fallback when prayer times aren't configured. Optional so old saves migrate cleanly
-   *  (missing = a plain clock frame). NEVER read by reward / ↩Restore math. */
+  /** Prayer-aware anchoring (v2.1) — INDEPENDENT per side. When `startAnchor` is set, the
+   *  frame's effective START follows that day's prayer time; likewise `endAnchor` for the END.
+   *  Either side absent = that edge uses the stored clock minute. So any mix works: Fajr→9:00
+   *  (startAnchor only), 12:00→Asr (endAnchor only), Fajr→Dhuhr (both), or plain clock (neither).
+   *  Resolution is pure (engine/prayerFrames.ts); the stored startMinute/endMinute remain the
+   *  fallback for a clock edge and when prayer times aren't configured. Optional so old saves
+   *  migrate cleanly. NEVER read by reward / ↩Restore math. */
+  startAnchor?: PrayerAnchorPoint
+  endAnchor?: PrayerAnchorPoint
+  /** @deprecated v2.1 — LEGACY whole-frame anchor (`{ start, end? }`, end omitted = next point).
+   *  Migrated to startAnchor/endAnchor on load (store.ts); kept only so old saves still parse. */
   prayerAnchor?: { start: PrayerAnchorPoint; end?: PrayerAnchorPoint }
 }
 

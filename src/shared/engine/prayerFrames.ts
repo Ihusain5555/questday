@@ -26,20 +26,33 @@ function pointMinute(day: PrayerDayTimes, point: PrayerAnchorPoint): number {
   return d.getHours() * 60 + d.getMinutes()
 }
 
-/** Resolve ONE frame's effective window from a prayer day. A non-anchored frame (or a
- *  null prayer day — no location configured) is returned unchanged. An anchored frame
- *  gets fresh startMinute/endMinute derived from the prayer times; every other field
- *  (id, name, order, manualOrder, the original anchor) is preserved. The existing
+/** Resolve a frame's per-side prayer anchors to explicit points. Honors the LEGACY
+ *  whole-frame `prayerAnchor` for un-migrated saves (start → startAnchor; end, or the next
+ *  point if omitted → endAnchor), so old frames keep working even before store migration. */
+function anchorsOf(frame: TimeFrame): { start?: PrayerAnchorPoint; end?: PrayerAnchorPoint } {
+  if (frame.startAnchor || frame.endAnchor) return { start: frame.startAnchor, end: frame.endAnchor }
+  if (frame.prayerAnchor) {
+    const start = frame.prayerAnchor.start
+    const end = frame.prayerAnchor.end ?? ORDER[(ORDER.indexOf(start) + 1) % ORDER.length]
+    return { start, end }
+  }
+  return {}
+}
+
+/** Resolve ONE frame's effective window from a prayer day. Each side is independent: a
+ *  prayer-anchored edge gets its minute from the prayer times; a clock edge keeps its stored
+ *  minute. A frame with no anchors (or a null prayer day — no location) is returned unchanged;
+ *  every other field (id, name, order, manualOrder, the anchors) is preserved. The existing
  *  midnight-wrap logic in selectCurrentQuest handles start > end (e.g. Isha→Fajr). */
 export function effectiveFrame(frame: TimeFrame, day: PrayerDayTimes | null): TimeFrame {
-  if (!frame.prayerAnchor || !day) return frame
-  const start = frame.prayerAnchor.start
-  let end = frame.prayerAnchor.end
-  if (!end) {
-    // No explicit end → run until the next anchor point (wrapping Isha → Fajr).
-    end = ORDER[(ORDER.indexOf(start) + 1) % ORDER.length]
+  if (!day) return frame
+  const { start, end } = anchorsOf(frame)
+  if (!start && !end) return frame
+  return {
+    ...frame,
+    startMinute: start ? pointMinute(day, start) : frame.startMinute,
+    endMinute: end ? pointMinute(day, end) : frame.endMinute
   }
-  return { ...frame, startMinute: pointMinute(day, start), endMinute: pointMinute(day, end) }
 }
 
 /** Resolve EVERY frame's effective window for a prayer day. Null day → frames unchanged. */

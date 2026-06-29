@@ -2,15 +2,16 @@
 // (built out/) in an isolated --user-data-dir (the real db.json is NEVER touched) and
 // verifies the feature end-to-end. Two halves:
 //   ENGINE self-checks (pure, deterministic — transpiles the engine and asserts math):
-//     RESOLVE_SHIFT  — an anchored frame's effective window == today's prayer minutes.
-//     END_OMITTED    — anchor with no `end` runs until the NEXT prayer point.
+//     RESOLVE_SHIFT  — a both-sides-anchored frame's window == today's prayer minutes.
+//     END_OMITTED    — LEGACY prayerAnchor with no `end` runs until the NEXT point (migration path).
+//     MIXED          — v2.1: start prayer + end clock (and vice-versa) each resolve independently.
 //     FALLBACK       — no location → anchored frame keeps its saved clock minutes.
 //   APP/UI checks (launch + drive + read db.json back):
 //     ISOLATION      — userData IS the temp dir (real db.json untouched).
-//     DB_ACCEPTS     — a seeded prayerAnchor survives migrate()+validate() on launch.
-//     UI_PICKERS     — the anchored row shows the Prayer segment active + 2 prayer selects.
-//     TOGGLE_CLOCK   — clicking Clock removes prayerAnchor (save + validate round-trip).
-//     TOGGLE_PRAYER  — clicking Prayer on a clock frame writes a default anchor.
+//     DB_ACCEPTS     — seeded startAnchor/endAnchor survive migrate()+validate() on launch.
+//     UI_PICKERS     — the anchored row shows 2 prayer selects with the seeded values.
+//     TOGGLE_CLOCK   — clicking a side's Clock seg clears that side's anchor → a MIXED frame.
+//     TOGGLE_PRAYER  — clicking a side's Prayer seg on a clock frame writes that side's anchor.
 //     ACTIVE_NOW     — if now is inside the resolved window, the row shows "active now"
 //                      (proves the wiring; SKIP, never FAIL, when run outside the window).
 import { _electron as electron } from 'playwright-core'
@@ -51,7 +52,7 @@ const exp = { fajr: minOf(day.fajr), dhuhr: minOf(day.dhuhr), asr: minOf(day.asr
 
 // Frames: an anchored "Deep work" (Fajr→Isha; clock fallback 08:00–17:00) + a plain Night.
 const frames = [
-  { id: 'tf-anchored', name: 'Deep work', startMinute: 480, endMinute: 1020, order: 0, prayerAnchor: { start: 'fajr', end: 'isha' } },
+  { id: 'tf-anchored', name: 'Deep work', startMinute: 480, endMinute: 1020, order: 0, startAnchor: 'fajr', endAnchor: 'isha' },
   { id: 'tf-night', name: 'Night', startMinute: 1260, endMinute: 300, order: 1 }
 ]
 const settingsForEngine = { prayerTimes: { cityId: CITY.id, lat: CITY.lat, lon: CITY.lon, method: 'isna', asr: 'standard' } }
@@ -76,6 +77,23 @@ const omit = effectiveTimeFrames(
 )[0]
 result('END_OMITTED', omit.startMinute === exp.dhuhr && omit.endMinute === exp.asr,
   `start=${omit.startMinute}(want ${exp.dhuhr}) end=${omit.endMinute}(want ${exp.asr})`)
+
+// MIXED (v2.1): each side independent — prayer start + clock end, and clock start + prayer end.
+const mixStart = effectiveTimeFrames(
+  [{ id: 'ms', name: 'ms', startMinute: 600, endMinute: 1020, order: 0, startAnchor: 'fajr' }],
+  settingsForEngine,
+  now
+)[0]
+const mixEnd = effectiveTimeFrames(
+  [{ id: 'me', name: 'me', startMinute: 600, endMinute: 1020, order: 0, endAnchor: 'asr' }],
+  settingsForEngine,
+  now
+)[0]
+result('MIXED',
+  mixStart.startMinute === exp.fajr && mixStart.endMinute === 1020 &&
+  mixEnd.startMinute === 600 && mixEnd.endMinute === exp.asr,
+  `prayer→clock: ${mixStart.startMinute}/${mixStart.endMinute} (want ${exp.fajr}/1020); ` +
+  `clock→prayer: ${mixEnd.startMinute}/${mixEnd.endMinute} (want 600/${exp.asr})`)
 
 const noLoc = effectiveTimeFrames(frames, { prayerTimes: { cityId: null, lat: null, lon: null, method: 'isna', asr: 'standard' } }, now)
 const na = noLoc.find((f) => f.id === 'tf-anchored')
@@ -127,10 +145,10 @@ try {
   const userData = await app.evaluate(async ({ app }) => app.getPath('userData'))
   result('ISOLATION', userData.toLowerCase() === dir.toLowerCase(), `dir=${dir}`)
 
-  // DB_ACCEPTS: the seeded prayerAnchor survived migrate()+validate() on launch.
+  // DB_ACCEPTS: the seeded per-side anchors survived migrate()+validate() on launch.
   const after = readDb().timeFrames.find((f) => f.id === 'tf-anchored')
-  result('DB_ACCEPTS', after?.prayerAnchor?.start === 'fajr' && after?.prayerAnchor?.end === 'isha',
-    `anchor=${JSON.stringify(after?.prayerAnchor)}`)
+  result('DB_ACCEPTS', after?.startAnchor === 'fajr' && after?.endAnchor === 'isha',
+    `anchors=${after?.startAnchor}/${after?.endAnchor}`)
 
   // Open the Time frames tab.
   await main.getByRole('button', { name: 'Time frames', exact: true }).click()
@@ -140,14 +158,13 @@ try {
   const anchoredRow = rows.nth(0)
   const nightRow = rows.nth(1)
 
-  // UI_PICKERS: Prayer segment active + two prayer selects with the seeded values.
-  const onSeg = (await anchoredRow.locator('.tf-seg.on').textContent()) ?? ''
+  // UI_PICKERS: both sides prayer-anchored → two prayer selects with the seeded values.
   const selects = anchoredRow.locator('.tf-prayer-select')
   const selCount = await selects.count()
   const v0 = selCount > 0 ? await selects.nth(0).inputValue() : ''
   const v1 = selCount > 1 ? await selects.nth(1).inputValue() : ''
-  result('UI_PICKERS', /Prayer/.test(onSeg) && selCount === 2 && v0 === 'fajr' && v1 === 'isha',
-    `onSeg=${onSeg.trim()} selects=${selCount} v0=${v0} v1=${v1}`)
+  result('UI_PICKERS', selCount === 2 && v0 === 'fajr' && v1 === 'isha',
+    `selects=${selCount} v0=${v0} v1=${v1}`)
   await main.screenshot({ path: path.join(shots, 'prayer-frames.png') })
 
   // ACTIVE_NOW (conditional): the row shows "active now" iff now ∈ the resolved window.
@@ -158,20 +175,22 @@ try {
     skip('ACTIVE_NOW', 'now is outside the Fajr→Isha window (e.g. late night)')
   }
 
-  // TOGGLE_CLOCK: click Clock on the anchored row → prayerAnchor removed on disk.
-  await anchoredRow.getByRole('button', { name: /Clock/ }).click()
+  // TOGGLE_CLOCK: set the START side of the anchored row to a clock time (its first toggle
+  // group, first seg = clock) → a MIXED frame: startAnchor cleared, endAnchor still isha.
+  await anchoredRow.locator('.tf-anchor-toggle').nth(0).locator('.tf-seg').nth(0).click()
   await main.waitForTimeout(600)
   const clk = readDb().timeFrames.find((f) => f.id === 'tf-anchored')
-  const timeInputs = await anchoredRow.locator('input.tf-time').count()
-  result('TOGGLE_CLOCK', clk.prayerAnchor == null && timeInputs === 2,
-    `anchor=${JSON.stringify(clk.prayerAnchor)} timeInputs=${timeInputs}`)
+  const startTime = await anchoredRow.locator('input.tf-time').count()
+  result('TOGGLE_CLOCK', clk.startAnchor == null && clk.endAnchor === 'isha' && startTime === 1,
+    `startAnchor=${clk.startAnchor} endAnchor=${clk.endAnchor} timeInputs=${startTime}`)
 
-  // TOGGLE_PRAYER: click Prayer on the (clock) Night row → default anchor written.
-  await nightRow.getByRole('button', { name: /Prayer/ }).click()
+  // TOGGLE_PRAYER: set the START side of the (clock) Night row to a prayer (its first toggle
+  // group, second seg = prayer) → startAnchor written, end stays clock (a MIXED prayer→clock).
+  await nightRow.locator('.tf-anchor-toggle').nth(0).locator('.tf-seg').nth(1).click()
   await main.waitForTimeout(600)
   const nf = readDb().timeFrames.find((f) => f.id === 'tf-night')
-  result('TOGGLE_PRAYER', nf.prayerAnchor?.start === 'fajr' && nf.prayerAnchor?.end === 'dhuhr',
-    `anchor=${JSON.stringify(nf.prayerAnchor)}`)
+  result('TOGGLE_PRAYER', nf.startAnchor === 'fajr' && nf.endAnchor == null,
+    `startAnchor=${nf.startAnchor} endAnchor=${nf.endAnchor}`)
 } catch (err) {
   console.log('ERROR:', err?.stack ?? err?.message ?? err)
   process.exitCode = 1

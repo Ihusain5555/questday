@@ -1054,6 +1054,16 @@ button.ghost.icon-btn.danger:hover {
   color: var(--muted);
 }
 
+/* v2.1 — per-side bound editors (start/end each clock-or-prayer). */
+.tf-bounds {
+  flex-wrap: wrap;
+}
+.tf-bound {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 /* Prayer-anchoring (v2 faith layer): a per-frame Clock/Prayer segmented toggle, the
    prayer-point dropdowns that replace the clock inputs, and the no-location hint. */
 .tf-item {

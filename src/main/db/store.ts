@@ -18,7 +18,16 @@ import {
   fsyncSync,
   closeSync
 } from 'fs'
-import type { Database, DatabasePatch, Importance, Quest, QuestTemplate, Urgency } from '@shared/types'
+import type {
+  Database,
+  DatabasePatch,
+  Importance,
+  PrayerAnchorPoint,
+  Quest,
+  QuestTemplate,
+  TimeFrame,
+  Urgency
+} from '@shared/types'
 import { createDefaultDatabase, DB_VERSION } from '@shared/defaults'
 import { writeAutoBackup } from '../backup/backup'
 
@@ -116,6 +125,25 @@ export function loadDatabase(): Database {
   }
 }
 
+const FRAME_ANCHOR_ORDER: PrayerAnchorPoint[] = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha']
+
+/** Migrate the legacy whole-frame `prayerAnchor` (v2) to independent startAnchor/endAnchor
+ *  (v2.1). Idempotent: a plain clock frame, or one already on the new fields, is returned with
+ *  any stray legacy field dropped. An omitted legacy `end` becomes the next anchor point (the
+ *  v2 semantics), so existing prayer-anchored frames keep their exact window. */
+function migrateFrameAnchor(f: TimeFrame): TimeFrame {
+  if (!f.prayerAnchor) return f
+  const out: TimeFrame = { ...f }
+  if (!out.startAnchor && !out.endAnchor) {
+    const start = f.prayerAnchor.start
+    out.startAnchor = start
+    out.endAnchor =
+      f.prayerAnchor.end ?? FRAME_ANCHOR_ORDER[(FRAME_ANCHOR_ORDER.indexOf(start) + 1) % FRAME_ANCHOR_ORDER.length]
+  }
+  delete out.prayerAnchor
+  return out
+}
+
 function migrate(db: Database): Database {
   // v1 is the first schema; future versions normalize here.
   if (typeof db.version !== 'number') db.version = DB_VERSION
@@ -125,7 +153,7 @@ function migrate(db: Database): Database {
     // Carry each quest into the current importance/urgency taxonomy, dropping the
     // old priority/skippability fields (idempotent — existing values are kept).
     quests: (db.quests ?? fresh.quests).map((q) => migrateQuestTaxonomy(q as LegacyQuest)),
-    timeFrames: db.timeFrames ?? fresh.timeFrames,
+    timeFrames: (db.timeFrames ?? fresh.timeFrames).map(migrateFrameAnchor),
     player: { ...fresh.player, ...db.player },
     garden: {
       ...fresh.garden,
@@ -230,7 +258,8 @@ function validate(db: Database): string | null {
   // `unknown` — runtime data may defy types.
   const ANCHOR_POINTS = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha']
   for (const f of db.timeFrames as unknown[]) {
-    const anchor = (f as { prayerAnchor?: unknown } | null)?.prayerAnchor
+    const frame = f as { prayerAnchor?: unknown; startAnchor?: unknown; endAnchor?: unknown } | null
+    const anchor = frame?.prayerAnchor
     if (anchor != null) {
       if (typeof anchor !== 'object' || Array.isArray(anchor)) return 'timeFrame prayerAnchor must be an object'
       const a = anchor as { start?: unknown; end?: unknown }
@@ -238,6 +267,12 @@ function validate(db: Database): string | null {
         return 'timeFrame prayerAnchor.start must be a prayer anchor point'
       if (a.end != null && (typeof a.end !== 'string' || !ANCHOR_POINTS.includes(a.end)))
         return 'timeFrame prayerAnchor.end must be a prayer anchor point'
+    }
+    // v2.1 independent per-side anchors: each, if present, must be a valid anchor point.
+    for (const key of ['startAnchor', 'endAnchor'] as const) {
+      const v = frame?.[key]
+      if (v != null && (typeof v !== 'string' || !ANCHOR_POINTS.includes(v)))
+        return `timeFrame ${key} must be a prayer anchor point`
     }
   }
   // The new optional quest fields (v1.13) are display/selection-only and fail safe when

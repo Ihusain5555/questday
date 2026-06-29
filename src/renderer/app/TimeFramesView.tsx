@@ -3,7 +3,7 @@ import { useStore } from '../state/store'
 import { minuteToHHMM, hhmmToMinute } from '@shared/format'
 import { activeTimeFrame } from '@shared/engine/selectCurrentQuest'
 import { effectiveTimeFrames } from '@shared/engine/prayerFrames'
-import type { PrayerAnchorPoint } from '@shared/types'
+import type { PrayerAnchorPoint, TimeFrame } from '@shared/types'
 import { CaretUp, CaretDown, Clock, Mosque } from '@phosphor-icons/react'
 
 const ANCHOR_OPTS: PrayerAnchorPoint[] = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha']
@@ -14,6 +14,68 @@ const ANCHOR_LABELS: Record<PrayerAnchorPoint, string> = {
   asr: 'Asr',
   maghrib: 'Maghrib',
   isha: 'Isha'
+}
+
+/** One edge (start OR end) of a frame's window — independently a CLOCK time or a PRAYER
+ *  (v2.1). The clock/prayer mini-toggle swaps the input; a prayer edge writes startAnchor/
+ *  endAnchor, a clock edge clears it and writes the minute. */
+function BoundEditor({
+  side,
+  frame,
+  update
+}: {
+  side: 'start' | 'end'
+  frame: TimeFrame
+  update: (patch: Partial<TimeFrame>) => void
+}): JSX.Element {
+  const isStart = side === 'start'
+  const anchor = isStart ? frame.startAnchor : frame.endAnchor
+  const minute = isStart ? frame.startMinute : frame.endMinute
+  const isPrayer = !!anchor
+  const setClock = (): void => update(isStart ? { startAnchor: undefined } : { endAnchor: undefined })
+  const setPrayer = (p: PrayerAnchorPoint): void => update(isStart ? { startAnchor: p } : { endAnchor: p })
+  const setMinute = (m: number): void => update(isStart ? { startMinute: m } : { endMinute: m })
+  return (
+    <div className="tf-bound">
+      <div className="tf-anchor-toggle" role="group" aria-label={`${side} source`}>
+        <button className={`tf-seg${!isPrayer ? ' on' : ''}`} onClick={setClock} title="Use a clock time">
+          <Clock size={12} weight="bold" />
+        </button>
+        <button
+          className={`tf-seg${isPrayer ? ' on' : ''}`}
+          onClick={() => setPrayer(anchor ?? (isStart ? 'fajr' : 'dhuhr'))}
+          title="Follow the daily prayer time"
+        >
+          <Mosque size={12} weight="bold" />
+        </button>
+      </div>
+      {isPrayer ? (
+        <select
+          className="tf-prayer-select"
+          aria-label={isStart ? 'Start prayer' : 'End prayer'}
+          value={anchor}
+          onChange={(e) => setPrayer(e.target.value as PrayerAnchorPoint)}
+        >
+          {ANCHOR_OPTS.map((p) => (
+            <option key={p} value={p}>
+              {ANCHOR_LABELS[p]}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <input
+          className="tf-time"
+          type="time"
+          aria-label={isStart ? 'Start time' : 'End time'}
+          value={minuteToHHMM(minute)}
+          onChange={(e) => {
+            const m = hhmmToMinute(e.target.value)
+            if (m !== null) setMinute(m)
+          }}
+        />
+      )}
+    </div>
+  )
 }
 
 export function TimeFramesView(): JSX.Element {
@@ -43,14 +105,14 @@ export function TimeFramesView(): JSX.Element {
       </div>
       <p className="tagline">
         The active frame (by your clock) decides which quests are candidates for the current quest.
-        Frames may wrap past midnight (start later than end, like Night). Switch a frame to{' '}
-        <strong>Prayer</strong> to anchor its window to the daily prayer times — it then shifts with
-        the real schedule (e.g. “Deep work” running from Fajr until Dhuhr).
+        Frames may wrap past midnight (start later than end, like Night). Set each side — start and
+        end — to a fixed <strong>clock</strong> time (🕐) or a <strong>prayer</strong> (🕌), in any
+        mix: e.g. Fajr → 9:00, 12:00 → Asr, or Fajr → Dhuhr. Prayer edges shift with the daily times.
       </p>
 
       <div className="card">
         {frames.map((f, i) => {
-          const anchored = !!f.prayerAnchor
+          const anchored = !!(f.startAnchor || f.endAnchor)
           return (
             <div className="tf-item" key={f.id}>
               <div className="tf-row">
@@ -72,85 +134,11 @@ export function TimeFramesView(): JSX.Element {
                   value={f.name}
                   onChange={(e) => updateTimeFrame(f.id, { name: e.target.value })}
                 />
-                <div className="tf-anchor-toggle" role="group" aria-label="Frame window source">
-                  <button
-                    className={`tf-seg${!anchored ? ' on' : ''}`}
-                    onClick={() => updateTimeFrame(f.id, { prayerAnchor: undefined })}
-                    title="Use a fixed clock time"
-                  >
-                    <Clock size={13} weight="bold" /> Clock
-                  </button>
-                  <button
-                    className={`tf-seg${anchored ? ' on' : ''}`}
-                    onClick={() =>
-                      updateTimeFrame(f.id, { prayerAnchor: f.prayerAnchor ?? { start: 'fajr', end: 'dhuhr' } })
-                    }
-                    title="Follow the daily prayer times"
-                  >
-                    <Mosque size={13} weight="bold" /> Prayer
-                  </button>
+                <div className="tf-times tf-bounds">
+                  <BoundEditor side="start" frame={f} update={(patch) => updateTimeFrame(f.id, patch)} />
+                  <span className="dash">→</span>
+                  <BoundEditor side="end" frame={f} update={(patch) => updateTimeFrame(f.id, patch)} />
                 </div>
-                {anchored ? (
-                  <div className="tf-times">
-                    <select
-                      className="tf-prayer-select"
-                      aria-label="Frame starts at"
-                      value={f.prayerAnchor!.start}
-                      onChange={(e) =>
-                        updateTimeFrame(f.id, {
-                          prayerAnchor: { start: e.target.value as PrayerAnchorPoint, end: f.prayerAnchor!.end }
-                        })
-                      }
-                    >
-                      {ANCHOR_OPTS.map((p) => (
-                        <option key={p} value={p}>
-                          {ANCHOR_LABELS[p]}
-                        </option>
-                      ))}
-                    </select>
-                    <span className="dash">→</span>
-                    <select
-                      className="tf-prayer-select"
-                      aria-label="Frame ends at"
-                      value={f.prayerAnchor!.end ?? ''}
-                      onChange={(e) => {
-                        const v = e.target.value
-                        updateTimeFrame(f.id, {
-                          prayerAnchor: { start: f.prayerAnchor!.start, end: v ? (v as PrayerAnchorPoint) : undefined }
-                        })
-                      }}
-                    >
-                      <option value="">Next prayer</option>
-                      {ANCHOR_OPTS.map((p) => (
-                        <option key={p} value={p}>
-                          {ANCHOR_LABELS[p]}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                ) : (
-                  <div className="tf-times">
-                    <input
-                      className="tf-time"
-                      type="time"
-                      value={minuteToHHMM(f.startMinute)}
-                      onChange={(e) => {
-                        const m = hhmmToMinute(e.target.value)
-                        if (m !== null) updateTimeFrame(f.id, { startMinute: m })
-                      }}
-                    />
-                    <span className="dash">→</span>
-                    <input
-                      className="tf-time"
-                      type="time"
-                      value={minuteToHHMM(f.endMinute)}
-                      onChange={(e) => {
-                        const m = hhmmToMinute(e.target.value)
-                        if (m !== null) updateTimeFrame(f.id, { endMinute: m })
-                      }}
-                    />
-                  </div>
-                )}
                 {f.id === activeId && <span className="badge active-now">active now</span>}
                 <button
                   className="ghost danger"
