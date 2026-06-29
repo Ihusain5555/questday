@@ -110,10 +110,12 @@ Recorded from this session's runs against the BUILT `out/` (each after `npm run 
 **NONE.** No failing test or open error at close. Everything above passed; nothing is mid-broken.
 
 ## Deployed
-- **Vercel production (live, public):** `https://website-virid-six-hmzgotbvpo.vercel.app` (HTTP 200, serves the real page).
-- Project = `website`, account scope `ihusain5556`, deployment id `dpl_9faVLX4YLhoYYvBcau17WETaJcVz`.
-- The deployment-specific `website-bbedqjir6-…vercel.app` URL is 302→SSO (Vercel default Deployment Protection); the
-  production ALIAS above is the public one. CLI was already authed (`vercel whoami` → ihusain5555).
+- **Vercel production (live, public):** `https://questday-ihusain5556.vercel.app` (HTTP 200). The old
+  `https://website-virid-six-hmzgotbvpo.vercel.app` still aliases to the same deployment (200) — no breakage.
+- Project **renamed `website`→`questday`** (2026-06-29, via `vercel project rename` — CLI v54 supports it), account
+  scope `ihusain5556`, latest prod deployment id `dpl_6QQMgndyULGw1bJHdKDxp6DauLE9`. (`questday.vercel.app` bare name is taken.)
+- The deployment-specific `questday-<hash>-…vercel.app` URL is 302→SSO (Vercel default Deployment Protection); the
+  production ALIASES above are the public ones. CLI was already authed (`vercel whoami` → ihusain5555).
 
 ## Next steps — file-level targets (none blocking; pick per priority)
 1. ~~Publish a GitHub Release so the site's download buttons resolve~~ **DONE 2026-06-29** — v2.0.0 released with both

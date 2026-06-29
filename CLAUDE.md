@@ -35,10 +35,12 @@ features (additive, not narrowing). Decisions that change what gets built:
   prayer-consistency/identity, never punishment); zero-dep default + vetted exceptions; installer UNSIGNED for now
   (revisit Microsoft Store ~$19 before distributing). **Monetization = FREE forever (sadaqah).**
 - **Cut:** Qibla (no desktop compass), Realm mystery reveal, arcade unlock tiers, live-friends server.
-- **Distribution:** the **Vercel landing page** is BUILT + DEPLOYED (2026-06-28) — `website/` (Next.js 14 App Router,
-  faithful port of `mockups/website-mockup.html`), live at `https://website-virid-six-hmzgotbvpo.vercel.app`. Deploy
-  from here via `cd website ; npx vercel --prod --yes` (CLI already authed). **Download buttons 404 until a GitHub
-  Release exists** (publish `npm run dist`'s `.exe`). Deploy/Vercel quirks → shipping-and-gotchas skill.
+- **Distribution:** the **Vercel landing page** is BUILT + DEPLOYED — `website/` (Next.js 14 App Router, faithful
+  port of `mockups/website-mockup.html`), live at `https://questday-ihusain5556.vercel.app` (Vercel project renamed
+  `website`→`questday` 2026-06-29; the old `website-virid-six-…` URL still aliases). Deploy from here via
+  `cd website ; npx vercel --prod --yes` (CLI already authed). **Download buttons now resolve** — **v2.0.0 is released
+  with BOTH installers** (Win `.exe` + Mac universal `.dmg`, marked Latest); release procedure + the version-drift trap
+  → memory `questday-release-procedure`. Deploy/Vercel quirks → shipping-and-gotchas skill.
 - Full decision record: memory `questday-pivot-muslim-productivity`; resume kit: `HANDOFF.md`.
 
 ## Commands

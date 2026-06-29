@@ -23,19 +23,22 @@ It's a faithful port of the approved `mockups/website-mockup.html`; download but
 `github.com/Ihusain5555/questday/releases/latest`. Build: `cd website ; npm install ; npm run build`.
 
 - **You CAN deploy from here** — the Vercel CLI is already authenticated (`npx vercel whoami` → `ihusain5555`;
-  deployments land under scope `ihusain5556`). First deploy (2026-06-28) is LIVE:
-  `https://website-virid-six-hmzgotbvpo.vercel.app`.
+  deployments land under scope `ihusain5556`). LIVE at the clean alias `https://questday-ihusain5556.vercel.app`
+  (the old `https://website-virid-six-hmzgotbvpo.vercel.app` still aliases to the same deployment).
 - **Deploy command:** `cd website ; npx --yes vercel --prod --yes`. The `--yes` auto-links the project (creates
   `.vercel/`, gitignored) and ships to production non-interactively. Build runs on Vercel (~25s, static prerender).
 - **Default Deployment Protection gotcha:** the deployment-specific `…-<hash>.vercel.app` URL returns **302 → Vercel
   SSO** (protected). The **production ALIAS** (e.g. `…-virid-six-….vercel.app`, from the deploy output's "Aliased"
   line, or `vercel ls`) is the PUBLIC URL — smoke-check THAT (`curl -L`), not the deployment URL. Turn protection off
   in Project → Settings → Deployment Protection if every URL should be public.
-- **Project name = the folder (`website`)** → an ugly URL; rename to `questday` in the dashboard for a clean one (no
-  reliable CLI rename in recent versions). Deploying to **production is outward-facing → confirm with the user first**
-  (the first deploy was explicitly authorized).
-- The download buttons **404 until a GitHub Release exists** — publishing one (`npm run dist` → Release → upload
-  the `.exe`) is a separate stop-and-confirm publish step.
+- **Project renamed `website`→`questday`** (2026-06-29) for a clean URL. **CLI v54 CAN rename** (the old "no reliable
+  CLI rename" note was outdated): `npx vercel project rename website questday`. But renaming alone does NOT change the
+  live URL — Vercel deployment URLs are fixed at deploy time, so **redeploy** (`vercel --prod`) to publish under the new
+  name (the new clean alias is `questday-<scope>.vercel.app`; the bare `questday.vercel.app` is taken globally).
+  Deploying to **production is outward-facing → confirm with the user first** (the first deploy was explicitly authorized).
+- A GitHub Release with both installers now exists (v2.0.0), so the buttons resolve. Publishing a NEW release
+  (`npm run dist` → `gh release create vX.Y.Z --latest` with the `.exe` + `.dmg`) is a separate stop-and-confirm
+  publish step — full procedure in memory `questday-release-procedure`.
 
 # Gotchas
 
