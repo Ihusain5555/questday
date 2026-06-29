@@ -13,9 +13,10 @@ Procedure + the version-drift trap are saved in memory `questday-release-procedu
 ### ▶ Session close-out (2026-06-29) — NEXT SESSION'S WORK IS CAPTURED, NOT BUILT
 The user gave a batch of arcade + UI feedback at close. **All of it is captured in
 `docs/arcade-and-ui-feedback-2026-06-29.md` — none is built.** Start there next session (one feature at a time).
-**⚠️ One blocking decision:** the "make the minigames punishing / -2 points" request **conflicts with the tone rule**
-(arcade code already enforces "misses are never punished") — resolve literal-penalty-vs-tone-compatible-stakes with the
-user before building any arcade change. Details + recommended reframe in that doc.
+**Arcade penalties — DECIDED 2026-06-29:** in-game point deduction on a wrong action (e.g. StopTap −2) **within the
+round score only**, with red (penalty) / green-or-gold (gain) flash feedback. **Productivity reward world stays
+gains-only** (XP/streaks/tickets/↩Restore never deducted). Build a tunable flash mockup first. Per-game targets + the
+one remaining design question (penalty always-on vs advanced-mode only) are in that doc.
 
 ## Git state
 - **Branch:** `feature/civilization-world-map` (repo default). **Remote:** `origin` = github.com/Ihusain5555/questday.
@@ -141,11 +142,10 @@ Lower-priority / optional (carried over, none blocking):
 
 ## Open / deferred
 - **No code TODO/FIXME added this session** (swept `556a234..HEAD` — zero matches; session was docs + a version bump only).
-- **⚠️ OPEN DECISION (arcade penalties):** "make the minigames punishing / -2 points" vs the tone rule. Must be resolved
-  with the user before building any arcade change. Recommended tone-compatible reframe (fail-state / combo-reset) in
-  `docs/arcade-and-ui-feedback-2026-06-29.md`.
+- **✅ DECIDED (arcade penalties):** in-game point deduction + red/green-gold flash, **arcade-score-only**; productivity
+  rewards stay gains-only. Recorded in CLAUDE.md tone rule + `docs/arcade-and-ui-feedback-2026-06-29.md`.
 - **Captured-but-not-built (this session's feedback):** the full arcade + UI batch in `docs/arcade-and-ui-feedback-2026-06-29.md`.
-- **Open questions for the user (in that doc):** arcade penalty model; Mental Spin = mirror-only / rotation-only / both.
+- **Open questions for the user (in that doc):** arcade penalty always-on vs advanced-mode only; Mental Spin = mirror-only / rotation-only / both.
 - **Deferred by decision (unchanged):** Ramadan mode (~Dec 2026 / ~2mo before Ramadan 2027); Qibla (CUT — no desktop
   compass); civ/Realm deep roadmap (PARKED behind Coming-Soon); installer code-signing (needs a paid cert); Microsoft
   Store (~$19, before distributing); a paid human security review (when real users appear).

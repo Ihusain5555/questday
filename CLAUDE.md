@@ -7,10 +7,11 @@ highest-priority "current quest". Local JSON only — no accounts, no cloud.
 **Tone rule (always applies):** motivating, never punishing — never add health/lives loss,
 point deduction, streak-shaming, or any punitive mechanic. (One sanctioned exception:
 ↩ Restore reverses an accidental completion's payout exactly — correction, not punishment.)
-**This extends to the arcade:** in-game misses are deliberately NOT punished (`AimTrainer.tsx`: "misses are never
-punished"). A request to add minigame penalties / point-deduction (raised 2026-06-29 — see
-`docs/arcade-and-ui-feedback-2026-06-29.md`) is a **stop-and-confirm amendment to this integrity line**, not a routine
-feature; offer tone-compatible stakes (fail-state / combo-reset, gains-only) first.
+**Arcade carve-out (DECIDED 2026-06-29):** minigames MAY deduct points **within the round's score** on a wrong action,
+with **red** (penalty) / **green-or-gold** (gain) flash feedback — `AimTrainer.tsx`'s "misses are never punished" is **no
+longer absolute for the arcade**. **HARD boundary:** in-game arcade score ONLY — the **productivity reward world stays
+strictly gains-only** (quest XP, levels, streaks, arcade *tickets*, and ↩Restore exactness are NEVER deducted). Spec +
+per-game targets: `docs/arcade-and-ui-feedback-2026-06-29.md`.
 The reward world only ever GAINS — no wilt/decay. (As of v1.8 the **Realm** replaced the garden in
 the UI; the garden engine is kept INERT — it still runs silently so ↩ Restore's coin claw-back math
 stays intact — so do NOT delete it.)

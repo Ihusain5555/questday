@@ -13,18 +13,16 @@ File map (confirmed this session):
 
 ---
 
-## ⚠️ BLOCKING DECISION #1 — "make the minigames punishing" CONFLICTS with the tone rule
-> User: *"The mini games should be punishing. For example stop tap should take away 2 points if they tap when it says stop. Look at the other games and see if you can do this. Like for aim trainer, reaction time, color clash, etc."*
+## ✅ DECISION #1 (DECIDED 2026-06-29) — in-game point deduction + flash feedback, arcade-score-only
+> User: *"The mini games should be punishing… stop tap should take away 2 points if they tap when it says stop… aim trainer, reaction time, color clash, etc."* → clarified: *"i meant point deduction WITHIN the minigame. and make it show, like a red flash… and green flash when they get a point… maybe gold, whatever looks good."*
 
-- **Conflict:** the project tone rule (`CLAUDE.md`, "always applies") forbids *"point deduction … or any punitive mechanic."* The arcade code **already enforces this on purpose** — `AimTrainer.tsx` comment: *"Misses are never punished (tone rule) — they just aren't hits."* So this request reverses a deliberate integrity-line decision.
-- **Claude pushed back once** (work-style rule). The call is the user's; literal point-deduction = a **deliberate amendment to the integrity line → stop-and-confirm**, and even then it must stay **arcade-score-only and NEVER touch productivity XP / streaks / ↩Restore** (gains-only there is non-negotiable).
-- **Latent intent (runs through ALL the arcade notes): the games are too EASY and need real stakes.** "Punishing" is just one way the user pictured it.
-- **Recommended tone-COMPATIBLE "stakes" to offer first (gains-only — no loss of earned points):**
-  1. **Mistake ends the round** (fail-state) — challenge without deducting points.
-  2. **Combo/multiplier that resets on a mistake** — you only ever gain; a miss costs momentum, not score.
-  3. **No reward for wrong actions** + accuracy gates a bonus.
-- **OPEN QUESTION for the user:** literal point-deduction (override tone rule, arcade-only) **or** the tone-compatible reframe (fail-state / combo-reset)? **This decides the whole arcade batch.**
-- Affected games: `StopTap.tsx` (the "tap during STOP" example), `AimTrainer.tsx`, `ReactionTime.tsx`, `ColorClash.tsx` (likely `ColorRecreation.tsx` too).
+**DECIDED:** arcade minigames MAY deduct points **within the round's score** on a wrong action, with visual feedback.
+- **Penalty:** a wrong action (e.g. StopTap tap during "STOP" = **−2**) subtracts from the **in-game round score only**.
+- **Visual feedback (juice):** **RED flash** on a penalty; **GREEN or GOLD flash** on a point gain. "Whatever looks good" = designer's latitude (brief element/screen flash + the score ticking up/down). **Build a quick tunable mockup FIRST** (user is visual — sliders for flash color/duration/intensity, copy-out the values) before wiring it into the real games.
+- **HARD BOUNDARY (non-negotiable):** this NEVER touches the **productivity reward world** — quest XP, levels, streaks, the arcade **tickets** awarded to the player, and **↩Restore exactness** all stay strictly **gains-only**. Deduction lives entirely in the per-round arcade score (`ArcadeState.best` still records only the best; high-score sharing unaffected).
+- **This AMENDS the tone rule's arcade application** — `AimTrainer.tsx`'s "misses are never punished" is no longer absolute for the arcade. CLAUDE.md tone-rule note updated to record the carve-out.
+- **Per-game build (next session):** a **shared score-flash component** (red / green / gold) reused across games; per-game "wrong action" + penalty amount in `balance.ts`. Games & their penalizable action: `StopTap.tsx` (tap during STOP), `AimTrainer.tsx` (miss / wrong target?), `ReactionTime.tsx` (jumping early), `ColorClash.tsx` / `ColorRecreation.tsx` (wrong colour).
+- **OPEN design question:** is the penalty **always-on**, or only in a harder/advanced mode? The strategic depth-mode rule says *"every game keeps its simple default + an advanced mode; never remove simple."* Confirm with the user whether penalties apply to the simple default too, or only an advanced mode.
 
 ---
 
